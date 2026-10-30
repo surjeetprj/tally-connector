@@ -1,0 +1,25 @@
+{
+  "business_id": 52,
+  "test_reference": "P0CT-261029-01",
+  "confirmed": {
+    "invoice_id": 69,
+    "invoice_num": "P0CT-261029-01",
+    "invoice_status": "ACTIVE",
+    "taxable": "1.00000",
+    "tax": "0.18",
+    "total": "1.18"
+  },
+  "supplier_id": 274,
+  "item_id": 84,
+  "quantity": "1.000",
+  "price": "1.00",
+  "item_type": "SERVICE",
+  "stock_movement_expected": false,
+  "item_qty_before": "0",
+  "item_qty_after_first_post": "0",
+  "item_qty_after_repeat": "0",
+  "repeat_post_stock_unchanged": true,
+  "deletion_or_reversal_performed": false,
+  "read_reconciliation_after_discarded_body": true,
+  "real_timeout_or_crash_simulated": false
+}

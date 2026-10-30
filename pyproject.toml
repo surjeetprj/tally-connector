@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "innoforia-tally-connector"
+version = "0.1.0"
+description = "Native Windows connector for Innoforia Bahi and TallyPrime"
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.12",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["innoforia_tally_connector*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.package-data]
+innoforia_tally_connector = [
+    "integrations/tally/templates/**/*.xml",
+    "resources/icons/*",
+    "resources/styles/*",
+    "persistence/migrations/versions/*.sql",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

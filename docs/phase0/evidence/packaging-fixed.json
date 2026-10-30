@@ -1,0 +1,13 @@
+{
+  "python": "3.12.8",
+  "pyside6": "6.11.1",
+  "huey": "3.5.3",
+  "pyinstaller": "6.21.0",
+  "packaging_hooks": "2026.6",
+  "executable_sha256": "1340ece018bccdee284c20e3ddfc430bae9b468475323d7ba9bf91035d3ee6cc",
+  "windows_gui_subsystem": true,
+  "foreign_poppler_dependency": false,
+  "bundled_icuuc": false,
+  "build_command": "python scripts/phase0/build_spike.py",
+  "host_only_validation": true
+}

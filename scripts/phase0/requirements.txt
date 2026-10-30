@@ -1,0 +1,5 @@
+# Isolated lifecycle/packaging experiment only; not application requirements.
+PySide6==6.11.1
+huey==3.5.3
+pyinstaller==6.21.0
+pyinstaller-hooks-contrib==2026.6

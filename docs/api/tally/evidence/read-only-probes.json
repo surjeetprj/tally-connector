@@ -1,0 +1,239 @@
+[
+  {
+    "probe": "companies",
+    "request": "companies.request.xml",
+    "utc": "2026-10-29T14:17:36.839538+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "18f502d469a5911d6f4870bf2f7ae68b8cc6043bf94acc972c7e1a3b0ed3104d",
+    "response_bytes": 1701,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "company_count": 1,
+      "target_company": "SIS Dummy",
+      "target_matches": [
+        {
+          "NAME": "SIS Dummy",
+          "GUID": "0b212ad8-3be5-45fe-8719-e1a70e240d4c",
+          "COMPANYNUMBER": "100006"
+        }
+      ],
+      "other_company_details": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.046
+  },
+  {
+    "probe": "product-about",
+    "request": "product-about.request.xml",
+    "utc": "2026-10-29T14:17:36.878601+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "ca33e12d9bf0700476ec1dccfe1e41a141a4513fa6806f6d50416b75bcfcbcb6",
+    "response_bytes": 3331,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "product_fields": [
+        {
+          "label": "Release",
+          "value": "6.2 (Upgrade Available)"
+        },
+        {
+          "label": "Edition",
+          "value": "Gold (Multi User) Rental"
+        }
+      ],
+      "note": "Unrecognized fields, license/serial, users and paths not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.454
+  },
+  {
+    "probe": "unit-baseline",
+    "request": "unit-baseline.request.xml",
+    "utc": "2026-10-29T14:17:37.343310+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "eb37584aa13852f4da2a058f1159db2df63c1390bcf8702195f91d640ae68962",
+    "response_bytes": 2986,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "Unit",
+      "record_count": 7,
+      "records_with_guid": 7,
+      "records_with_numeric_alter_id": 7,
+      "min_alter_id": 212,
+      "max_alter_id": 306,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.031
+  },
+  {
+    "probe": "ledger-baseline",
+    "request": "ledger-baseline.request.xml",
+    "utc": "2026-10-29T14:17:37.367342+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "1ee491da2852cf01f4552b07cb57345bdaa0f2ee8e3bb68fb3babc70cfa1a176",
+    "response_bytes": 22946,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "Ledger",
+      "record_count": 60,
+      "records_with_guid": 60,
+      "records_with_numeric_alter_id": 60,
+      "min_alter_id": 31,
+      "max_alter_id": 423,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.047
+  },
+  {
+    "probe": "stockitem-baseline",
+    "request": "stockitem-baseline.request.xml",
+    "utc": "2026-10-29T14:17:37.409419+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "a6d930973c635d65ce97b1254b35b6643b0216f1d080aca747e7e8213a2ac605",
+    "response_bytes": 9843,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "StockItem",
+      "record_count": 21,
+      "records_with_guid": 21,
+      "records_with_numeric_alter_id": 21,
+      "min_alter_id": 235,
+      "max_alter_id": 424,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.015
+  },
+  {
+    "probe": "voucher-baseline",
+    "request": "voucher-baseline.request.xml",
+    "utc": "2026-10-29T14:17:37.432640+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "723f4405c033f1ab7ec60f289fd18321d8450d88496084890d9e262c3aa7b7f2",
+    "response_bytes": 71709,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "Voucher",
+      "record_count": 58,
+      "records_with_guid": 58,
+      "records_with_numeric_alter_id": 58,
+      "min_alter_id": 178,
+      "max_alter_id": 697,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.063
+  },
+  {
+    "probe": "unit-after-306",
+    "request": "unit-after-306.request.xml",
+    "utc": "2026-10-29T14:17:37.487462+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "de8a4734b7d7b80049a11cef998e6985b8cdc1e5bb494a45b288affb30dd42c6",
+    "response_bytes": 1500,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "Unit",
+      "record_count": 0,
+      "records_with_guid": 0,
+      "records_with_numeric_alter_id": 0,
+      "min_alter_id": null,
+      "max_alter_id": null,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.015
+  },
+  {
+    "probe": "ledger-after-423",
+    "request": "ledger-after-423.request.xml",
+    "utc": "2026-10-29T14:17:37.505499+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "a4a2fbdbfd8500fe89b3e17dc77076fec8cbcc4cc33f2cad4eb35c30b6779b87",
+    "response_bytes": 1497,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "Ledger",
+      "record_count": 0,
+      "records_with_guid": 0,
+      "records_with_numeric_alter_id": 0,
+      "min_alter_id": null,
+      "max_alter_id": null,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.0
+  },
+  {
+    "probe": "stockitem-after-424",
+    "request": "stockitem-after-424.request.xml",
+    "utc": "2026-10-29T14:17:37.514458+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "255e50b2e732e5483c0b3eeaf8eddabca3ace6f4303623c6067ad9bd721af198",
+    "response_bytes": 1499,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "StockItem",
+      "record_count": 0,
+      "records_with_guid": 0,
+      "records_with_numeric_alter_id": 0,
+      "min_alter_id": null,
+      "max_alter_id": null,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.032
+  },
+  {
+    "probe": "voucher-after-697",
+    "request": "voucher-after-697.request.xml",
+    "utc": "2026-10-29T14:17:37.537221+00:00",
+    "endpoint": "http://localhost:9000",
+    "read_only": true,
+    "http_status": 200,
+    "response_sha256": "a4d087f6b24e8961d24cdb09fdd44097c1bb74012f1f6f0bdc3c6e52f1d2e0f6",
+    "response_bytes": 1511,
+    "root_tag": "ENVELOPE",
+    "error_tags_present": false,
+    "observed": {
+      "entity": "Voucher",
+      "record_count": 0,
+      "records_with_guid": 0,
+      "records_with_numeric_alter_id": 0,
+      "min_alter_id": null,
+      "max_alter_id": null,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "outcome": "parsed",
+    "elapsed_seconds": 0.047
+  }
+]

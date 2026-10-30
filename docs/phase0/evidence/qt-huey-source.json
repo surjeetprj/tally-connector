@@ -1,0 +1,40 @@
+{
+  "utc": "2026-10-29T15:07:15.822589+00:00",
+  "frozen": false,
+  "python": "3.12.8",
+  "pyside6": "6.12.0",
+  "huey": "3.5.3",
+  "checks": {
+    "three_operations_succeeded": true,
+    "single_worker_serialized": true,
+    "worker_off_main_thread": true,
+    "queued_signals_on_main_thread": true,
+    "duplicate_operation_no_extra_effect": true,
+    "retry_once": true,
+    "qt_heartbeat": true,
+    "clean_event_loop_exit": true,
+    "bounded_graceful_stop": true,
+    "template_loaded": true,
+    "icon_rendered": true
+  },
+  "operations": [
+    [
+      "first",
+      "SUCCEEDED",
+      1
+    ],
+    [
+      "retry-once",
+      "SUCCEEDED",
+      2
+    ],
+    [
+      "third",
+      "SUCCEEDED",
+      1
+    ]
+  ],
+  "qt_heartbeats": 71,
+  "stop_seconds": 0.0,
+  "network_access": false
+}

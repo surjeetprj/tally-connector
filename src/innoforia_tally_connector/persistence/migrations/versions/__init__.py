@@ -1,0 +1,1 @@
+"""Explicitly registered migration implementations."""

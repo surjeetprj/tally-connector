@@ -1,0 +1,1 @@
+"""Bahi REST adapter ownership."""

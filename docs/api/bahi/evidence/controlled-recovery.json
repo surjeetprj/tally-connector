@@ -1,0 +1,14 @@
+{
+  "business_id": 52,
+  "invoice_id": 69,
+  "invoice_status": "ACTIVE",
+  "test_reference": "P0CT-261029-01",
+  "unresolved_intent_found": true,
+  "recovered_via_get_only": true,
+  "recovery_creates": 0,
+  "recovery_posts": 0,
+  "item_quantity": "0",
+  "stock_unchanged": true,
+  "scope": "Client exit after repeated known-ID post, before local acknowledgment",
+  "server_crash_or_unknown_create_tested": false
+}

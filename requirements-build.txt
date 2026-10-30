@@ -1,0 +1,3 @@
+# Validated Phase 0 packaging toolchain. Runtime requirements are installed separately.
+pyinstaller==6.21.0
+pyinstaller-hooks-contrib==2026.6

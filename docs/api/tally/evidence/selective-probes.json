@@ -1,0 +1,70 @@
+[
+  {
+    "utc": "2026-10-29T14:49:08.100692+00:00",
+    "entity": "Unit",
+    "after": 305,
+    "request": "unit-selective.request.xml",
+    "observed": {
+      "entity": "Unit",
+      "record_count": 1,
+      "records_with_guid": 1,
+      "records_with_numeric_alter_id": 1,
+      "min_alter_id": 306,
+      "max_alter_id": 306,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "filter_predicate_verified": true,
+    "response_sha256": "a2aa54c012b5255457652b8ba16c94cdd7ddfb1451adfc3fbb029b92ef6d9ef4"
+  },
+  {
+    "utc": "2026-10-29T14:49:08.386418+00:00",
+    "entity": "Ledger",
+    "after": 422,
+    "request": "ledger-selective.request.xml",
+    "observed": {
+      "entity": "Ledger",
+      "record_count": 1,
+      "records_with_guid": 1,
+      "records_with_numeric_alter_id": 1,
+      "min_alter_id": 423,
+      "max_alter_id": 423,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "filter_predicate_verified": true,
+    "response_sha256": "82ba09c476e9cae2deac07216ed8d911d9df0fe7cd88249f0d771b74d18d864e"
+  },
+  {
+    "utc": "2026-10-29T14:49:08.443126+00:00",
+    "entity": "StockItem",
+    "after": 423,
+    "request": "stockitem-selective.request.xml",
+    "observed": {
+      "entity": "StockItem",
+      "record_count": 1,
+      "records_with_guid": 1,
+      "records_with_numeric_alter_id": 1,
+      "min_alter_id": 424,
+      "max_alter_id": 424,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "filter_predicate_verified": true,
+    "response_sha256": "087cc4309191305805193ae3cd50a5c8fae5d6e6efe81ec6af353f1753dd265e"
+  },
+  {
+    "utc": "2026-10-29T14:49:08.696910+00:00",
+    "entity": "Voucher",
+    "after": 696,
+    "request": "voucher-selective.request.xml",
+    "observed": {
+      "entity": "Voucher",
+      "record_count": 1,
+      "records_with_guid": 1,
+      "records_with_numeric_alter_id": 1,
+      "min_alter_id": 697,
+      "max_alter_id": 697,
+      "record_names_dates_and_identities": "not retained"
+    },
+    "filter_predicate_verified": true,
+    "response_sha256": "06bcd31bb1acbde61adc37331bf374b2d51dcd05d67218c288f2dd40a4a10833"
+  }
+]
