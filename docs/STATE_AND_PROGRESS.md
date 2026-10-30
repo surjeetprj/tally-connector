@@ -1,6 +1,6 @@
 # Current state and progress
 
-Last updated: 29 October 2026.
+Last updated: 30 October 2026.
 
 ## Active milestone
 
@@ -31,6 +31,28 @@ The full product, clean-machine certification and automatic sync are not complet
 
 ## Latest repository update
 
+Converted [the architecture diagram](ARCHITECTURE.md) from ASCII boxes to a Mermaid
+flowchart with cloud/Windows boundaries, UI events, durable dispatch, separate
+databases, shared sync execution and adapter connections. Rendering requires a
+Mermaid-capable Markdown viewer; visual rendering was not verified locally.
+The architecture guide is linked from the documentation
+index. It shows the target native GUI, background execution, durable storage,
+application boundaries and cloud/Tally adapters. It distinguishes proposed sync
+routes from deployed APIs and explains safe retries, gateway serialization and
+credential storage. This is documentation only; no runtime capability was added.
+PowerShell verification passed for all three affected Markdown files: balanced
+code fences, 35 local links/anchors and `git diff --check`. The existing .venv
+could not launch because its referenced Python312 interpreter is unavailable;
+repair/recreate the environment before the next Python experiment. No runtime
+tests or network calls were run for this documentation task.
+
+Git is initialized with remote `origin` pointing to
+`https://github.com/surjeetprj/tally-connector.git`. Branch `main` tracks
+`origin/main`; the working tree was clean when checked at commit `285141e`
+(`Initial commit: add connector specification and Phase 0 integration probes`).
+The repository handoff correction is included with the architecture documentation
+commit requested by the user. No push was requested.
+
 Aligned the physical repository with the specification: 33 source ownership
 packages under src/, corresponding test packages, packaging ownership notes,
 pyproject.toml and runtime/dev/build dependency declarations. Requirements remain
@@ -47,7 +69,7 @@ remain intact. No network requests or accounting writes ran for this task.
 ## Implemented scope
 
 Source package structure and build metadata now exist; runtime application
-services/entry point do not. There is no Git repository. Phase 0 remains isolated
+services/entry point do not. Git now tracks the project. Phase 0 remains isolated
 scripts/tests, an ignored project .venv, build outputs and sanitized evidence.
 The specification's named service files remain planned, not implemented APIs.
 

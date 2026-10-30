@@ -14,6 +14,7 @@ not establish deployment compatibility.
 | --- | --- |
 | [Agent instructions](../AGENTS.md) | Working rules, navigation and verification expectations |
 | [Current state and progress](STATE_AND_PROGRESS.md) | Implemented state, latest checks, unresolved dependencies and next concrete task |
+| [Architecture diagram](ARCHITECTURE.md) | Visual guide to target components, execution flow and runtime boundaries |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |
 | [Live Bahi validation](api/bahi/LIVE_VALIDATION.md) | Authenticated business identity and sampled GET contracts |
