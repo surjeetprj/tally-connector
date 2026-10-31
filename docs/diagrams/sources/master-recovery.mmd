@@ -1,0 +1,23 @@
+sequenceDiagram
+    accTitle: Uncertain master write recovery
+    accDescr: Investigate a possibly applied create; record verified recovery or keep uncertainty visible without automatically creating again.
+    participant WORK as WORKER AND SYNC ENGINE
+    participant DATA as LOCAL STORAGE
+    participant TARGET as DESTINATION CONNECTION
+    participant UI as USER SCREEN
+
+    WORK->>DATA: Save intent and attempt before sending
+    WORK->>TARGET: Send master create
+    Note over WORK,TARGET: Response is lost or the process stops after send
+    WORK->>DATA: On timeout or restart, retain uncertain outcome
+    WORK-->>UI: Needs investigation - do not create again
+    WORK->>TARGET: Read-only identity or authoritative outcome lookup, if available
+    alt Exact result is established and content matches
+        TARGET-->>WORK: Verified target identity and content
+        WORK->>DATA: Save recovered mapping and verified completion
+        WORK-->>UI: Recovered successfully
+    else Result cannot be established
+        TARGET-->>WORK: Unsupported lookup, ambiguity or insufficient evidence
+        WORK->>DATA: Retain unresolved intent and diagnostic evidence
+        WORK-->>UI: Still unresolved - automatic create retry blocked
+    end

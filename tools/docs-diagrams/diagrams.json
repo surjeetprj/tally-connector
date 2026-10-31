@@ -1,0 +1,44 @@
+[
+  {
+    "id": "architecture-overview",
+    "document": "docs/ARCHITECTURE.md",
+    "title": "Architecture overview",
+    "description": "Bahi in the cloud connects through the Windows connector to TallyPrime on the computer."
+  },
+  {
+    "id": "connector-components",
+    "document": "docs/ARCHITECTURE.md",
+    "title": "Windows connector components",
+    "description": "The user screen delegates background work to the sync engine, which records progress locally and uses separate Bahi and Tally connections."
+  },
+  {
+    "id": "master-sync-workflow",
+    "document": "docs/master-sync/MASTER_SYNC_UI_FLOW.md",
+    "title": "Master sync user workflow",
+    "description": "Connect, choose a direction, load records, match, preview, confirm, transfer and review results."
+  },
+  {
+    "id": "master-link-existing",
+    "document": "docs/master-sync/MASTER_SYNC_SEQUENCES.md",
+    "title": "Link existing masters",
+    "description": "The user confirms a pair of existing master records, which are rechecked and linked locally without remote modification."
+  },
+  {
+    "id": "master-transfer",
+    "document": "docs/master-sync/MASTER_SYNC_SEQUENCES.md",
+    "title": "Successful master transfer",
+    "description": "Save durable intent and the write attempt, send the approved master, read back the target and record verified completion."
+  },
+  {
+    "id": "master-recovery",
+    "document": "docs/master-sync/MASTER_SYNC_SEQUENCES.md",
+    "title": "Uncertain master write recovery",
+    "description": "Investigate a possibly applied create; record verified recovery or keep uncertainty visible without automatically creating again."
+  },
+  {
+    "id": "master-operation-states",
+    "document": "docs/master-sync/MASTER_SYNC_STATES.md",
+    "title": "Master operation states",
+    "description": "Normal progress from pending to verified success, with blocked work, conflicts and reconciliation of uncertain writes."
+  }
+]

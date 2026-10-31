@@ -11,3 +11,4 @@ dist/
 *.db-shm
 .phase0-runtime/
 *.egg-info/
+tools/docs-diagrams/node_modules/

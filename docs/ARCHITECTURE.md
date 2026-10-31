@@ -13,11 +13,23 @@ for what has been built and tested, and the
 
 Start here. There are three main parts:
 
+<!-- diagram-start: architecture-overview -->
+<p><a href="diagrams/architecture-overview.svg"><img src="diagrams/architecture-overview.svg" alt="Architecture overview" width="271" style="width: 271px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: architecture-overview -->
 ```mermaid
 flowchart TB
-    bahi["<b>BAHI / BILLING</b><br/>Your business data in the cloud"]
-    connector["<b>WINDOWS CONNECTOR</b><br/>Checks and transfers supported records"]
-    tally["<b>TALLYPRIME</b><br/>Your accounting data on the computer"]
+    accTitle: Architecture overview
+    accDescr: Bahi in the cloud connects through the Windows connector to TallyPrime on the computer.
+    bahi["`**BAHI / BILLING**
+Your business data in the cloud`"]
+    connector["`**WINDOWS CONNECTOR**
+Checks and transfers supported records`"]
+    tally["`**TALLYPRIME**
+Your accounting data on the computer`"]
 
     bahi <-->|HTTPS REST API| connector
     connector <-->|Local HTTP connection carrying XML| tally
@@ -25,6 +37,11 @@ flowchart TB
     classDef component fill:#e8f1ff,stroke:#3268a8,color:#162e49,font-size:18px;
     class bahi,connector,tally component;
 ```
+
+[Source file](diagrams/sources/architecture-overview.mmd)
+
+</details>
+<!-- diagram-end: architecture-overview -->
 
 Read the diagram from top to bottom. The connector talks to Bahi over the
 internet and to Tally on the computer. The arrows point both ways because the
@@ -38,15 +55,31 @@ the user's computer.
 This diagram shows responsibilities. Follow the numbered arrows to understand
 what happens after someone clicks **SYNC NOW**.
 
+<!-- diagram-start: connector-components -->
+<p><a href="diagrams/connector-components.svg"><img src="diagrams/connector-components.svg" alt="Windows connector components" width="870" style="width: 870px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: connector-components -->
 ```mermaid
 flowchart TB
+    accTitle: Windows connector components
+    accDescr: The user screen delegates background work to the sync engine, which records progress locally and uses separate Bahi and Tally connections.
     subgraph connector["WINDOWS CONNECTOR"]
-        screen["<b>USER SCREEN</b><br/>Sync Now, settings, connection status and activity"]
-        worker["<b>BACKGROUND WORKER</b><br/>Runs work while the screen stays responsive"]
-        engine["<b>SYNC ENGINE</b><br/>Checks mappings, transfers records and verifies results"]
-        storage["<b>LOCAL STORAGE</b><br/>Remembers queued work, record links and progress"]
-        bahiAdapter["<b>BAHI CONNECTION</b><br/>Converts application data into REST API requests"]
-        tallyAdapter["<b>TALLY CONNECTION</b><br/>Converts application data into XML requests<br/>Sends one request at a time"]
+        screen["`**USER SCREEN**
+Sync Now, settings, connection status and activity`"]
+        worker["`**BACKGROUND WORKER**
+Runs work while the screen stays responsive`"]
+        engine["`**SYNC ENGINE**
+Checks mappings, transfers records and verifies results`"]
+        storage["`**LOCAL STORAGE**
+Remembers queued work, record links and progress`"]
+        bahiAdapter["`**BAHI CONNECTION**
+Converts application data into REST API requests`"]
+        tallyAdapter["`**TALLY CONNECTION**
+Converts application data into XML requests
+Sends one request at a time`"]
 
         screen -->|1. Request sync through the UI bridge| worker
         worker -->|2. Run the requested work| engine
@@ -56,8 +89,10 @@ flowchart TB
         engine -.->|5. Send progress through queued UI events| screen
     end
 
-    bahi["<b>BAHI / BILLING</b><br/>Cloud application"]
-    tally["<b>TALLYPRIME</b><br/>Selected company on this computer"]
+    bahi["`**BAHI / BILLING**
+Cloud application`"]
+    tally["`**TALLYPRIME**
+Selected company on this computer`"]
     bahiAdapter <-->|HTTPS REST API| bahi
     tallyAdapter <-->|HTTP and XML / localhost:9000| tally
 
@@ -70,6 +105,11 @@ flowchart TB
     class storage storageStyle;
     class bahi,tally externalStyle;
 ```
+
+[Source file](diagrams/sources/connector-components.mmd)
+
+</details>
+<!-- diagram-end: connector-components -->
 
 Solid arrows show requests or storage access. The dotted arrow shows progress
 updates to the screen. Connection responses return to the sync engine through

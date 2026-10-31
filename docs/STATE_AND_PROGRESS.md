@@ -31,48 +31,40 @@ The full product, clean-machine certification and automatic sync are not complet
 
 ## Latest repository update
 
-Fixed Mermaid syntax errors reported in the preview: renamed the sequence
-participant `LINKS` to `ADAPTERS`, removed message semicolons interpreted as
-statement separators, and replaced the unsupported default state class with an
-explicit named class applied to all states. All seven diagrams across the
-architecture, master UI flow, sequence and state documents parsed and rendered
-to SVG in headless Chrome using the Mermaid bundle from installed Markdown
-Preview Enhanced 0.8.40. Validation HTML/SVG output is ignored under
-`build/mermaid-validation/`. This validates rendering with that bundle, not every
-Markdown preview extension/version. No business requests or runtime tests ran.
+Matched BahiAI-Desktop's SVG-plus-collapsible-Mermaid documentation pattern after
+read-only review of its system overview. All seven diagrams now have generated
+SVG image embeds and an **Editable Mermaid source** details section that renders
+in Mermaid-capable viewers. Canonical editable sources remain in
+[diagram maintenance](diagrams/README.md); build synchronizes both representations
+and check rejects manual reference drift. Surrounding prose is preserved.
 
-Added [master sequence diagrams](master-sync/MASTER_SYNC_SEQUENCES.md) for local
-linking, verified transfer and uncertain-write reconciliation, plus the
-[shared operation state diagram](master-sync/MASTER_SYNC_STATES.md). Bold uppercase
-labels and plain-language tables explain the normal and recovery paths. These
-are planned behavior, not a new state enum or proof of implemented recovery.
-The subsequent headless check above supersedes the earlier syntax-only checks.
-Checks passed for the five diagram-related Markdown files: four Mermaid blocks,
-balanced fences, 42 local links/anchors, no trailing whitespace and
-`git diff --check`. No runtime tests, network requests or business writes ran.
+Fixed oversized image display: SVGs now declare native pixel width/height and
+Markdown embeds use explicit pixel width with responsive max-width. The vertical
+UI workflow stays approximately 273px wide rather than stretching across the pane.
+Clicking an image opens the full SVG. Tested primary image sizing at 900px and
+320px pane widths, including a theme-style width:100% rule.
 
-Prepared the [master-sync documentation](master-sync/README.md): design and open
-policy decisions, semantic field mapping, matching rules, beginner-friendly UI
-flow and validation/recovery cases. Added MST-001 through MST-008 work packages
-under existing CON tasks in the implementation plan. All packages are pending.
-The selected delivery order is foundation, supervised masters, purchase slice,
-then remaining automatic/expansion gates. The specification and index reflect it.
+All seven SVGs and reference diagrams render with the pinned toolchain; all seven
+references also rendered with the installed Markdown Preview Enhanced 0.8.40
+Mermaid bundle. Visually inspected collapsed/expanded workflow screenshots.
+Freshness, SVG structure/accessibility/bold-label checks pass. Negative checks
+reject source edits, SVG edits and reference-only drift; failed Mermaid export
+preserves existing SVGs, manifest and managed Markdown content. Restored inputs
+pass the final check. Browser checks required sandbox escalation.
+Markdown verification passed for nine files and 101 local link/image/anchor
+references, including balanced details/fences, JavaScript syntax and whitespace.
 
-No master adapter, production sync engine, database schema or UI was implemented.
-Tally mappings are semantic targets, not verified XML contracts. Backend changes
-remain proposals. Master writes, service/charge representation, automatic mode
-and policy decisions are not marked verified. Existing invoice 69 and runtime
-journals are untouched; no network calls or business writes ran for this task.
-Documentation checks passed for 11 affected Markdown files: balanced code fences,
-95 local links/anchors and `git diff --check`. No runtime tests were run because
-this task changes documentation only.
+Tooling remains documentation-only: Mermaid CLI 11.12.0/Puppeteer 23.11.1 and its
+managed browser, with dependencies locked and temporary output ignored under
+build/docs-diagrams/. No Bahi/Tally calls, accounting writes, installer builds or
+Python application regression tests ran. BahiAI-Desktop files were not changed.
 
-The architecture guide retains two simplified Mermaid diagrams with bold uppercase
-labels. Its SVG rendering passed the headless check above. The existing .venv
-references an unavailable Python312 interpreter; repair/recreate it before Python
-experiments. Git tracks this project with origin pointing to
-`https://github.com/surjeetprj/tally-connector.git`. The user requested a commit
-of these master-sync documents and Mermaid fixes; no push was requested.
+Master-sync implementation tasks remain pending. The selected order remains
+foundation, supervised masters, purchase slice, then remaining automatic gates.
+No runtime adapter, engine, schema or UI was implemented. Existing invoice 69,
+runtime journals and handbooks are intact. The .venv still references an unavailable
+Python312 interpreter; repair it before Python experiments. The user requested
+a commit of these documentation/assets/tooling changes; no push was requested.
 
 ## Implemented scope
 

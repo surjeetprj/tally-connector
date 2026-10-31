@@ -15,6 +15,7 @@ not establish deployment compatibility.
 | [Agent instructions](../AGENTS.md) | Working rules, navigation and verification expectations |
 | [Current state and progress](STATE_AND_PROGRESS.md) | Implemented state, latest checks, unresolved dependencies and next concrete task |
 | [Architecture diagram](ARCHITECTURE.md) | Visual guide to target components, execution flow and runtime boundaries |
+| [SVG diagrams and editable sources](diagrams/README.md) | Diagram inventory, export commands and image validation |
 | [Master sync preparation](master-sync/README.md) | Design, field mapping, matching rules, UI flow and validation for the master-first milestone |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |

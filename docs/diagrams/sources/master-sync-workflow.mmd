@@ -1,0 +1,20 @@
+flowchart TB
+    accTitle: Master sync user workflow
+    accDescr: Connect, choose a direction, load records, match, preview, confirm, transfer and review results.
+    setup["`**CONNECT**
+Confirm Bahi business and Tally company`"]
+    choose["`**CHOOSE**
+Select master type and transfer direction`"]
+    load["`**LOAD RECORDS**
+Read both systems in the background`"]
+    match["`**MATCH RECORDS**
+Link existing, create new or skip`"]
+    preview["`**PREVIEW CHANGES**
+Review exact fields and blocking issues`"]
+    confirm["`**CONFIRM TRANSFER**
+Approve eligible records for this run`"]
+    run["`**TRANSFER AND VERIFY**
+Save intent, write and read the result back`"]
+    results["`**REVIEW RESULTS**
+Verified, blocked, conflict or needs investigation`"]
+    setup --> choose --> load --> match --> preview --> confirm --> run --> results

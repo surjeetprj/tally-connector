@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "inputs": {
+    "docs/diagrams/sources/architecture-overview.mmd": "84503e6d8dcec9d7228b552addd34a31b90602a19a95aacf0346a50253fd7f85",
+    "docs/diagrams/sources/connector-components.mmd": "6be164a2b92b193e5131019b04a356db8532a54b216ae49d35ada8f1c265dd4e",
+    "docs/diagrams/sources/master-link-existing.mmd": "3c71dacd7e5c59bc0258f153120e0369e9aacf258c3ec78839111a6c9b86f3df",
+    "docs/diagrams/sources/master-operation-states.mmd": "f8a1386c76ef12b896b1aa255acdd1214d0d96a5319cd1059ce440a61c224155",
+    "docs/diagrams/sources/master-recovery.mmd": "77f53c15f7789ca6a1846af9af5d7deb6a5be7fc7409abb3a532d244a2f88988",
+    "docs/diagrams/sources/master-sync-workflow.mmd": "5dcb6a32a2379b0185f317a9825bc5acad4d292587490015864cf39d4940be86",
+    "docs/diagrams/sources/master-transfer.mmd": "2baf220e1bb9f2bebc4c40e482137fbf766bfa5916b177e5e168d213375a151d",
+    "tools/docs-diagrams/.puppeteerrc.cjs": "5e089b01f4f5924895caf5134bfb9509f6f028557328d80152d7a9ce5654970b",
+    "tools/docs-diagrams/diagrams.json": "43fd90d7a3bcb9db1d760f68681927e54ba69eca13ac0d6fe2db0171a8729bcf",
+    "tools/docs-diagrams/diagrams.mjs": "208bdcd50b29a3d7d61d75c38c7cd8d62894592cc3a96865aefb757deb1b3fc8",
+    "tools/docs-diagrams/labels.css": "f163108e14d8ee86e0e48e82ce0fd6b35ddec9cb6a3189ed63636eb735aba802",
+    "tools/docs-diagrams/mermaid.json": "c11da8fc239baf280197efceb74ff5fee64537b7e6bf213c27dd5c0a2f47beea",
+    "tools/docs-diagrams/package-lock.json": "96c7a355a90df57219b543759cd3c6726a84664bab72a6ec781de67f402afe4f",
+    "tools/docs-diagrams/package.json": "e9f9d55545313cb81d78cf2dbefcd1f176117c9405584aee53360814bd136003"
+  },
+  "outputs": {
+    "architecture-overview.svg": "b6fc2080852bbbc945939da4237f96bf276d9bebbf9009f51e585e90bdcc8ce2",
+    "connector-components.svg": "1127acbe69ff43d255846e4959382cec2d2c531fa53f27f516b147f30217c555",
+    "master-sync-workflow.svg": "923465648d1e7e5b846bd003e832ea1302b4fcd99cfb51e9bcc88c66f0a53dc2",
+    "master-link-existing.svg": "8fbc76ea9cf54da460dae0a5a853d93c189fbf2774bb51ff97597310c08f47d0",
+    "master-transfer.svg": "2d931ae2d9d92492cfa7c147049a13809377d96932b3d0fd7599ab750bea7ce9",
+    "master-recovery.svg": "6bfd0e36300b7a17122a7bf9a4ae5dcce56c589e5d9551ac47762be58f7e9153",
+    "master-operation-states.svg": "8e205893c1c62caa9334b0f1b480d83fbe277eca46fdfd7ced2885edf989c0a0"
+  }
+}

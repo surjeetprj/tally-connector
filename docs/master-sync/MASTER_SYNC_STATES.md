@@ -11,8 +11,17 @@ Read arrows as conditions for changing status. Bold uppercase labels name states
 The straight path is the normal successful transfer. The side path handles a
 write whose result is uncertain.
 
+<!-- diagram-start: master-operation-states -->
+<p><a href="../diagrams/master-operation-states.svg"><img src="../diagrams/master-operation-states.svg" alt="Master operation states" width="779" style="width: 779px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: master-operation-states -->
 ```mermaid
 stateDiagram-v2
+    accTitle: Master operation states
+    accDescr: Normal progress from pending to verified success, with blocked work, conflicts and reconciliation of uncertain writes.
     direction TB
     state "PENDING" as Pending
     state "VALIDATING" as Validating
@@ -39,8 +48,13 @@ stateDiagram-v2
     Succeeded --> [*]
 
     classDef componentLabel font-weight:bold;
-    class Pending,Validating,Applying,Verifying,Succeeded,Blocked,Conflict,Unknown,Reconciling componentLabel;
+    class Pending,Validating,Applying,Verifying,Succeeded,Blocked,Conflict,Unknown,Reconciling componentLabel
 ```
+
+[Source file](../diagrams/sources/master-operation-states.mmd)
+
+</details>
+<!-- diagram-end: master-operation-states -->
 
 This diagram deliberately shows the main path and investigation path. It is not
 a complete transition implementation. Dependency failures and other exceptions

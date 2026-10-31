@@ -1,0 +1,26 @@
+sequenceDiagram
+    accTitle: Successful master transfer
+    accDescr: Save durable intent and the write attempt, send the approved master, read back the target and record verified completion.
+    participant UI as USER SCREEN
+    participant APP as BACKGROUND SERVICES
+    participant DATA as LOCAL STORAGE
+    participant WORK as WORKER AND SYNC ENGINE
+    participant TARGET as DESTINATION CONNECTION
+
+    UI->>APP: Confirm the displayed transfer and direction
+    APP->>DATA: Commit operation and pending dispatch together
+    DATA-->>APP: Saved durable operation ID
+    APP->>WORK: Queue the operation ID through Huey
+    WORK->>DATA: Load intent, binding and confirmed mappings
+    WORK->>WORK: Recheck source, destination and dependencies through ports
+    Note over WORK: Stop here if the preview is stale or validation fails
+    WORK->>DATA: Save the write attempt before sending
+    DATA-->>WORK: Attempt saved
+    WORK->>TARGET: Create the approved master
+    TARGET-->>WORK: Response with identity or lookup evidence
+    WORK->>DATA: Save returned identity immediately when available
+    WORK->>TARGET: Read back the exact target record
+    TARGET-->>WORK: Identity and supported business fields
+    WORK->>WORK: Compare actual result with intended content
+    WORK->>DATA: Save verified mapping, baseline and completion
+    WORK-->>UI: Queued event: transfer verified

@@ -1,0 +1,6 @@
+/* Native SVG text styling: never put HTML tags inside participant names. */
+.actor text, text.actor, .actor tspan,
+.stateGroup .state-title, .stateGroup .state-title tspan,
+.statediagram-state .label text, .statediagram-state .label tspan {
+  font-weight: 700 !important;
+}

@@ -1,0 +1,41 @@
+flowchart TB
+    accTitle: Windows connector components
+    accDescr: The user screen delegates background work to the sync engine, which records progress locally and uses separate Bahi and Tally connections.
+    subgraph connector["WINDOWS CONNECTOR"]
+        screen["`**USER SCREEN**
+Sync Now, settings, connection status and activity`"]
+        worker["`**BACKGROUND WORKER**
+Runs work while the screen stays responsive`"]
+        engine["`**SYNC ENGINE**
+Checks mappings, transfers records and verifies results`"]
+        storage["`**LOCAL STORAGE**
+Remembers queued work, record links and progress`"]
+        bahiAdapter["`**BAHI CONNECTION**
+Converts application data into REST API requests`"]
+        tallyAdapter["`**TALLY CONNECTION**
+Converts application data into XML requests
+Sends one request at a time`"]
+
+        screen -->|1. Request sync through the UI bridge| worker
+        worker -->|2. Run the requested work| engine
+        engine <-->|3. Save intent and progress| storage
+        engine -->|4. Read or write through the appropriate connection| bahiAdapter
+        engine -->|4. Read or write through the appropriate connection| tallyAdapter
+        engine -.->|5. Send progress through queued UI events| screen
+    end
+
+    bahi["`**BAHI / BILLING**
+Cloud application`"]
+    tally["`**TALLYPRIME**
+Selected company on this computer`"]
+    bahiAdapter <-->|HTTPS REST API| bahi
+    tallyAdapter <-->|HTTP and XML / localhost:9000| tally
+
+    classDef screenStyle fill:#e8f1ff,stroke:#3268a8,color:#162e49;
+    classDef workStyle fill:#e7f5ed,stroke:#33865a,color:#163e29;
+    classDef storageStyle fill:#fff5d6,stroke:#a57919,color:#49380d;
+    classDef externalStyle fill:#f2ecff,stroke:#7953ad,color:#392750;
+    class screen screenStyle;
+    class worker,engine,bahiAdapter,tallyAdapter workStyle;
+    class storage storageStyle;
+    class bahi,tally externalStyle;

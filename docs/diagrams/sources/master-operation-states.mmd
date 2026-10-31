@@ -1,0 +1,30 @@
+stateDiagram-v2
+    accTitle: Master operation states
+    accDescr: Normal progress from pending to verified success, with blocked work, conflicts and reconciliation of uncertain writes.
+    direction TB
+    state "PENDING" as Pending
+    state "VALIDATING" as Validating
+    state "APPLYING" as Applying
+    state "VERIFYING" as Verifying
+    state "SUCCEEDED" as Succeeded
+    state "BLOCKED" as Blocked
+    state "CONFLICT" as Conflict
+    state "OUTCOME_UNKNOWN" as Unknown
+    state "RECONCILING" as Reconciling
+
+    [*] --> Pending
+    Pending --> Validating: Worker receives saved operation
+    Validating --> Applying: Checks pass and attempt is saved
+    Validating --> Blocked: Missing mapping or unsupported data
+    Validating --> Conflict: Concurrent edit or stale preview
+    Applying --> Verifying: Target can be read using identity evidence
+    Applying --> Unknown: Request may have succeeded
+    Unknown --> Reconciling: Investigate the original attempt
+    Reconciling --> Verifying: Exact target result established
+    Reconciling --> Unknown: Evidence remains insufficient
+    Verifying --> Succeeded: Identity and supported content match
+    Verifying --> Conflict: Supported content differs and needs review
+    Succeeded --> [*]
+
+    classDef componentLabel font-weight:bold;
+    class Pending,Validating,Applying,Verifying,Succeeded,Blocked,Conflict,Unknown,Reconciling componentLabel

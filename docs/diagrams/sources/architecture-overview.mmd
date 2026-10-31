@@ -1,0 +1,15 @@
+flowchart TB
+    accTitle: Architecture overview
+    accDescr: Bahi in the cloud connects through the Windows connector to TallyPrime on the computer.
+    bahi["`**BAHI / BILLING**
+Your business data in the cloud`"]
+    connector["`**WINDOWS CONNECTOR**
+Checks and transfers supported records`"]
+    tally["`**TALLYPRIME**
+Your accounting data on the computer`"]
+
+    bahi <-->|HTTPS REST API| connector
+    connector <-->|Local HTTP connection carrying XML| tally
+
+    classDef component fill:#e8f1ff,stroke:#3268a8,color:#162e49,font-size:18px;
+    class bahi,connector,tally component;

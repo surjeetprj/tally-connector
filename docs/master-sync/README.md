@@ -6,6 +6,11 @@ The first feature milestone is **SUPERVISED MASTER TRANSFER**, before invoices.
 The user selects records and a direction, confirms links and proposed changes,
 and reviews verified results. Automatic bidirectional mutation remains gated.
 
+Diagrams use SVG images plus collapsible Mermaid reference blocks. The images
+work in ordinary Markdown previews; the references render in Mermaid-capable viewers. Use
+[diagram maintenance](../diagrams/README.md) for editable sources and repeatable
+export commands.
+
 ## Reading order
 
 | Document | Purpose |

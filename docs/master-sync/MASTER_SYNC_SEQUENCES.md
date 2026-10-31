@@ -11,12 +11,21 @@ not proposed Python method signatures or additional threads.
 represent the same business. Linking saves a relationship locally; it does not
 change either remote record.
 
+<!-- diagram-start: master-link-existing -->
+<p><a href="../diagrams/master-link-existing.svg"><img src="../diagrams/master-link-existing.svg" alt="Link existing masters" width="858" style="width: 858px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: master-link-existing -->
 ```mermaid
 sequenceDiagram
-    participant UI as <b>USER SCREEN</b>
-    participant APP as <b>BACKGROUND SERVICES</b>
-    participant DATA as <b>LOCAL STORAGE</b>
-    participant ADAPTERS as <b>BAHI AND TALLY CONNECTIONS</b>
+    accTitle: Link existing masters
+    accDescr: The user confirms a pair of existing master records, which are rechecked and linked locally without remote modification.
+    participant UI as USER SCREEN
+    participant APP as BACKGROUND SERVICES
+    participant DATA as LOCAL STORAGE
+    participant ADAPTERS as BAHI AND TALLY CONNECTIONS
 
     UI->>APP: Load masters for the confirmed business and company
     APP->>ADAPTERS: Read supported records and their identities
@@ -29,6 +38,11 @@ sequenceDiagram
     DATA-->>APP: Mapping saved
     APP-->>UI: Linked locally with no remote fields changed
 ```
+
+[Source file](../diagrams/sources/master-link-existing.mmd)
+
+</details>
+<!-- diagram-end: master-link-existing -->
 
 The combined connection participant keeps the picture short. Actual Bahi and
 Tally adapters are separate; all Tally reads use the shared serialized gateway.
@@ -43,13 +57,22 @@ user decision, as specified in [matching rules](MASTER_MATCHING_RULES.md).
 the shared Tally gateway for Bahi-to-Tally transfers. Source records have already
 been loaded for preview; execution rechecks their freshness and dependencies.
 
+<!-- diagram-start: master-transfer -->
+<p><a href="../diagrams/master-transfer.svg"><img src="../diagrams/master-transfer.svg" alt="Successful master transfer" width="1073" style="width: 1073px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: master-transfer -->
 ```mermaid
 sequenceDiagram
-    participant UI as <b>USER SCREEN</b>
-    participant APP as <b>BACKGROUND SERVICES</b>
-    participant DATA as <b>LOCAL STORAGE</b>
-    participant WORK as <b>WORKER AND SYNC ENGINE</b>
-    participant TARGET as <b>DESTINATION CONNECTION</b>
+    accTitle: Successful master transfer
+    accDescr: Save durable intent and the write attempt, send the approved master, read back the target and record verified completion.
+    participant UI as USER SCREEN
+    participant APP as BACKGROUND SERVICES
+    participant DATA as LOCAL STORAGE
+    participant WORK as WORKER AND SYNC ENGINE
+    participant TARGET as DESTINATION CONNECTION
 
     UI->>APP: Confirm the displayed transfer and direction
     APP->>DATA: Commit operation and pending dispatch together
@@ -69,6 +92,11 @@ sequenceDiagram
     WORK->>DATA: Save verified mapping, baseline and completion
     WORK-->>UI: Queued event: transfer verified
 ```
+
+[Source file](../diagrams/sources/master-transfer.mmd)
+
+</details>
+<!-- diagram-end: master-transfer -->
 
 **The important order is SAVE → SEND → READ BACK → VERIFY.** A response or import
 counter alone is insufficient. Missing identity or mismatched content follows
@@ -92,12 +120,21 @@ There is no invoice creation, posting or stock-balance write in this workflow.
 destination may already contain the master. The connector must investigate
 before sending another create request.
 
+<!-- diagram-start: master-recovery -->
+<p><a href="../diagrams/master-recovery.svg"><img src="../diagrams/master-recovery.svg" alt="Uncertain master write recovery" width="855" style="width: 855px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: master-recovery -->
 ```mermaid
 sequenceDiagram
-    participant WORK as <b>WORKER AND SYNC ENGINE</b>
-    participant DATA as <b>LOCAL STORAGE</b>
-    participant TARGET as <b>DESTINATION CONNECTION</b>
-    participant UI as <b>USER SCREEN</b>
+    accTitle: Uncertain master write recovery
+    accDescr: Investigate a possibly applied create; record verified recovery or keep uncertainty visible without automatically creating again.
+    participant WORK as WORKER AND SYNC ENGINE
+    participant DATA as LOCAL STORAGE
+    participant TARGET as DESTINATION CONNECTION
+    participant UI as USER SCREEN
 
     WORK->>DATA: Save intent and attempt before sending
     WORK->>TARGET: Send master create
@@ -115,6 +152,11 @@ sequenceDiagram
         WORK-->>UI: Still unresolved - automatic create retry blocked
     end
 ```
+
+[Source file](../diagrams/sources/master-recovery.mmd)
+
+</details>
+<!-- diagram-end: master-recovery -->
 
 An absent name-search result is not proof that the first create failed. When
 available evidence proves a different result, show the mismatch/conflict rather

@@ -4,18 +4,40 @@ Status: planned native PySide6 workflow. No screens are implemented by this docu
 
 ## The user's path
 
+<!-- diagram-start: master-sync-workflow -->
+<p><a href="../diagrams/master-sync-workflow.svg"><img src="../diagrams/master-sync-workflow.svg" alt="Master sync user workflow" width="273" style="width: 273px; max-width: 100%; height: auto;"></a></p>
+
+<details>
+<summary>Editable Mermaid source</summary>
+
+<!-- diagram: master-sync-workflow -->
 ```mermaid
 flowchart TB
-    setup["<b>CONNECT</b><br/>Confirm Bahi business and Tally company"]
-    choose["<b>CHOOSE</b><br/>Select master type and transfer direction"]
-    load["<b>LOAD RECORDS</b><br/>Read both systems in the background"]
-    match["<b>MATCH RECORDS</b><br/>Link existing, create new or skip"]
-    preview["<b>PREVIEW CHANGES</b><br/>Review exact fields and blocking issues"]
-    confirm["<b>CONFIRM TRANSFER</b><br/>Approve eligible records for this run"]
-    run["<b>TRANSFER AND VERIFY</b><br/>Save intent, write and read the result back"]
-    results["<b>REVIEW RESULTS</b><br/>Verified, blocked, conflict or needs investigation"]
+    accTitle: Master sync user workflow
+    accDescr: Connect, choose a direction, load records, match, preview, confirm, transfer and review results.
+    setup["`**CONNECT**
+Confirm Bahi business and Tally company`"]
+    choose["`**CHOOSE**
+Select master type and transfer direction`"]
+    load["`**LOAD RECORDS**
+Read both systems in the background`"]
+    match["`**MATCH RECORDS**
+Link existing, create new or skip`"]
+    preview["`**PREVIEW CHANGES**
+Review exact fields and blocking issues`"]
+    confirm["`**CONFIRM TRANSFER**
+Approve eligible records for this run`"]
+    run["`**TRANSFER AND VERIFY**
+Save intent, write and read the result back`"]
+    results["`**REVIEW RESULTS**
+Verified, blocked, conflict or needs investigation`"]
     setup --> choose --> load --> match --> preview --> confirm --> run --> results
 ```
+
+[Source file](../diagrams/sources/master-sync-workflow.mmd)
+
+</details>
+<!-- diagram-end: master-sync-workflow -->
 
 Component titles are bold uppercase; arrows show the user's sequence, not direct
 calls from widgets into adapters. Screen commands go through the UI bridge to
