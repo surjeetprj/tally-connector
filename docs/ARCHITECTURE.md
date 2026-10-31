@@ -1,122 +1,141 @@
 # Project architecture
 
-This diagram shows the **target architecture** of the native Windows connector.
-It is a visual guide to the [project specification](PROJECT_SPECIFICATION.md),
-which owns the requirements and boundaries. Source ownership packages and Phase 0
-experiments exist; the production UI, adapters and sync engine are still planned.
-See [current progress](STATE_AND_PROGRESS.md) for implemented capabilities.
+The connector is a Windows application that moves supported business records
+between **BAHI / BILLING** and **TALLYPRIME**. It checks records before sending
+them and remembers the result so that interrupted work can be investigated safely.
 
-## System overview
+These diagrams describe the **planned application**. The production UI and sync
+engine are not implemented yet. See [current progress](STATE_AND_PROGRESS.md)
+for what has been built and tested, and the
+[project specification](PROJECT_SPECIFICATION.md) for the full requirements.
+
+## 1. The big picture
+
+Start here. There are three main parts:
 
 ```mermaid
 flowchart TB
-    subgraph cloud["INNOFORAI BAHI / BILLING - Cloud ERP"]
-        api["Existing REST APIs<br/>Business, parties, groups, items, invoices"]
-        proposed["Proposed sync capabilities - not deployed<br/>Change feed, outcome lookup, versions, ack, writer lease"]
-    end
+    bahi["<b>BAHI / BILLING</b><br/>Your business data in the cloud"]
+    connector["<b>WINDOWS CONNECTOR</b><br/>Checks and transfers supported records"]
+    tally["<b>TALLYPRIME</b><br/>Your accounting data on the computer"]
 
-    subgraph windows["CLIENT WINDOWS MACHINE"]
-        subgraph connector["INNOFORAI TALLY CONNECTOR - Native Windows .exe"]
-            subgraph main["MAIN THREAD - PySide6"]
-                gui["Desktop GUI and system tray<br/>Status, Sync Now, settings, activity, failures/conflicts"]
-                bridge["UI bridge and controllers"]
-                gui -->|Commands| bridge
-                bridge -->|Queued Qt events| gui
-            end
+    bahi <-->|HTTPS REST API| connector
+    connector <-->|Local HTTP connection carrying XML| tally
 
-            dispatch["Application services and background dispatch<br/>Coalesce manual and timer triggers<br/>Cloud poll: 60s / Tally capture: 120s defaults"]
-            bridge -->|Dispatch work| dispatch
-
-            subgraph storage["LOCAL SQLITE - WAL / bounded transactions"]
-                metadata[("sync_metadata.db<br/>Bindings, mappings, operations, attempts,<br/>outbox, checkpoints, versions, content hashes")]
-                queue[("huey_queue.db<br/>Huey-owned persistent execution queue")]
-            end
-
-            dispatch -->|Commit captured operations and outbox| metadata
-            metadata -->|Recover pending outbox entries| dispatch
-            dispatch -->|Enqueue durable operation IDs| queue
-            queue --> worker["Embedded SqliteHuey<br/>One background thread worker<br/>Bounded tasks and graceful shutdown"]
-
-            subgraph core["APPLICATION + DOMAIN - Framework-independent rules and ports"]
-                features["Feature use cases<br/>Purchases, sales, masters"]
-                sync["Shared sync execution<br/>Validate mappings, save intent, apply, read back<br/>Reconcile unknown outcomes and resolve conflicts"]
-                features --> sync
-            end
-
-            worker -->|Execute application commands| features
-            sync <-->|Short transactions through persistence ports| metadata
-            sync -->|Status and result events| bridge
-
-            bahi["Bahi adapter<br/>REST schemas / reused HTTPX connections<br/>Separate invoice DRAFT and POST operations"]
-            tallyGateway["One shared Tally gateway<br/>Serialized background access for ALL requests<br/>Company checks, exports, imports, read-back"]
-            sync -->|Through Bahi port| bahi
-            sync -->|Through Tally port| tallyGateway
-
-            host["Windows host services<br/>Credential Manager, instance lock, runtime paths"]
-            diagnostics["Diagnostics<br/>Bounded, rotating, redacted logs"]
-        end
-
-        tally["TALLYPRIME<br/>Explicitly bound company identity"]
-        tallyGateway <-->|HTTP POST / XML - localhost:9000 default| tally
-    end
-
-    bahi <-->|Outbound HTTPS requests and responses / Keep-Alive| api
-
-    classDef cloudStyle fill:#e8f1ff,stroke:#3268a8,color:#162e49;
-    classDef storageStyle fill:#fff5d6,stroke:#a57919,color:#49380d;
-    classDef coreStyle fill:#e7f5ed,stroke:#33865a,color:#163e29;
-    classDef proposedStyle fill:#fff1e6,stroke:#b56628,stroke-dasharray:5 5,color:#643510;
-    class api cloudStyle;
-    class proposed proposedStyle;
-    class metadata,queue storageStyle;
-    class features,sync coreStyle;
+    classDef component fill:#e8f1ff,stroke:#3268a8,color:#162e49,font-size:18px;
+    class bahi,connector,tally component;
 ```
 
-The cloud connection above terminates at the Bahi adapter. Both adapters return
-results through application ports; they do not call each other. The diagram
-groups responsibilities rather than specifying exactly two operating-system
-threads: Huey includes consumer/scheduler lifecycle work as well as its single
-task worker. Use the [tested Qt/Huey embedding recipe](phase0/QT_HUEY_COMPATIBILITY.md).
+Read the diagram from top to bottom. The connector talks to Bahi over the
+internet and to Tally on the computer. The arrows point both ways because the
+connector sends requests and receives responses; supported records can also
+be transferred in either direction when the required checks are satisfied.
+**The connector initiates the connections.** Bahi does not need to connect into
+the user's computer.
 
-## How synchronization moves through the system
+## 2. Inside the Windows connector
 
-1. A timer or Sync Now dispatches background work through the UI bridge and
-   services. Repeated triggers are coalesced; the GUI stays responsive.
-2. Capture reads the selected source through its adapter. It commits operations,
-   outbox entries and the capture checkpoint together in the metadata database.
-   Dispatch then queues operation IDs; startup recovery repairs missed dispatches.
-3. The worker executes the relevant use case, validates the business/company
-   binding and confirmed mappings, and records write intent before external IO.
-4. The destination adapter applies the change. Every Tally request, including
-   health and company checks, uses the same serialized gateway. HTTP calls run
-   outside database transactions.
-5. Identity and supported canonical content are read back before completion.
-   Unknown outcomes enter reconciliation before any retry. A failed backend
-   acknowledgment retries the acknowledgment without recreating the voucher.
-6. Persisted results produce queued UI events for status, activity and failures.
+This diagram shows responsibilities. Follow the numbered arrows to understand
+what happens after someone clicks **SYNC NOW**.
 
-This flow applies in both directions. Tally-to-Bahi invoice DRAFT creation and
-accounting posting remain separate operations. Safe retries use a bounded policy;
-authentication, missing mappings and conflicts require action.
+```mermaid
+flowchart TB
+    subgraph connector["WINDOWS CONNECTOR"]
+        screen["<b>USER SCREEN</b><br/>Sync Now, settings, connection status and activity"]
+        worker["<b>BACKGROUND WORKER</b><br/>Runs work while the screen stays responsive"]
+        engine["<b>SYNC ENGINE</b><br/>Checks mappings, transfers records and verifies results"]
+        storage["<b>LOCAL STORAGE</b><br/>Remembers queued work, record links and progress"]
+        bahiAdapter["<b>BAHI CONNECTION</b><br/>Converts application data into REST API requests"]
+        tallyAdapter["<b>TALLY CONNECTION</b><br/>Converts application data into XML requests<br/>Sends one request at a time"]
 
-## Storage, scheduling and backend boundaries
+        screen -->|1. Request sync through the UI bridge| worker
+        worker -->|2. Run the requested work| engine
+        engine <-->|3. Save intent and progress| storage
+        engine -->|4. Read or write through the appropriate connection| bahiAdapter
+        engine -->|4. Read or write through the appropriate connection| tallyAdapter
+        engine -.->|5. Send progress through queued UI events| screen
+    end
 
-- Runtime data lives under `%LOCALAPPDATA%\InnoforaiTallySync\`. API secrets live
-  in Windows Credential Manager; local configuration stores credential references.
-  Credentials and raw business payloads are not Huey task arguments.
-- The two databases have separate owners. Metadata transactions cannot atomically
-  commit Huey queue changes, which is why durable outbox recovery is required.
-- Polling runs only in supported modes. A 30-second option needs a separately
-  tested trigger because Huey's periodic checks are minute-based.
-- The supplied `/v1/sync/pending`, `/v1/sync/ack` and `/v1/sync/from-tally` routes
-  are illustrative proposals, not verified deployed endpoints. The
-  [backend handoff](api/bahi/SYNC_EXTENSION_CONTRACT.md) owns the proposed contracts.
-- Automatic bidirectional mutation depends on verified change capture,
-  idempotency/outcome lookup, version handling, origin/ack and writer ownership.
-  Local serialization alone does not prevent another PC from writing.
-- The connector initiates cloud requests and uses Tally's HTTP interface. It
-  runs as a native desktop/tray application without a local web server.
+    bahi["<b>BAHI / BILLING</b><br/>Cloud application"]
+    tally["<b>TALLYPRIME</b><br/>Selected company on this computer"]
+    bahiAdapter <-->|HTTPS REST API| bahi
+    tallyAdapter <-->|HTTP and XML / localhost:9000| tally
 
-For package-level ownership, see the
-[layout and dependency rules](PROJECT_SPECIFICATION.md#dependency-and-ownership-rules).
-For delivery gates, see the [implementation plan](IMPLEMENTATION_PLAN.md).
+    classDef screenStyle fill:#e8f1ff,stroke:#3268a8,color:#162e49;
+    classDef workStyle fill:#e7f5ed,stroke:#33865a,color:#163e29;
+    classDef storageStyle fill:#fff5d6,stroke:#a57919,color:#49380d;
+    classDef externalStyle fill:#f2ecff,stroke:#7953ad,color:#392750;
+    class screen screenStyle;
+    class worker,engine,bahiAdapter,tallyAdapter workStyle;
+    class storage storageStyle;
+    class bahi,tally externalStyle;
+```
+
+Solid arrows show requests or storage access. The dotted arrow shows progress
+updates to the screen. Connection responses return to the sync engine through
+the same application interfaces; the two connections do not call each other.
+The diagrams group related responsibilities to keep the main flow readable.
+
+## 3. What each component means
+
+| Component | In plain language | Planned technology or responsibility |
+| --- | --- | --- |
+| **USER SCREEN** | The part the user sees and clicks | PySide6 desktop window, system tray and UI bridge |
+| **BACKGROUND WORKER** | Does work without freezing the screen | Embedded SqliteHuey with one task worker; services handle scheduling and dispatch |
+| **SYNC ENGINE** | Decides what to transfer and checks the result | Purchase, sales and master use cases, shared sync execution and domain rules |
+| **LOCAL STORAGE** | Remembers work even after closing the application | SQLite: `huey_queue.db` for queued jobs; `sync_metadata.db` for operations, mappings and progress |
+| **BAHI CONNECTION** | Speaks the language of Bahi's web APIs | Bahi adapter, REST payloads and reusable HTTPX connections |
+| **TALLY CONNECTION** | Speaks the language of Tally | One shared gateway for all XML requests, including company and health checks |
+
+Supporting services keep API keys in **WINDOWS CREDENTIAL MANAGER**, prevent
+conflicting local application instances and write redacted diagnostic logs.
+They are left outside the main diagram to keep the transfer path clear.
+
+## 4. Example: send a purchase from Bahi to Tally
+
+1. The user clicks **SYNC NOW**. The screen hands the request to background
+   services and stays responsive. Repeated clicks are combined where appropriate.
+2. The background process reads supported Bahi records through the **BAHI
+   CONNECTION** and saves the work to **LOCAL STORAGE**.
+3. The **SYNC ENGINE** checks the selected business/company and confirmed
+   supplier, item and unit mappings. Missing mappings require user action.
+4. Before writing to Tally, it saves the intended operation. The **TALLY
+   CONNECTION** sends the XML request through the shared gateway.
+5. It reads the record back from Tally and compares its identity and supported
+   content with the intended result. An import counter alone is not proof.
+6. It saves the verified result and updates the screen. If the result is
+   uncertain, it investigates before attempting another write.
+
+For the opposite direction, the engine reads Tally and writes through the Bahi
+connection. Creating a Bahi invoice **DRAFT** and **POSTING** it to accounting
+are separate operations.
+
+## 5. Rules behind the simple picture
+
+- **KEEP THE SCREEN RESPONSIVE:** widgets do not perform network calls, database
+  work or direct Huey access. The UI bridge dispatches work and receives queued
+  Qt events. The [Qt/Huey experiment](phase0/QT_HUEY_COMPATIBILITY.md) records the
+  tested embedding method; the diagram does not imply exactly two OS threads.
+- **REMEMBER BEFORE SENDING:** metadata changes use short transactions, with no
+  transaction held during HTTP. Operations and pending dispatch entries are
+  committed together, then operation IDs are queued. Recovery repairs missed
+  dispatches between the two databases. Secrets and raw payloads are not job arguments.
+- **VERIFY BEFORE RETRYING:** uncertain writes need reconciliation. Retrying a
+  failed cloud acknowledgment must not create another Tally voucher.
+- **USE ONE TALLY GATEWAY:** all requests run through serialized background
+  access. Preventing competing writers on different PCs also needs backend support.
+- **SCHEDULE SUPPORTED WORK:** cloud polling defaults to 60 seconds and Tally
+  capture to 120 seconds. A 30-second option needs a separately tested trigger.
+- **KEEP DATA IN THE RIGHT PLACE:** runtime files live under
+  `%LOCALAPPDATA%\InnoforaiTallySync\`. API keys stay in Credential Manager;
+  only their references are stored in local configuration.
+- **ENABLE AUTOMATION ONLY WHEN READY:** the proposed `/v1/sync/pending`,
+  `/v1/sync/ack` and `/v1/sync/from-tally` routes are not verified deployed APIs.
+  Automatic bidirectional writes require verified change capture, safe create
+  identification, version/conflict handling, origin/ack and writer ownership.
+  See the [backend handoff](api/bahi/SYNC_EXTENSION_CONTRACT.md).
+
+For package ownership, see the
+[dependency rules](PROJECT_SPECIFICATION.md#dependency-and-ownership-rules).
+For delivery tasks and acceptance gates, see the
+[implementation plan](IMPLEMENTATION_PLAN.md).

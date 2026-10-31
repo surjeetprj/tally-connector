@@ -31,10 +31,12 @@ The full product, clean-machine certification and automatic sync are not complet
 
 ## Latest repository update
 
-Converted [the architecture diagram](ARCHITECTURE.md) from ASCII boxes to a Mermaid
-flowchart with cloud/Windows boundaries, UI events, durable dispatch, separate
-databases, shared sync execution and adapter connections. Rendering requires a
-Mermaid-capable Markdown viewer; visual rendering was not verified locally.
+Simplified [the architecture guide](ARCHITECTURE.md) for beginner developers:
+two Mermaid diagrams show the big picture and the internal transfer path, with
+bold uppercase component labels, numbered arrows, a plain-language component
+table and a purchase-transfer example. Detailed reliability rules remain below
+the diagrams. Rendering requires a Mermaid-capable Markdown viewer; visual
+rendering was not verified locally.
 The architecture guide is linked from the documentation
 index. It shows the target native GUI, background execution, durable storage,
 application boundaries and cloud/Tally adapters. It distinguishes proposed sync
