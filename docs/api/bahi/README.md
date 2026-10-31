@@ -19,6 +19,12 @@ assessment; use the validation report for subsequent observed evidence. A later 
 [proposed sync extensions](SYNC_EXTENSION_CONTRACT.md) remain unimplemented.
 Do not generalize the sampled test into automatic-sync guarantees.
 
+The selected first feature milestone is now supervised master transfer. See the
+[master field matrix](../../master-sync/MASTER_FIELD_MAPPING.md),
+[master-specific backend gaps](../../master-sync/MASTER_SYNC_DESIGN.md#backend-contract-gaps-for-masters)
+and [validation plan](../../master-sync/MASTER_SYNC_VALIDATION.md). These elaborate
+the supplied contracts; they do not verify master writes or add deployed endpoints.
+
 ## 1. What these documents let us build
 
 We can implement a business-binding check, scoped read adapters, party/group/item

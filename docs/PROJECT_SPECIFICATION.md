@@ -1,6 +1,6 @@
 # Project Specification v2.1: Innoforia Bahi <-> TallyPrime Desktop Connector
 
-Updated: 29 October 2026.
+Updated: 31 October 2026.
 
 Status: implementation specification; application not yet implemented. This
 revision incorporates the supplied project specification, five Bahi API
@@ -30,6 +30,18 @@ SUPPLIER parties, item groups, untracked items and ordinary PURCHASE. Add ordina
 SALES and supported CREDIT/DEBIT notes after the purchase flow passes accounting
 and recovery gates. Receipt/Payment and general ledger/UOM synchronization require
 additional API contracts. Do not present them as implemented or infer routes.
+
+The selected delivery order is now master-first: after the foundation, deliver
+supervised discovery, confirmed existing-record linking and controlled master
+creation/allowlisted updates before invoice transfer. Each run has an explicit
+direction and field-ownership policy. Begin item creation with representable
+untracked GOODS and existing confirmed units/groups; SERVICE/CHARGE needs a
+separate verified representation. Block existing item unit/group changes in this
+slice. No balance or quantity copying, automatic deactivation/deletion or
+unattended writes are enabled by this milestone. Field ownership and supported
+representations must be confirmed before their dependent writes are enabled.
+The [master design](master-sync/MASTER_SYNC_DESIGN.md) elaborates these rules;
+the implementation plan owns work packages and acceptance gates.
 
 Linked returns, tracked inventory, multi-currency, godowns, batches, serials,
 cost centres and automatic cancellation propagation are outside the first slice.
@@ -758,12 +770,16 @@ Implement complete, tested milestones with explicit capability boundaries:
    Produce sanitized evidence and unresolved dependency decisions.
 2. **Foundation:** Paths, secure credentials, migrations/operations/outbox,
    connection/read adapters, single-instance lifecycle and usable basic UI.
-3. **Purchase slice:** Existing confirmed party/item/UOM mappings; one ordinary
+3. **Supervised masters:** Discover and link existing records, then validate
+   controlled party/group/item transfers using explicit field ownership and
+   confirmed unit mappings. Prove each enabled direction and safe recovery;
+   unsupported/uncertain cases stay visibly blocked.
+4. **Purchase slice:** Existing confirmed party/item/UOM mappings; one ordinary
    untracked purchase each way; DRAFT/post separation; duplicate/unknown-result
    handling and verified read-back. Backend-dependent behavior stays gated.
-4. **Expansion:** Master creation with required data and confirmed policy, Sales,
+5. **Expansion:** Broader verified master capabilities, Sales,
    supported notes, mappings/conflicts, diagnostics and packaging.
-5. **Production:** Backend synchronization guarantees, fault/recovery gates and
+6. **Production:** Backend synchronization guarantees, fault/recovery gates and
    reconciled pilot approval. Receipt/Payment waits for its own API contract.
 
 Each implemented milestone must run without TODO-only behavior or simulated

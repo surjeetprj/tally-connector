@@ -1,6 +1,6 @@
 # Current state and progress
 
-Last updated: 30 October 2026.
+Last updated: 31 October 2026.
 
 ## Active milestone
 
@@ -31,42 +31,48 @@ The full product, clean-machine certification and automatic sync are not complet
 
 ## Latest repository update
 
-Simplified [the architecture guide](ARCHITECTURE.md) for beginner developers:
-two Mermaid diagrams show the big picture and the internal transfer path, with
-bold uppercase component labels, numbered arrows, a plain-language component
-table and a purchase-transfer example. Detailed reliability rules remain below
-the diagrams. Rendering requires a Mermaid-capable Markdown viewer; visual
-rendering was not verified locally.
-The architecture guide is linked from the documentation
-index. It shows the target native GUI, background execution, durable storage,
-application boundaries and cloud/Tally adapters. It distinguishes proposed sync
-routes from deployed APIs and explains safe retries, gateway serialization and
-credential storage. This is documentation only; no runtime capability was added.
-PowerShell verification passed for all three affected Markdown files: balanced
-code fences, 35 local links/anchors and `git diff --check`. The existing .venv
-could not launch because its referenced Python312 interpreter is unavailable;
-repair/recreate the environment before the next Python experiment. No runtime
-tests or network calls were run for this documentation task.
+Fixed Mermaid syntax errors reported in the preview: renamed the sequence
+participant `LINKS` to `ADAPTERS`, removed message semicolons interpreted as
+statement separators, and replaced the unsupported default state class with an
+explicit named class applied to all states. All seven diagrams across the
+architecture, master UI flow, sequence and state documents parsed and rendered
+to SVG in headless Chrome using the Mermaid bundle from installed Markdown
+Preview Enhanced 0.8.40. Validation HTML/SVG output is ignored under
+`build/mermaid-validation/`. This validates rendering with that bundle, not every
+Markdown preview extension/version. No business requests or runtime tests ran.
 
-Git is initialized with remote `origin` pointing to
-`https://github.com/surjeetprj/tally-connector.git`. Branch `main` tracks
-`origin/main`; the working tree was clean when checked at commit `285141e`
-(`Initial commit: add connector specification and Phase 0 integration probes`).
-The repository handoff correction is included with the architecture documentation
-commit requested by the user. No push was requested.
+Added [master sequence diagrams](master-sync/MASTER_SYNC_SEQUENCES.md) for local
+linking, verified transfer and uncertain-write reconciliation, plus the
+[shared operation state diagram](master-sync/MASTER_SYNC_STATES.md). Bold uppercase
+labels and plain-language tables explain the normal and recovery paths. These
+are planned behavior, not a new state enum or proof of implemented recovery.
+The subsequent headless check above supersedes the earlier syntax-only checks.
+Checks passed for the five diagram-related Markdown files: four Mermaid blocks,
+balanced fences, 42 local links/anchors, no trailing whitespace and
+`git diff --check`. No runtime tests, network requests or business writes ran.
 
-Aligned the physical repository with the specification: 33 source ownership
-packages under src/, corresponding test packages, packaging ownership notes,
-pyproject.toml and runtime/dev/build dependency declarations. Requirements remain
-the metadata dependency source. Existing Phase 0 code, assets, evidence, runtime
-journals and credentials were not moved. No business service, UI or application
-entry-point stub was generated. The production dependency lock remains deferred
-until the full runtime environment is validated. The implementation plan remains
-phase/task-based without duration estimates. Layout verification passed: setuptools
-discovers 33 source packages and generates metadata with all seven runtime
-requirements; source compilation and 15 offline tests pass. Checked 26 Markdown
-files and 112 local links/anchors. Handbooks, evidence and write-journal paths
-remain intact. No network requests or accounting writes ran for this task.
+Prepared the [master-sync documentation](master-sync/README.md): design and open
+policy decisions, semantic field mapping, matching rules, beginner-friendly UI
+flow and validation/recovery cases. Added MST-001 through MST-008 work packages
+under existing CON tasks in the implementation plan. All packages are pending.
+The selected delivery order is foundation, supervised masters, purchase slice,
+then remaining automatic/expansion gates. The specification and index reflect it.
+
+No master adapter, production sync engine, database schema or UI was implemented.
+Tally mappings are semantic targets, not verified XML contracts. Backend changes
+remain proposals. Master writes, service/charge representation, automatic mode
+and policy decisions are not marked verified. Existing invoice 69 and runtime
+journals are untouched; no network calls or business writes ran for this task.
+Documentation checks passed for 11 affected Markdown files: balanced code fences,
+95 local links/anchors and `git diff --check`. No runtime tests were run because
+this task changes documentation only.
+
+The architecture guide retains two simplified Mermaid diagrams with bold uppercase
+labels. Its SVG rendering passed the headless check above. The existing .venv
+references an unavailable Python312 interpreter; repair/recreate it before Python
+experiments. Git tracks this project with origin pointing to
+`https://github.com/surjeetprj/tally-connector.git`. The user requested a commit
+of these master-sync documents and Mermaid fixes; no push was requested.
 
 ## Implemented scope
 
@@ -123,6 +129,13 @@ The specification's named service files remain planned, not implemented APIs.
   bidirectional mutation until guarantees are implemented and tested.
 
 ## Next concrete task
+
+Start [MST-001](IMPLEMENTATION_PLAN.md#master-first-work-packages): review the
+master decision register and prepare controlled master identity/read-back
+experiments for CON-002. Resolve policies only for the fields/types being enabled.
+Restore the project interpreter before executing Python checks. Complete pending
+Phase 0/foundation prerequisites, then deliver read-only discovery and confirmed
+links before master writes. Do not begin purchase transfer ahead of this milestone.
 
 Use [the backend handoff](api/bahi/SYNC_EXTENSION_CONTRACT.md) to resolve the sync
 extension design with the backend developer. Continue CON-002 read-back/import

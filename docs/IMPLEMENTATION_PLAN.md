@@ -278,9 +278,36 @@ calendar schedule is assigned.
 | **5 — Finish desktop operations and resilience** | CON-050 tray/dashboard; CON-051 retries/conflicts; CON-052 diagnostics/fault tests | Connector + QA | Nonblocking logs, counts, last successful sync, company identity, pause/resume, safe retry/reconcile, conflict resolution and redacted support bundle. Fault suite and baseline/restore detection pass. |
 | **6 — Package and pilot** | CON-060 installer/upgrades; CON-061 clean-machine checks; CON-062 pilot/runbook | Connector + QA + support | Versioned PyInstaller/Inno artifacts; signature plan for distribution; standard-user install, opt-in startup, upgrade migration/backup and rollback tested; pilot reconciled and approved. |
 
-Dependencies: `0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6`. Cloud contract work runs
-alongside the connector foundation; UI grows in each phase. Contract mocks enable
-local work but cannot satisfy the live integration gate.
+Selected execution order is **master-first**: Phase 0 -> Phase 1 -> the supervised
+master work packages below -> Phase 2 purchase slice -> remaining Phase 3 gates
+-> Phases 4, 5 and 6. Phase numbers and existing CON IDs are retained as references;
+they no longer imply that all master work waits until after purchases. Cloud
+contract work runs alongside the foundation; UI grows in each phase. Contract
+mocks enable local work but cannot satisfy a live integration gate. Automatic
+master synchronization remains gated even if supervised work passes.
+
+### Master-first work packages
+
+All packages are **PENDING**; creating the design documents does not complete
+their implementation or validation. These are subdivisions of the existing CON
+tasks, not another phase or independent sync engine. Use the
+[master preparation index](master-sync/README.md) for detailed references and
+[validation cases](master-sync/MASTER_SYNC_VALIDATION.md) for evidence criteria.
+
+| Package | Parent tasks / prerequisites | Deliverable | Acceptance gate |
+| --- | --- | --- | --- |
+| MST-001 — Confirm contracts and policies | CON-001/002; before dependent writes | Resolve MD-01 through MD-06 for enabled fields/types; sanitize read fixtures; prepare Tally create/read-back experiments | Required field matrix, direction/ownership and permitted party/unit/group mappings explicit; unverified capabilities stay disabled |
+| MST-002 — Read and compare masters | CON-010/012/013; MST-001 read scope | Binding-guarded party/group/item reads and comparison views in background execution | Correct IDs/classifications, page coverage/freshness visible; failed pages not presented as a complete baseline; no mutations |
+| MST-003 — Confirm and persist links | CON-011/020/032; MST-002 | Existing-record matching UI, scoped unique mappings and separate side observations | Restart preserves confirmed links; ambiguity and duplicate links rejected; no remote changes and no false equal-content baseline |
+| MST-004 — Party transfer | CON-021/030; MST-003 and relevant CON-002 write evidence | One customer and supplier create/read-back each way, then allowlisted updates | Classification/name/contact fields verified; no balances copied; repeated dispatch safe; uncertain creates remain blocked; reviewed test authorization before live mutations |
+| MST-005 — Group transfer | CON-021/030; MST-003 plus group experiment evidence | Parent-first creation and supported group metadata | Root/child identity read-back, required Bahi tax/description input explicit; no hierarchy cycle or Primary creation |
+| MST-006 — Supported item transfer | CON-021/031; MST-005 and confirmed existing units | Untracked GOODS create/read-back each way, then allowlisted edits | Manufacturer/type/price supplied explicitly; unit/group verified; no quantity/balance write or implicit existing unit/group change; unsupported types blocked |
+| MST-007 — Shared recovery and supervised release | CON-023/032; enabled MST-004/005/006 capabilities | Shared operation/outbox/reconciliation integration and preview/results UI | Applicable failure matrix, stale previews, restart/dispatch, rename/conflict, redaction, gateway serialization and focused/full configured regression checks pass; unresolved remote guarantees disclosed |
+| MST-008 — Automatic master changes | Remaining CON-030/031/032 gates; MST-007 and backend contracts | Incremental capture, echo/conflict handling and writer ownership | Live snapshot/feed, conditional updates, idempotent outcome lookup, origin/ack/lease and verified Tally change/restore capture; mocks do not satisfy gate |
+
+For implementation, begin with **MST-001** and the pending foundation tasks.
+The first user-visible delivery is read-only discovery and linking, then a
+bounded party transfer. Do not start invoices merely to exercise master creation.
 
 Assign a Bahi API owner for backend contracts, an accounting reviewer for
 voucher gates, QA for fault/recovery checks, and support for the pilot runbook.
@@ -398,7 +425,8 @@ Use [STATE_AND_PROGRESS](STATE_AND_PROGRESS.md) for the current completed work,
 checks, blockers and next concrete action; this plan owns the task definitions.
 
 After the Phase 0 gates are satisfied, proceed to Phase 1 tasks CON-010 through
-CON-013, then the Phase 2 purchase slice. Select a bounded task with explicit
+CON-013, then the supervised [master-first work packages](#master-first-work-packages)
+before the Phase 2 purchase slice. Select a bounded task with explicit
 inputs, deliverables and checks instead of requesting the whole connector in one
 pass. Advance through later phases according to the dependency and backend
 capability gates in section 8.

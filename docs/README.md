@@ -1,6 +1,6 @@
 # Development documentation
 
-Current baseline: Project Specification v2.1, dated 29 October 2026. The connector
+Current baseline: Project Specification v2.1, updated 31 October 2026. The connector
 source-package layout and project metadata exist; runtime services and the UI
 are not implemented. Phase 0 has executed initial
 read-only Tally/Bahi probes, offline tests and a source Qt/Huey lifecycle spike.
@@ -15,6 +15,7 @@ not establish deployment compatibility.
 | [Agent instructions](../AGENTS.md) | Working rules, navigation and verification expectations |
 | [Current state and progress](STATE_AND_PROGRESS.md) | Implemented state, latest checks, unresolved dependencies and next concrete task |
 | [Architecture diagram](ARCHITECTURE.md) | Visual guide to target components, execution flow and runtime boundaries |
+| [Master sync preparation](master-sync/README.md) | Design, field mapping, matching rules, UI flow and validation for the master-first milestone |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |
 | [Live Bahi validation](api/bahi/LIVE_VALIDATION.md) | Authenticated business identity and sampled GET contracts |
@@ -53,7 +54,9 @@ context, not authorization to run writes or migrations against a live business.
    identity/read-back/delta queries, and prove Qt/Huey lifecycle and packaging.
 2. Prepare BAH-001 through BAH-003: schemas, sanitized fixtures, business binding
    and read adapters.
-3. Prove an ordinary untracked purchase transfer using confirmed existing
+3. Deliver supervised master discovery, confirmed linking and bounded transfers
+   using the [master-first work packages](IMPLEMENTATION_PLAN.md#master-first-work-packages).
+4. Prove an ordinary untracked purchase transfer using confirmed existing
    party/item/UOM mappings, with separate draft/post stages and recovery tests.
 
 Automatic bidirectional writes remain gated on verified backend change capture,
