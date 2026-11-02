@@ -1,6 +1,8 @@
 # Master synchronization preparation
 
-Prepared: 31 October 2026. Status: implementation design, not implemented capability.
+Prepared: 31 October 2026. Status: implementation design with an offline-tested
+[party read/link foundation slice](READ_LINK_FOUNDATION.md). Production readers,
+desktop workflow and writes remain pending.
 
 The first feature milestone is **SUPERVISED MASTER TRANSFER**, before invoices.
 The user selects records and a direction, confirms links and proposed changes,

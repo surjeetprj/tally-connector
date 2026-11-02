@@ -6,6 +6,14 @@ not a complete application or a clean-machine installer validation.
 
 ## Tested environment
 
+31 October source recheck: the unavailable 3.12 environment was preserved and
+`.venv` rebuilt on installed Python 3.13.15. Qt/Huey source seed/run in a fresh
+ignored directory passed all eleven assertions; see
+[new source evidence](evidence/qt-huey-source-313.json) and the
+[environment report](../master-sync/READ_LINK_FOUNDATION.md#environment-repair).
+Frozen and clean-machine checks were not repeated on 3.13. The following 3.12
+packaging baseline remains historical evidence.
+
 Python 3.12.8, PySide6 6.11.1, Huey 3.5.3, PyInstaller 6.21.0 and packaging hooks
 2026.6, in the isolated project .venv on this Windows 11 host. See experiment-only
 [requirements](../../scripts/phase0/requirements.txt) and

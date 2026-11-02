@@ -1,13 +1,14 @@
 # Current state and progress
 
-Last updated: 31 October 2026.
+Last updated: 2 November 2026.
 
 ## Active milestone
 
-**Phase 0 — local packaging and controlled Bahi posting issues resolved.**
+**MST-001 in progress; bounded party read/link foundation core implemented.**
+Production master readers, background review UI and master writes remain pending.
 CON-001 has live read/write evidence and a proposed backend contract handoff.
 CON-002 has baseline/populated Tally reads; Tally imports remain untested.
-CON-003 source and fresh frozen lifecycle/resource experiments now pass locally.
+CON-003 source/frozen checks passed on 3.12; source lifecycle was rechecked on 3.13.
 The full product, clean-machine certification and automatic sync are not complete.
 
 ## Authorization and environment
@@ -31,47 +32,43 @@ The full product, clean-machine certification and automatic sync are not complet
 
 ## Latest repository update
 
-Matched BahiAI-Desktop's SVG-plus-collapsible-Mermaid documentation pattern after
-read-only review of its system overview. All seven diagrams now have generated
-SVG image embeds and an **Editable Mermaid source** details section that renders
-in Mermaid-capable viewers. Canonical editable sources remain in
-[diagram maintenance](diagrams/README.md); build synchronizes both representations
-and check rejects manual reference drift. Surrounding prose is preserved.
+Fixed the review's P2 excessive-query finding in party discovery. Reproduced
+**10,100 mapping SELECTs for 100 records per side** before the change. Eligibility
+is now checked once per identity per discovery call; classification/name and
+classification/exact-GSTIN indexes avoid comparing unrelated pairs. Measured
+mapping SELECTs are **2 / 200 / 2,000** for **1 / 100 / 1,000** records per side.
+Candidate order, ambiguous suggestions, reason order and original observations/
+coverage are preserved; dual matches emit one candidate with both reasons.
+Lookup errors still propagate and link confirmation retains its detail rereads
+and transactional uniqueness. No public interface or schema change was needed.
 
-Fixed oversized image display: SVGs now declare native pixel width/height and
-Markdown embeds use explicit pixel width with responsive max-width. The vertical
-UI workflow stays approximately 273px wide rather than stretching across the pane.
-Clicking an image opens the full SVG. Tested primary image sizing at 900px and
-320px pane widths, including a theme-style width:100% rule.
+Focused matching/persistence checks: **35 passed**. Full configured offline suite:
+**51 passed**, including the 15 Phase 0 tests. New checks measure real SQLite
+mapping SELECTs, prohibit discovery writes, cover invalid context before lookups,
+lookup failures and eligibility refreshed on the next discovery call.
+See [scope, prerequisite review and query evidence](master-sync/READ_LINK_FOUNDATION.md).
+Documentation verification passed for nine changed Markdown files and 99 local
+links/anchors, including balanced fences/details. Whitespace checks passed for
+all five files touched by this fix; `git diff --check` is clean.
 
-All seven SVGs and reference diagrams render with the pinned toolchain; all seven
-references also rendered with the installed Markdown Preview Enhanced 0.8.40
-Mermaid bundle. Visually inspected collapsed/expanded workflow screenshots.
-Freshness, SVG structure/accessibility/bold-label checks pass. Negative checks
-reject source edits, SVG edits and reference-only drift; failed Mermaid export
-preserves existing SVGs, manifest and managed Markdown content. Restored inputs
-pass the final check. Browser checks required sandbox escalation.
-Markdown verification passed for nine files and 101 local link/image/anchor
-references, including balanced details/fences, JavaScript syntax and whitespace.
+Reused the existing Python 3.13.15 `.venv` without rebuilding or changing
+dependencies. The sandbox cannot launch its installed base interpreter, so Python
+checks used approved execution outside it. Earlier environment repair/source
+Qt/Huey evidence remains in the slice report; no lifecycle or frozen checks were
+repeated for this matching-only fix. No lint/format command is configured.
 
-Tooling remains documentation-only: Mermaid CLI 11.12.0/Puppeteer 23.11.1 and its
-managed browser, with dependencies locked and temporary output ignored under
-build/docs-diagrams/. No Bahi/Tally calls, accounting writes, installer builds or
-Python application regression tests ran. BahiAI-Desktop files were not changed.
-
-Master-sync implementation tasks remain pending. The selected order remains
-foundation, supervised masters, purchase slice, then remaining automatic gates.
-No runtime adapter, engine, schema or UI was implemented. Existing invoice 69,
-runtime journals and handbooks are intact. The .venv still references an unavailable
-Python312 interpreter; repair it before Python experiments. The user requested
-a commit of these documentation/assets/tooling changes; no push was requested.
+No live Bahi/Tally calls, master writes, posting experiments, runtime schema
+migrations or installer builds ran. Test databases were temporary. Existing
+runtime journals, invoice 69, handbooks and unrelated uncommitted work are intact.
+MD-01 through MD-07 and production readers/background/UI gates remain pending.
+The selected order remains foundation, supervised masters, then purchase slice.
 
 ## Implemented scope
 
-Source package structure and build metadata now exist; runtime application
-services/entry point do not. Git now tracks the project. Phase 0 remains isolated
+Source package structure, build metadata and a local party read/link application
+core now exist; production readers/bootstrap/entry point/UI do not. Phase 0 remains isolated
 scripts/tests, an ignored project .venv, build outputs and sanitized evidence.
-The specification's named service files remain planned, not implemented APIs.
+Most specification service files remain planned; inspect source for implemented APIs.
 
 - Bahi GET probe verified business, supplier, group, item and purchase contracts.
 - Tally baseline and populated AlterID probes verify the observed query behavior.
@@ -81,12 +78,15 @@ The specification's named service files remain planned, not implemented APIs.
 - Qt/Huey spike verifies local persisted tasks, retry, serialization, queued signals,
   heartbeat, idle stop and assets. A reproducible isolated-PATH build fixes the
   foreign ICU DLL that caused the earlier QtCore import failure.
+- Local master-link core and dedicated metadata schema are offline-tested only;
+  full MST-002/MST-003 live/background/UI gates and CON-010 through CON-013 remain
+  incomplete. Schema upgrades/backups and operation/outbox persistence are pending.
 
 ## Verification and material external effects
 
-- Fifteen offline tests pass. Source and fresh frozen Qt/Huey runs each pass all
+- Historically fifteen Phase 0 offline tests passed. Source/frozen Qt/Huey runs passed
   eleven runtime assertions. Python 3.12.8, PySide6 6.11.1, Huey 3.5.3,
-  PyInstaller 6.21.0 and hooks 2026.6 form the current experiment baseline.
+  PyInstaller 6.21.0 and hooks 2026.6 form the historical packaging baseline.
 - Fixed executable: `build/phase0-fixed-dist/ConnectorPhase0/ConnectorPhase0.exe`.
   It passed seed/run from a different working directory without manual edits.
   Older failed build directories are historical outputs, not releases.
@@ -102,7 +102,7 @@ The specification's named service files remain planned, not implemented APIs.
   zero creates/posts during recovery. Server crashes/unknown creates are not proved.
 - `scripts/phase0/requirements-lock.txt` records the isolated environment; it is
   an experiment lock, not the production application's final dependency policy.
-- Final checks passed: 18 Markdown files, 99 local links/anchors, eleven Python
+- Historical Phase 0 checks passed: 18 Markdown files, 99 local links/anchors, eleven Python
   files' syntax and consistent posting/recovery/frozen evidence. Fifteen offline
   tests pass; pip check reports no broken requirements. All five handbooks remain
   byte-identical to the supplied originals; saved JSON contains no API-key pattern.
@@ -122,12 +122,14 @@ The specification's named service files remain planned, not implemented APIs.
 
 ## Next concrete task
 
-Start [MST-001](IMPLEMENTATION_PLAN.md#master-first-work-packages): review the
-master decision register and prepare controlled master identity/read-back
-experiments for CON-002. Resolve policies only for the fields/types being enabled.
-Restore the project interpreter before executing Python checks. Complete pending
-Phase 0/foundation prerequisites, then deliver read-only discovery and confirmed
-links before master writes. Do not begin purchase transfer ahead of this milestone.
+Continue [MST-001/MST-002](IMPLEMENTATION_PLAN.md#master-first-work-packages):
+verify read-only company-scoped Tally single-party identity/classification and
+canonical read-back queries, then implement guarded Bahi party list/detail reads
+and serialized background Tally reads. Follow the experiment plan in
+[the slice report](master-sync/READ_LINK_FOUNDATION.md#next-controlled-read-back-experiments).
+Add native background review/link UI before claiming full discovery/link gates.
+Resolve only policies required for the fields/types being enabled. Master writes
+and purchase transfer remain disabled pending their separate evidence/decisions.
 
 Use [the backend handoff](api/bahi/SYNC_EXTENSION_CONTRACT.md) to resolve the sync
 extension design with the backend developer. Continue CON-002 read-back/import

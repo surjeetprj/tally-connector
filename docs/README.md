@@ -1,8 +1,10 @@
 # Development documentation
 
 Current baseline: Project Specification v2.1, updated 31 October 2026. The connector
-source-package layout and project metadata exist; runtime services and the UI
-are not implemented. Phase 0 has executed initial
+source-package layout and project metadata exist. An offline-tested party
+discovery/linking core and local persistence are implemented; production readers,
+runtime bootstrap and UI remain pending. See the
+[bounded slice evidence](master-sync/READ_LINK_FOUNDATION.md). Phase 0 has executed initial
 read-only Tally/Bahi probes, offline tests and a source Qt/Huey lifecycle spike.
 The packaged spike now passes after native DLL search isolation; one authorized
 Bahi purchase and a known-ID recovery test passed. Handbook examples alone do

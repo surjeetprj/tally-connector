@@ -6,9 +6,14 @@ The existing executable offline checks remain under `phase0/`:
 .\.venv\Scripts\python.exe -m unittest discover -s tests/phase0 -v
 ```
 
+Run the complete configured offline suite (including Phase 0) with
+`.\.venv\Scripts\python.exe -m pytest -q`. Party discovery/linking, metadata
+transactions/migrations and architecture checks now have executable tests; they
+use synthetic observations and temporary databases, with no live adapter calls.
+
 Application test packages follow the
 [specification](../docs/PROJECT_SPECIFICATION.md#3-project-layout). Their package
-markers establish ownership only; they do not count as implemented tests.
+markers alone establish ownership; they do not count as implemented tests.
 
 - `unit/domain/`: canonical business rules and validation.
 - `unit/application/{purchases,sales,masters,sync}/`: feature use cases and shared

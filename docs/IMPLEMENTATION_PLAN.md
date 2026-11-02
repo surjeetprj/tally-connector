@@ -7,7 +7,9 @@ Revised after reviewing the five supplied Bahi API handbooks. The
 records actual routes, scopes, mapping rules and remaining contract gaps.
 Handbook behavior is documented capability, not verified live deployment.
 
-Status: proposed implementation backlog; no connector implementation has begun.
+Status: implementation backlog; an offline-tested party read/link foundation
+slice now exists. Full runtime and release gates remain pending; see
+[the slice evidence](master-sync/READ_LINK_FOUNDATION.md).
 Use the [documentation index](README.md) for reading order and source authority.
 Project Specification v2.1 governs architecture; this document owns delivery
 phases, tasks, dependencies and acceptance gates.
@@ -288,8 +290,12 @@ master synchronization remains gated even if supervised work passes.
 
 ### Master-first work packages
 
-All packages are **PENDING**; creating the design documents does not complete
-their implementation or validation. These are subdivisions of the existing CON
+MST-001 is **IN PROGRESS**: prerequisites and read scope were reviewed, with all
+write policies still open. MST-002/MST-003 have an offline-tested party application
+core and local persistence, while production readers, background/UI integration
+and their full acceptance gates remain **PENDING**. MST-004 through MST-008 remain
+**PENDING**. See [bounded implementation evidence](master-sync/READ_LINK_FOUNDATION.md).
+These are subdivisions of the existing CON
 tasks, not another phase or independent sync engine. Use the
 [master preparation index](master-sync/README.md) for detailed references and
 [validation cases](master-sync/MASTER_SYNC_VALIDATION.md) for evidence criteria.

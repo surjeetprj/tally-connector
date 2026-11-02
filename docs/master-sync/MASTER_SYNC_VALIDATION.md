@@ -1,7 +1,8 @@
 # Master sync validation
 
 Status: acceptance plan. Every case below is **NOT RUN for the production master
-workflow**. Existing Phase 0 read probes are limited evidence, not passing master
+workflow**. The [party read/link core](READ_LINK_FOUNDATION.md) has offline tests;
+these do not satisfy live/background/UI release gates. Existing Phase 0 read probes are limited evidence, not passing master
 mutation or recovery tests. See [Tally evidence](../api/tally/README.md) and
 [Bahi live reads](../api/bahi/LIVE_VALIDATION.md).
 
@@ -18,8 +19,9 @@ Use a disposable Bahi business and disposable Tally company or explicit bounded
 test records under separately established authorization. Business 52 posting
 authorization and retained invoice 69 do not authorize arbitrary master changes.
 Do not reuse or reverse that invoice as a master test. No live writes are made
-by preparing this plan. Use the selected project interpreter after repairing the
-currently unavailable base-interpreter reference in the existing .venv.
+by preparing this plan. Use the selected project interpreter; `.venv` was rebuilt
+with Python 3.13.15 for the read/link foundation slice. Historical frozen evidence
+remains on Python 3.12.8.
 
 Before each live write, prepare the target identity, exact test fields, expected
 canonical result and intent journal. Confirm permissions for only the intended
