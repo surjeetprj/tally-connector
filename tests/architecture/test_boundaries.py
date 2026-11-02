@@ -20,6 +20,12 @@ def test_layer_imports():
                     assert not short.startswith(forbidden), (relative, module)
                 if layer == "domain":
                     assert not short.startswith("application"), (relative, module)
+                if layer == "ui":
+                    assert not short.startswith(("httpx", "sqlalchemy", "huey", "persistence", "integrations", "execution")), (relative, module)
+                if relative.parts[:2] == ("integrations", "bahi"):
+                    assert not short.startswith("integrations.tally"), (relative, module)
+                if relative.parts[:2] == ("integrations", "tally"):
+                    assert not short.startswith("integrations.bahi"), (relative, module)
                 if relative.parts[:2] == ("application", "masters"):
                     assert not short.startswith(("application.purchases", "application.sales")), (relative, module)
                 if "_transport" in short:

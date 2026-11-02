@@ -1,10 +1,12 @@
 # Read/link foundation slice
 
 Implemented 31 October 2026; matching performance updated 2 November 2026.
-This is an offline-tested application core for party
-discovery and explicit local linking. It is not the full MST-002/MST-003 desktop
-delivery: there are no production master readers, connection bootstrap or screens.
-No remote master mutation capability is exposed by this slice.
+This records the initial offline-tested party discovery/linking core. The
+subsequent [read-only desktop milestone](READ_ONLY_DISCOVERY.md) now supplies
+guarded readers, bootstrap, background execution and a native review screen.
+Sections below describe the initial slice's evidence and then-pending gates;
+use the current report/state for implemented capabilities. No remote master
+mutation capability is enabled.
 
 ## MST-001 review
 

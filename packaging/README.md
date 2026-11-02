@@ -1,8 +1,9 @@
 # Application packaging
 
 `pyinstaller/` owns the future production connector.spec and `inno_setup/` the
-future installer.iss. They will be implemented when an application entry point
-and its install/upgrade behavior exist. See the
+future installer.iss. A native source entry point now exists; production
+packaging, install/upgrade certification and frozen Python 3.13 checks remain
+pending. See the [read-only source workflow](../docs/master-sync/READ_ONLY_DISCOVERY.md) and
 [specification](../docs/PROJECT_SPECIFICATION.md#10-packaging-and-support).
 
 The validated experimental build remains in `scripts/phase0/`. Run it with:

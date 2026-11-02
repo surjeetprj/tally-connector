@@ -109,3 +109,9 @@ def test_scan_rejects_duplicates_and_wrong_binding(binding, observation):
 def test_wrong_scan_context_is_discarded(binding, observation, reader, store):
     with pytest.raises(ValueError, match="scoped scan"):
         discover(binding, reader([observation(Side.TALLY)]), reader([observation(Side.TALLY)]), store)
+
+
+def test_inactive_detail_cannot_be_confirmed(binding, observation, reader, store):
+    with pytest.raises(ValueError, match="Inactive"):
+        confirm(binding, observation(is_active=False), observation(Side.TALLY, "2"), reader, store)
+    assert store.find(binding, Side.BAHI, "1") is None

@@ -1,0 +1,33 @@
+{
+  "utc": "2026-11-02T08:33:41.245588+00:00",
+  "export_only": true,
+  "company_guid_matched": true,
+  "group_count": 28,
+  "ledger_count": 60,
+  "ledger_fields": [
+    "ALTERID",
+    "EMAIL",
+    "GUID",
+    "LEDGERPHONE",
+    "LEDSTATENAME",
+    "MASTERID",
+    "NAME",
+    "PARENT",
+    "PARTYGSTIN",
+    "PINCODE"
+  ],
+  "group_fields": [
+    "ALTERID",
+    "GUID",
+    "MASTERID",
+    "NAME",
+    "PARENT"
+  ],
+  "group_parents_resolved": true,
+  "guid_detail_checks": 60,
+  "guid_detail_matches": true,
+  "missing_guid_returns_empty": true,
+  "invalid_company_returned_count": 0,
+  "invalid_response_sha256": "a4a2fbdbfd8500fe89b3e17dc77076fec8cbcc4cc33f2cad4eb35c30b6779b87",
+  "renamed_live_record": "not tested: no mutations authorized"
+}

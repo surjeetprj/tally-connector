@@ -1,5 +1,5 @@
 """Atomic unique links and confirmation evidence; never an equal-content ack."""
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, literal_column
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
@@ -54,3 +54,21 @@ class SqlPartyLinks:
         if link.binding != binding:
             raise ValueError("Binding identities changed; investigate")
         return link
+
+    def list(self, binding: Binding, offset: int = 0, limit: int = 200) -> tuple[ConfirmedPartyLink, ...]:
+        if not 1 <= limit <= 201 or offset < 0:
+            raise ValueError("Invalid saved-link page")
+        with self.engine.connect() as connection:
+            rows = connection.execute(select(party_links.c.evidence_json).where(
+                party_links.c.binding_id == binding.id,
+                party_links.c.generation == binding.generation,
+            ).order_by(literal_column("party_links.rowid").desc()).offset(offset).limit(limit)).scalars().all()
+        links = tuple(ConfirmedPartyLink.model_validate_json(row) for row in rows)
+        if any(link.binding != binding for link in links):
+            raise ValueError("Binding identity mismatch")
+        return links
+
+    def by_id(self, identity):
+        with self.engine.connect() as connection:
+            row = connection.execute(select(party_links.c.evidence_json).where(party_links.c.id == identity)).scalar_one_or_none()
+        return ConfirmedPartyLink.model_validate_json(row) if row else None

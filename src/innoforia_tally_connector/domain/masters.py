@@ -51,10 +51,40 @@ class PartyObservation(Value):
     content: PartyContent
     version: str | None = None
     observed_at: AwareDatetime
+    is_active: bool | None = None
+    unavailable_fields: tuple[str, ...] = ()
+    master_id: str | None = None
 
     def comparison(self) -> dict:
         # Missing differs from explicit null; observation time is not content.
         return self.model_dump(mode="json", exclude={"observed_at"}, exclude_unset=True)
+
+
+class ScanIssue(Value):
+    code: str
+    message: str
+    identity: str | None = None
+    name: str | None = None
+
+
+class GroupObservation(Value):
+    identity: str
+    name: str
+    parent: str
+    version: str
+
+
+class Classification(Value):
+    customer_root: str
+    supplier_root: str
+
+
+class ConnectionSnapshot(Value):
+    business_id: int
+    business_name: str
+    company_guid: str
+    company_name: str
+    groups: tuple[GroupObservation, ...]
 
 
 class PartyScan(Value):
@@ -66,6 +96,7 @@ class PartyScan(Value):
     total_pages: int | None = Field(default=None, ge=0)
     failed_pages: tuple[int, ...] = ()
     stable_snapshot: bool = False
+    issues: tuple[ScanIssue, ...] = ()
 
     @model_validator(mode="after")
     def consistent_scope(self):

@@ -1,6 +1,8 @@
 # Master sync UI flow
 
-Status: planned native PySide6 workflow. No screens are implemented by this document.
+Status: supervised transfer screens remain planned. The read/load/review/local-link
+portion now exists in the [read-only party application](READ_ONLY_DISCOVERY.md);
+create/update/transfer actions described below are not enabled.
 
 ## The user's path
 

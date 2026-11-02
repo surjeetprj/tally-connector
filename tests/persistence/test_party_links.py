@@ -93,7 +93,7 @@ def test_migration_failure_restarts_cleanly(tmp_path, monkeypatch):
         runner.migrate(engine)
         runner.migrate(engine)
         with engine.connect() as connection:
-            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == 1
+            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == runner.MIGRATIONS[-1].VERSION
             assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar_one() == 1
             assert connection.exec_driver_sql("PRAGMA synchronous").scalar_one() == 2
     finally:

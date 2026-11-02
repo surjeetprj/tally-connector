@@ -1,6 +1,8 @@
 # Master sync design
 
-Status: planned. See [the preparation index](README.md) for authority and reading order.
+Status: mutation workflows are planned. The
+[read-only party desktop slice](READ_ONLY_DISCOVERY.md) is implemented. See
+[the preparation index](README.md) for authority and reading order.
 
 ## Scope and release boundaries
 
@@ -117,8 +119,12 @@ testing directory substitutes for authoritative implementation or live evidence.
 
 ## Decision register
 
-All decisions below are **OPEN**. Implement read-only capabilities while they
-are unresolved; block only dependent writes rather than inventing defaults.
+Mutation decisions below remain **OPEN**. For MD-02 only, on 2 November the user
+confirmed Sundry Debtors for customers and Sundry Creditors for suppliers,
+including descendants, for business-52/SIS-Dummy read/link classification. This
+does not confirm individual identity links, Bahi write configuration or a master
+write policy. Implement read-only capabilities while other decisions remain
+unresolved; block dependent writes rather than inventing defaults.
 
 | ID | Decision needed | Proposed starting point | Reviewer |
 | --- | --- | --- | --- |

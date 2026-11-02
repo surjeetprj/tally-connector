@@ -7,9 +7,9 @@ Revised after reviewing the five supplied Bahi API handbooks. The
 records actual routes, scopes, mapping rules and remaining contract gaps.
 Handbook behavior is documented capability, not verified live deployment.
 
-Status: implementation backlog; an offline-tested party read/link foundation
-slice now exists. Full runtime and release gates remain pending; see
-[the slice evidence](master-sync/READ_LINK_FOUNDATION.md).
+Status: implementation backlog; the party read/link source application now has
+verified read adapters and a native review workflow. Full runtime/release gates
+remain pending; see [current evidence](master-sync/READ_ONLY_DISCOVERY.md).
 Use the [documentation index](README.md) for reading order and source authority.
 Project Specification v2.1 governs architecture; this document owns delivery
 phases, tasks, dependencies and acceptance gates.
@@ -290,11 +290,12 @@ master synchronization remains gated even if supervised work passes.
 
 ### Master-first work packages
 
-MST-001 is **IN PROGRESS**: prerequisites and read scope were reviewed, with all
-write policies still open. MST-002/MST-003 have an offline-tested party application
-core and local persistence, while production readers, background/UI integration
-and their full acceptance gates remain **PENDING**. MST-004 through MST-008 remain
-**PENDING**. See [bounded implementation evidence](master-sync/READ_LINK_FOUNDATION.md).
+MST-001 is **IN PROGRESS**: party GUID/classification reads are verified and the
+user confirmed debtor/creditor roots for read/link use; mutation policies remain
+open. The **party subset** of MST-002/MST-003 has guarded live readers, background
+UI and native local-link/restart evidence. Actual owner-reviewed identity links
+and the broader group/item/unit gates remain **PENDING**. MST-004 through MST-008
+remain **PENDING**. See [implementation evidence](master-sync/READ_ONLY_DISCOVERY.md).
 These are subdivisions of the existing CON
 tasks, not another phase or independent sync engine. Use the
 [master preparation index](master-sync/README.md) for detailed references and

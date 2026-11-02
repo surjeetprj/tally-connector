@@ -4,8 +4,9 @@ Last updated: 2 November 2026.
 
 ## Active milestone
 
-**MST-001 in progress; bounded party read/link foundation core implemented.**
-Production master readers, background review UI and master writes remain pending.
+**Read-only party discovery and local-link desktop slice implemented.**
+MST-002/MST-003 party capabilities have live reader and native-screen evidence;
+broader master types, actual owner-reviewed party links and all writes remain gated.
 CON-001 has live read/write evidence and a proposed backend contract handoff.
 CON-002 has baseline/populated Tally reads; Tally imports remain untested.
 CON-003 source/frozen checks passed on 3.12; source lifecycle was rechecked on 3.13.
@@ -25,6 +26,9 @@ The full product, clean-machine certification and automatic sync are not complet
   is user-reported; transaction-date restrictions have not been write-tested.
 - Bahi and Tally data differ. No production cross-system master mappings were
   confirmed, and no bulk alignment or historical overwrite is authorized.
+- On 2 November the user confirmed Sundry Debtors as customers and Sundry
+  Creditors as suppliers, including descendants, for this pair's read-only
+  classification. This does not confirm any individual party link or write policy.
 - Bahi is company-owned; the user can arrange new endpoints but currently has no
   authoritative backend source. Do not inspect the excluded local `bahi` testing
   directory as a substitute. Use handbooks and live responses; server changes
@@ -32,43 +36,49 @@ The full product, clean-machine certification and automatic sync are not complet
 
 ## Latest repository update
 
-Fixed the review's P2 excessive-query finding in party discovery. Reproduced
-**10,100 mapping SELECTs for 100 records per side** before the change. Eligibility
-is now checked once per identity per discovery call; classification/name and
-classification/exact-GSTIN indexes avoid comparing unrelated pairs. Measured
-mapping SELECTs are **2 / 200 / 2,000** for **1 / 100 / 1,000** records per side.
-Candidate order, ambiguous suggestions, reason order and original observations/
-coverage are preserved; dual matches emit one candidate with both reasons.
-Lookup errors still propagate and link confirmation retains its detail rereads
-and transactional uniqueness. No public interface or schema change was needed.
+Implemented guarded Bahi party GETs, serialized Tally export readers, native
+review/link UI, source entry point, Credential Manager retrieval, instance lock,
+rotating redacted logs and background startup/shutdown. Metadata v2 adds confirmed
+setup and durable operation-ID/outbox execution through one Huey thread worker.
+Upgrades back up committed SQLite/WAL state and retain existing links/audits.
+Restart safely rediscovers reads; interrupted confirmations require renewed review
+unless their local mapping audit proves completion. Missing/null observations stay
+distinct through journal serialization. Saved-link inspection is paged at 200 rows.
 
-Focused matching/persistence checks: **35 passed**. Full configured offline suite:
-**51 passed**, including the 15 Phase 0 tests. New checks measure real SQLite
-mapping SELECTs, prohibit discovery writes, cover invalid context before lookups,
-lookup failures and eligibility refreshed on the next discovery call.
-See [scope, prerequisite review and query evidence](master-sync/READ_LINK_FOUNDATION.md).
-Documentation verification passed for nine changed Markdown files and 99 local
-links/anchors, including balanced fences/details. Whitespace checks passed for
-all five files touched by this fix; `git diff --check` is clean.
+Live Tally queries verified 28 groups and GUID-based detail read-back for all 60
+ledgers; missing GUID and invalid company reads returned no records. Ledger GUIDs
+use a UUID plus eight-hex suffix. A narrowly verified Primary-parent XML sentinel
+is normalized; other invalid XML/controls/entities are rejected. Address remains
+unavailable on the Tally side. Live reader checks observed one Bahi party and 48
+Tally parties, with 12 other ledgers excluded; all selected details matched.
+See [implementation, usage and evidence](master-sync/READ_ONLY_DISCOVERY.md).
 
-Reused the existing Python 3.13.15 `.venv` without rebuilding or changing
-dependencies. The sandbox cannot launch its installed base interpreter, so Python
-checks used approved execution outside it. Earlier environment repair/source
-Qt/Huey evidence remains in the slice report; no lifecycle or frozen checks were
-repeated for this matching-only fix. No lint/format command is configured.
+Offline regression: **90 passed, 1 opt-in live test skipped**, including Phase 0 and the indexed matching
+query-count checks. Opt-in live GET/export integration: **1 passed**. Native Windows
+walkthrough verified an explicit second ambiguous synthetic candidate, local
+confirmation, restart and saved-link retrieval. Actual source-app startup and
+connection verification passed through Windows UI automation; Quit closed cleanly.
+After the user's root confirmation, the live screen loaded one Bahi party, 48
+Tally parties and one suggestion. The live UI uses ignored `build/live-party-ui/`;
+its database contains one confirmed setup and zero real party links.
 
-No live Bahi/Tally calls, master writes, posting experiments, runtime schema
-migrations or installer builds ran. Test databases were temporary. Existing
-runtime journals, invoice 69, handbooks and unrelated uncommitted work are intact.
-MD-01 through MD-07 and production readers/background/UI gates remain pending.
-The selected order remains foundation, supervised masters, then purchase slice.
+Reused Python 3.13.15 and all installed dependency versions; `pip check` passed.
+Python/network checks required approved execution outside the sandbox. No
+lint/format command is configured. Frozen/installer checks were not run.
+Final checks passed: 44 changed/new Python files parsed, two sanitized evidence
+JSON files validated, 14 Markdown files/131 local links and anchors checked,
+all task-file whitespace checked and `git diff --check` clean. Handbooks unchanged.
+No remote mutation or invoice/posting experiment ran. Existing Phase 0 journals,
+invoice 69 and supplied handbooks are intact. MD-02 is confirmed only for this
+pair's read/link classification; write and unsupported-field/type policies remain
+open. Broader Phase 0/foundation/automatic gates are incomplete.
 
 ## Implemented scope
 
-Source package structure, build metadata and a local party read/link application
-core now exist; production readers/bootstrap/entry point/UI do not. Phase 0 remains isolated
-scripts/tests, an ignored project .venv, build outputs and sanitized evidence.
-Most specification service files remain planned; inspect source for implemented APIs.
+Source application, party readers, background review and durable local linking
+now exist. Source launch: `.\.venv\Scripts\python.exe -m innoforia_tally_connector`.
+Inspect source for actual implemented APIs; the specification remains a target
+for deferred master types, accounting transfers and broader operational features.
 
 - Bahi GET probe verified business, supplier, group, item and purchase contracts.
 - Tally baseline and populated AlterID probes verify the observed query behavior.
@@ -78,9 +88,9 @@ Most specification service files remain planned; inspect source for implemented 
 - Qt/Huey spike verifies local persisted tasks, retry, serialization, queued signals,
   heartbeat, idle stop and assets. A reproducible isolated-PATH build fixes the
   foreign ICU DLL that caused the earlier QtCore import failure.
-- Local master-link core and dedicated metadata schema are offline-tested only;
-  full MST-002/MST-003 live/background/UI gates and CON-010 through CON-013 remain
-  incomplete. Schema upgrades/backups and operation/outbox persistence are pending.
+- Party read/link source workflow has live reader/native UI evidence. Full
+  MST-002/MST-003 coverage for other masters, CI/frozen foundation checks and
+  production mapping review remain pending. No external-write attempt engine exists.
 
 ## Verification and material external effects
 
@@ -122,14 +132,11 @@ Most specification service files remain planned; inspect source for implemented 
 
 ## Next concrete task
 
-Continue [MST-001/MST-002](IMPLEMENTATION_PLAN.md#master-first-work-packages):
-verify read-only company-scoped Tally single-party identity/classification and
-canonical read-back queries, then implement guarded Bahi party list/detail reads
-and serialized background Tally reads. Follow the experiment plan in
-[the slice report](master-sync/READ_LINK_FOUNDATION.md#next-controlled-read-back-experiments).
-Add native background review/link UI before claiming full discovery/link gates.
-Resolve only policies required for the fields/types being enabled. Master writes
-and purchase transfer remain disabled pending their separate evidence/decisions.
+Use [the source review screen](master-sync/READ_ONLY_DISCOVERY.md#run-and-use) to
+review actual candidate identities with the owner and save only explicitly
+confirmed local links. Prepare bounded party create/update/read-back experiments
+and required MD-01/03/05/06 decisions before enabling any master write. Groups,
+items, UOM discovery/transfer and the purchase slice remain separate milestones.
 
 Use [the backend handoff](api/bahi/SYNC_EXTENSION_CONTRACT.md) to resolve the sync
 extension design with the backend developer. Continue CON-002 read-back/import

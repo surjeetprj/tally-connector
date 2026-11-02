@@ -1,8 +1,9 @@
 # Master synchronization preparation
 
-Prepared: 31 October 2026. Status: implementation design with an offline-tested
-[party read/link foundation slice](READ_LINK_FOUNDATION.md). Production readers,
-desktop workflow and writes remain pending.
+Prepared: 31 October 2026; implementation updated 2 November. The
+[read-only party desktop slice](READ_ONLY_DISCOVERY.md) now has guarded live
+readers and native local-link/restart evidence. Remote writes and broader master
+types remain pending. The [initial foundation](READ_LINK_FOUNDATION.md) is historical.
 
 The first feature milestone is **SUPERVISED MASTER TRANSFER**, before invoices.
 The user selects records and a direction, confirms links and proposed changes,
@@ -17,6 +18,7 @@ export commands.
 
 | Document | Purpose |
 | --- | --- |
+| [Implemented read-only discovery](READ_ONLY_DISCOVERY.md) | Launch/use instructions, source workflow, live/offline evidence and remaining gates |
 | [Design](MASTER_SYNC_DESIGN.md) | Scope, direction, dependencies, execution and decisions |
 | [Field mapping](MASTER_FIELD_MAPPING.md) | Semantic field mapping and representation limits |
 | [Matching rules](MASTER_MATCHING_RULES.md) | Link existing records, create new records and handle ambiguity |

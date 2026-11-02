@@ -27,6 +27,10 @@ def search_name(value: str) -> str:
 def discover(binding: Binding, bahi: PartyReader, tally: PartyReader,
              links: PartyLinks) -> Discovery:
     left, right = bahi.scan(binding), tally.scan(binding)
+    return compare_scans(binding, left, right, links)
+
+
+def compare_scans(binding: Binding, left: PartyScan, right: PartyScan, links: PartyLinks) -> Discovery:
     if (left.binding != binding or right.binding != binding
             or left.side != Side.BAHI or right.side != Side.TALLY):
         raise ValueError("Discard stale or incorrectly scoped scan")

@@ -1,5 +1,17 @@
 # Live Bahi read validation
 
+## Runtime party reader update — 2 November 2026
+
+The [runtime adapter probe](../../../scripts/phase0/probe_discovery_live.py)
+rechecked business 52, traversed its unfiltered party list (one page, one party)
+and matched the selected detail against its observation. The native application
+also verified the authenticated business and displayed the live party. Only GETs
+were sent; no invoice route or write scope was exercised. See
+[sanitized adapter evidence](../../master-sync/evidence/live-discovery-reads.json)
+and [the implemented desktop workflow](../../master-sync/READ_ONLY_DISCOVERY.md).
+Multi-page failures/duplicates/limits are tested offline, not certified as a
+stable live snapshot. The following sections retain the original read baseline.
+
 29 October 2026, approximately 20:13 IST. CON-001 read evidence; no write or
 posting permissions were exercised in that initial read-only run. Subsequent
 [authorized posting/recovery evidence](CONTROLLED_POSTING.md) now verifies the

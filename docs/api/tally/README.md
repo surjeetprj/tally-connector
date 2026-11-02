@@ -3,6 +3,32 @@
 Observed 29 October 2026, approximately 19:47 IST. CON-002 is partially validated;
 the observations below do not establish import, idempotency or crash recovery.
 
+## Party read-back update — 2 November 2026
+
+The export-only [party experiment](../../../scripts/phase0/probe_party_reads.py)
+verified all 60 ledger GUID lookups against their collection observations,
+including GUID/MasterID/AlterID/name/parent and observed optional scalar fields.
+All 28 group parents resolved. A missing GUID returned no records; a nonexistent
+company name returned no records. See [sanitized evidence](evidence/party-read-probes.json).
+
+Ledger GUIDs use a UUID plus an eight-hex suffix in this release. Root-group
+PARENT values use `&#4; Primary`; the runtime normalizes only this verified root
+sentinel and rejects other invalid controls or XML declarations. The application
+resolves company names from the verified GUID and serializes every request through
+its injected gateway. This does not establish an atomic snapshot or cross-PC lease.
+
+The user subsequently confirmed Sundry Debtors/Customer and Sundry
+Creditors/Supplier roots, including descendants, for read/link classification.
+The runtime reader observed 48 parties, excluded 12 other ledgers and matched all
+48 selected details. Actual native-screen loading passed. No Tally imports or
+live rename tests were performed. Address flattening, changes/deletions/restores
+and automatic mutation guarantees remain unverified. See
+[the desktop milestone](../../master-sync/READ_ONLY_DISCOVERY.md).
+
+The remaining sections retain the original 29 October baseline and its then-open
+read-back questions; this update supersedes those questions only for the executed
+party read scope.
+
 ## Reproducible experiment
 
 [Probe script](../../../scripts/phase0/probe_tally.py) uses Python standard-library

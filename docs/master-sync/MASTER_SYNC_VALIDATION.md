@@ -1,9 +1,11 @@
 # Master sync validation
 
-Status: acceptance plan. Every case below is **NOT RUN for the production master
-workflow**. The [party read/link core](READ_LINK_FOUNDATION.md) has offline tests;
-these do not satisfy live/background/UI release gates. Existing Phase 0 read probes are limited evidence, not passing master
-mutation or recovery tests. See [Tally evidence](../api/tally/README.md) and
+Status: mutation acceptance cases remain **NOT RUN**. MV-01 has party-only live
+reader/native-screen evidence for the known pair; synthetic native tests verify
+local linking/restart. See [the executed slice](READ_ONLY_DISCOVERY.md). Group/item
+discovery, actual owner-reviewed identity links, master writes and their recovery
+gates remain open. Existing probes are limited evidence, not passing master
+mutation tests. See [Tally evidence](../api/tally/README.md) and
 [Bahi live reads](../api/bahi/LIVE_VALIDATION.md).
 
 ## Evidence levels and test environment

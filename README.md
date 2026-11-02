@@ -2,8 +2,10 @@
 
 Standalone Windows desktop connector for Innoforia Bahi REST APIs and TallyPrime.
 The specified source-package structure and project metadata are established.
-An offline-tested party discovery/linking core and local persistence are implemented.
-Production readers, application entry point and desktop UI are not implemented yet.
+A native source application now reads parties from the existing Bahi/Tally test
+pair, reviews matching suggestions and saves explicitly confirmed local links.
+Remote master changes and accounting transfers remain disabled. See
+[read-only discovery](docs/master-sync/READ_ONLY_DISCOVERY.md) for usage/evidence.
 
 Start with the [documentation index](docs/README.md).
 
@@ -39,11 +41,18 @@ Run all configured offline checks with:
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-No application launch command exists yet. Production `__main__.py`, service
-bootstrap, build_exe.py and installer scripts are created with their working
-milestones. Package markers define ownership without pretending those features
-exist. See [test organization](tests/README.md) and [packaging](packaging/README.md).
+Launch the native source application with:
 
-Next: verify read-only Tally party identity/classification queries and implement
-guarded readers/background review UI, then complete confirmed linking before
-master writes. See [current progress](docs/STATE_AND_PROGRESS.md).
+```powershell
+.\.venv\Scripts\python.exe -m innoforia_tally_connector
+```
+
+The initial profile verifies business 52 and SIS Dummy, using the existing Windows
+credential reference. Confirm the observed classification roots in the screen;
+there is no automatic party linking. Runtime storage remains
+`%LOCALAPPDATA%\InnoforaiTallySync\`. Source readiness does not certify an installer
+or frozen build. See [test organization](tests/README.md) and
+[packaging](packaging/README.md).
+
+Next: owner review of actual party identities and separate write/read-back policy
+experiments before enabling master changes. See [current progress](docs/STATE_AND_PROGRESS.md).

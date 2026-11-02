@@ -1,0 +1,29 @@
+{
+  "utc": "2026-11-02T08:19:04.388227+00:00",
+  "remote_mutations": 0,
+  "classification": "Experimental standard group roots; not a confirmed business mapping",
+  "sides": {
+    "BAHI": {
+      "records": 1,
+      "pages": [
+        1
+      ],
+      "coverage_complete": true,
+      "stable_snapshot": false,
+      "issues": 0,
+      "detail_checks": 1,
+      "details_match": true
+    },
+    "TALLY": {
+      "records": 48,
+      "pages": [
+        1
+      ],
+      "coverage_complete": true,
+      "stable_snapshot": false,
+      "issues": 12,
+      "detail_checks": 48,
+      "details_match": true
+    }
+  }
+}

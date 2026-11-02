@@ -1,10 +1,10 @@
 # Development documentation
 
 Current baseline: Project Specification v2.1, updated 31 October 2026. The connector
-source-package layout and project metadata exist. An offline-tested party
-discovery/linking core and local persistence are implemented; production readers,
-runtime bootstrap and UI remain pending. See the
-[bounded slice evidence](master-sync/READ_LINK_FOUNDATION.md). Phase 0 has executed initial
+source-package layout, native source entry point and party read/link screen exist.
+Guarded readers and local persistence have live read and synthetic native-link
+evidence; remote changes remain disabled. See
+[read-only discovery](master-sync/READ_ONLY_DISCOVERY.md). Phase 0 has executed initial
 read-only Tally/Bahi probes, offline tests and a source Qt/Huey lifecycle spike.
 The packaged spike now passes after native DLL search isolation; one authorized
 Bahi purchase and a known-ID recovery test passed. Handbook examples alone do
@@ -19,6 +19,7 @@ not establish deployment compatibility.
 | [Architecture diagram](ARCHITECTURE.md) | Visual guide to target components, execution flow and runtime boundaries |
 | [SVG diagrams and editable sources](diagrams/README.md) | Diagram inventory, export commands and image validation |
 | [Master sync preparation](master-sync/README.md) | Design, field mapping, matching rules, UI flow and validation for the master-first milestone |
+| [Read-only party discovery](master-sync/READ_ONLY_DISCOVERY.md) | Implemented source workflow, launch/use instructions, evidence and remaining gates |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |
 | [Live Bahi validation](api/bahi/LIVE_VALIDATION.md) | Authenticated business identity and sampled GET contracts |
