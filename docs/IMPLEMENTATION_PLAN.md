@@ -293,9 +293,14 @@ master synchronization remains gated even if supervised work passes.
 MST-001 is **IN PROGRESS**: party GUID/classification reads are verified and the
 user confirmed debtor/creditor roots for read/link use; mutation policies remain
 open. The **party subset** of MST-002/MST-003 has guarded live readers, background
-UI and native local-link/restart evidence. Actual owner-reviewed identity links
-and the broader group/item/unit gates remain **PENDING**. MST-004 through MST-008
-remain **PENDING**. See [implementation evidence](master-sync/READ_ONLY_DISCOVERY.md).
+UI and native local-link/restart evidence. The owner confirmed persistence of one
+real reviewed party link. Broader group/item/unit gates remain **PENDING**.
+MST-004 has a bounded synthetic supplier experiment implementation with offline
+coverage; one owner-approved synthetic supplier create/read-back and native restart
+inspection passed in Bahi 52 (account 275). The Tally destination remains live-unverified.
+Full MST-004 through MST-008 remain **PENDING**. See
+[experiment gates](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md) and
+[reader evidence](master-sync/READ_ONLY_DISCOVERY.md).
 These are subdivisions of the existing CON
 tasks, not another phase or independent sync engine. Use the
 [master preparation index](master-sync/README.md) for detailed references and

@@ -33,8 +33,11 @@ class Runtime:
                     pass  # Leave durable evidence for startup recovery.
                 command = self.commands.get(operation_id)
                 if command:
+                    message = ("Local storage failed. Restart and inspect the durable experiment; do not create again."
+                               if command.kind in {"EXP_CREATE", "EXP_RECONCILE"} else
+                               "Local storage failed. Restore storage access and restart; inspect saved links before confirming again")
                     self._emit(Event(command.id, command.generation, command.kind,
-                        error="Local storage failed. Restore storage access and restart; inspect saved links before confirming again"))
+                        error=message))
         self.task = execute_operation
 
         @self.queue.on_shutdown()

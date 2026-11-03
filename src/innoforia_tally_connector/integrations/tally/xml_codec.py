@@ -6,7 +6,7 @@ import re
 from innoforia_tally_connector.domain.errors import ReadError
 
 
-def parse(raw: bytes):
+def parse(raw: bytes, check_errors=True):
     if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
         raise ReadError("Tally returned forbidden XML declarations")
     # Verified on release 6.2: root Group PARENT uses the invalid U+0004
@@ -22,9 +22,9 @@ def parse(raw: bytes):
         raise ReadError("Tally returned invalid XML") from None
     if root.getroottree().docinfo.doctype:
         raise ReadError("Tally returned forbidden XML declarations")
-    if any((n.text or "").strip() for n in root.iter() if n.tag in {"LINEERROR", "ERROR"}):
+    if check_errors and any((n.text or "").strip() for n in root.iter() if n.tag in {"LINEERROR", "ERROR"}):
         raise ReadError("Tally rejected the read request")
-    if root.findtext(".//STATUS") == "0":
+    if check_errors and root.findtext(".//STATUS") == "0":
         raise ReadError("Tally rejected the read request")
     return root
 

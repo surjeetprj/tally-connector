@@ -6,6 +6,7 @@ from innoforia_tally_connector.domain.commands import Command
 from innoforia_tally_connector.domain.masters import Binding, Classification, ConnectionSnapshot
 from innoforia_tally_connector.persistence.migrations.versions.v0001_party_links import bindings
 from innoforia_tally_connector.persistence.migrations.versions.v0002_discovery import operations, outbox, settings
+from innoforia_tally_connector.persistence.migrations.versions.v0003_experiments import attempts, experiments
 
 
 class DiscoveryStore:
@@ -13,7 +14,7 @@ class DiscoveryStore:
         self.engine = engine
 
     def capture(self, command):
-        key = None if command.kind == "LINK" else f"{command.generation}:{command.kind}"
+        key = None if command.kind in {"LINK", "EXP_CREATE"} else f"{command.generation}:{command.kind}"
         try:
             with self.engine.begin() as connection:
                 connection.execute(insert(operations).values(id=command.id, command_json=command.model_dump_json(exclude_unset=True),
@@ -48,15 +49,28 @@ class DiscoveryStore:
 
     def finish(self, identity, error=None):
         with self.engine.begin() as connection:
-            connection.execute(update(operations).where(operations.c.id == identity).values(
+            attempt = connection.execute(select(attempts.c.experiment_id).where(attempts.c.operation_id == identity)).scalar_one_or_none()
+            if attempt is not None:
+                if error:
+                    row = connection.execute(select(experiments).where(experiments.c.id == attempt)).mappings().one()
+                    if row["state"] in {"APPLYING", "VERIFYING", "RECONCILING"}:
+                        state = "VERIFYING" if row["target_json"] else "OUTCOME_UNKNOWN"
+                        connection.execute(update(experiments).where(experiments.c.id == attempt).values(
+                            state=state, message="Local execution interrupted after an attempt; read-only reconciliation required"))
+                        connection.execute(update(operations).where(operations.c.id == identity).values(state=state, coalesce_key=None))
+                return  # Generic read completion must never overwrite an external outcome.
+            connection.execute(update(operations).where(operations.c.id == identity,
+                operations.c.state.in_(["PENDING", "VALIDATING"])).values(
                 state="BLOCKED" if error else "SUCCEEDED", error=error, coalesce_key=None))
 
     def recover(self, links):
+        from innoforia_tally_connector.persistence.repositories.experiments import ExperimentStore
+        ExperimentStore(self.engine).recover()
         with self.engine.connect() as connection:
             rows = connection.execute(select(operations).where(operations.c.state.in_(["PENDING", "VALIDATING"]))).mappings().all()
         for row in rows:
             command = Command.model_validate_json(row["command_json"])
-            if command.kind in {"LINK", "BIND"}:
+            if command.kind in {"LINK", "BIND", "EXP_CREATE"}:
                 applied = command.kind == "LINK" and links.by_id(command.id) is not None
                 self.finish(command.id, None if applied else "Interrupted confirmation requires renewed review")
                 self.dispatched(command.id)

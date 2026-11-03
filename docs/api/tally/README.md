@@ -104,5 +104,11 @@ deletions and restore behavior; company mismatch guard; educational-mode date
 limits; controlled imports; timeout/crash recovery; cross-PC writer ownership.
 No balance, stock or voucher was changed by these probes.
 
+The MST-004 supplier experiment now includes a strict single-ledger create adapter
+with offline XML/receipt tests, based on the official master example. It has not
+sent a live Tally import. The selected live trial created only in Bahi; Tally
+email acceptance, import receipt shapes and identity resolution remain live gates.
+See [controlled supplier experiment](../../master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md).
+
 See the [purchase capability checklist](../../phase0/CONTRACT_VALIDATION.md)
 and [current state](../../STATE_AND_PROGRESS.md).

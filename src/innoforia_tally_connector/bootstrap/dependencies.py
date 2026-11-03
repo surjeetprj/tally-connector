@@ -1,16 +1,21 @@
 """Own concrete clients/gateway; application and UI only see injected capabilities."""
 from innoforia_tally_connector.application.masters.discovery import DiscoveryWorkflow
+from innoforia_tally_connector.application.masters.experiments import SupplierExperimentWorkflow
+from innoforia_tally_connector.domain.experiments import Direction
 from innoforia_tally_connector.domain.masters import ConnectionSnapshot
 from innoforia_tally_connector.execution.consumer import Runtime
 from innoforia_tally_connector.host.windows.credentials import REFERENCE, read_key
 from innoforia_tally_connector.integrations.bahi.client import Client
 from innoforia_tally_connector.integrations.bahi.endpoints.parties import PartyReader as BahiReader
+from innoforia_tally_connector.integrations.bahi.endpoints.experiment import SupplierExperiment as BahiExperiment
 from innoforia_tally_connector.integrations.tally.gateway import Gateway
 from innoforia_tally_connector.integrations.tally.parties import PartyReader as TallyReader, group_observations, validate_classification
+from innoforia_tally_connector.integrations.tally.experiment import SupplierExperiment as TallyExperiment
 from innoforia_tally_connector.persistence.database import metadata_engine
 from innoforia_tally_connector.persistence.migrations.runner import migrate
 from innoforia_tally_connector.persistence.repositories.discovery import DiscoveryStore
 from innoforia_tally_connector.persistence.repositories.party_links import SqlPartyLinks
+from innoforia_tally_connector.persistence.repositories.experiments import ExperimentStore
 
 
 def build(directory, emit, credential=read_key, bahi_client=None, tally_gateway=None):
@@ -38,7 +43,10 @@ def build(directory, emit, credential=read_key, bahi_client=None, tally_gateway=
         return (BahiReader(bahi, progress, lambda: runtime.stopping.is_set()),
                 TallyReader(gateway, classification, progress))
 
-    workflow = DiscoveryWorkflow(verify, readers, validate_classification, store, links, REFERENCE)
+    experiments = SupplierExperimentWorkflow(ExperimentStore(engine),
+        lambda direction, classification: BahiExperiment(bahi) if direction == Direction.TO_BAHI
+        else TallyExperiment(gateway, classification), verify, lambda: runtime.stopping.is_set())
+    workflow = DiscoveryWorkflow(verify, readers, validate_classification, store, links, REFERENCE, experiments)
 
     def handle(command):
         nonlocal current

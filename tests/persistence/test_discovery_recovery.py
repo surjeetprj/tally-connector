@@ -83,7 +83,7 @@ def test_upgrade_has_consistent_backup_and_rollback(tmp_path, monkeypatch):
         runner.migrate(engine)
         with engine.connect() as connection:
             assert connection.exec_driver_sql("SELECT id FROM company_bindings").scalar_one() == "preserved"
-            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == 2
+            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == 3
     finally:
         engine.dispose()
 

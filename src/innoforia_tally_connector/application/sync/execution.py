@@ -26,6 +26,8 @@ class Runner:
             error = str(failure)
         except Exception as failure:
             logging.getLogger(__name__).error("Operation %s failed: %s", identity, type(failure).__name__)
-            error = "Local discovery failed; inspect redacted diagnostics and retry a safe read"
+            error = ("Experiment execution interrupted; inspect the saved result and reconcile through reads only. Do not create again."
+                     if command.kind in {"EXP_CREATE", "EXP_RECONCILE"} else
+                     "Local discovery failed; inspect redacted diagnostics and retry a safe read")
         self.store.finish(identity, error)
         self.emit(Event(command.id, command.generation, command.kind, result, error))

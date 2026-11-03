@@ -85,7 +85,17 @@ payloads or assume that a returned schema grants write capability.
 
 ## Still pending
 
-- Actual write/post permissions, DRAFT create/PATCH/post results and recovery.
+Subsequent MST-004 evidence: the owner approved one exact synthetic SUPPLIER in
+business 52. POST api-party.php accepted party_type/account_name/email with HTTP
+201 and returned account ID 275. ID-based detail read-back matched enabled fields.
+This verifies party:create for this credential/deployment/trial only; it does not
+establish backend idempotency, external-reference lookup or mutation safety.
+The server-configured supplier group's code/ID remains unavailable. See
+[sanitized experiment evidence](../../master-sync/evidence/supplier-create-bahi.json)
+and [workflow/remaining gates](../../master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md).
+
+- Broader write permissions and master update/recovery capabilities; purchase
+  posting evidence is documented separately in [controlled posting](CONTROLLED_POSTING.md).
 - Numbering ownership and confirmed party/item/unit/tax/charge mappings.
 - Server idempotency/external identity, expected versions, change feed/origin and
   cross-PC ownership contracts. No unprovided `/sync/*` endpoint was probed.

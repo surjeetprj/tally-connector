@@ -30,10 +30,11 @@ class SavedPage:
 
 
 class DiscoveryWorkflow:
-    def __init__(self, verify, readers, validate_groups, store, links, credential_reference):
+    def __init__(self, verify, readers, validate_groups, store, links, credential_reference, experiments=None):
         self.verify, self.readers, self.validate_groups = verify, readers, validate_groups
         self.store, self.links, self.credential_reference = store, links, credential_reference
         self.active = None
+        self.experiments = experiments
 
     def handle(self, command):
         if command.kind == "VERIFY":
@@ -57,6 +58,10 @@ class DiscoveryWorkflow:
         if not self.active or command.binding != self.active[0] or command.generation != self.active[2]:
             raise ContextMismatch("Verify and explicitly confirm the current binding first")
         binding, classification, _ = self.active
+        if command.kind.startswith("EXP_"):
+            if self.experiments is None:
+                raise ReadError("Controlled experiments are unavailable")
+            return self.experiments.handle(command, binding, classification)
         if command.kind == "SAVED":
             links = self.links.list(binding, offset=command.offset, limit=201)
             return SavedPage(links[:200], command.offset, len(links) > 200)

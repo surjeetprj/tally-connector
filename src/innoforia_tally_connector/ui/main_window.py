@@ -1,4 +1,4 @@
-"""Native read-only party review; identity links are the only local action."""
+"""Native party review/local links and a separately approved supplier experiment."""
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QMessageBox, QPushButton, QSplitter, QTableView, QTabWidget, QTextEdit,
@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QHBoxLayout, QLabel
 
 from innoforia_tally_connector.domain.masters import Classification, PartyContent
 from innoforia_tally_connector.ui.models.parties import TableModel
+from innoforia_tally_connector.ui.pages.experiment import ExperimentPage
 
 
 class MainWindow(QMainWindow):
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         root = QWidget()
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
-        layout.addWidget(QLabel("READ ONLY · Bahi business 52 ↔ SIS Dummy · No remote master changes"))
+        layout.addWidget(QLabel("Discovery is read-only · Controlled supplier experiment requires explicit creation approval · Business 52 ↔ SIS Dummy"))
         self.identity = QLabel("Starting local metadata…")
         self.identity.setWordWrap(True)
         layout.addWidget(self.identity)
@@ -64,6 +65,8 @@ class MainWindow(QMainWindow):
         for column, width in enumerate((300, 300, 220)):
             self.link_view.setColumnWidth(column, width)
         self.tabs.addTab(self.link_view, "Saved local links")
+        self.experiment = ExperimentPage(self.send)
+        self.tabs.addTab(self.experiment, "Controlled party experiment")
         layout.addWidget(self.tabs, 3)
         paging = QHBoxLayout()
         self.previous_links, self.next_links = QPushButton("Previous saved links"), QPushButton("Next saved links")
@@ -101,6 +104,11 @@ class MainWindow(QMainWindow):
         self.bahi_view.selectionModel().selectionChanged.connect(self.show_difference)
         self.tally_view.selectionModel().selectionChanged.connect(self.show_difference)
         self.tabs.currentChanged.connect(self.show_difference)
+        self.tabs.currentChanged.connect(self.tab_changed)
+
+    def tab_changed(self, index):
+        for widget in (self.details, self.reviewer, self.link, self.coverage):
+            widget.setVisible(index != 3)
 
     def table(self, headers):
         model, view = TableModel(headers), QTableView()
@@ -137,6 +145,7 @@ class MainWindow(QMainWindow):
             self.load.setEnabled(bound)
             self.saved.setEnabled(bound)
             self.link.setEnabled(bound and self.discovery is not None)
+        self.experiment.set_busy(busy, self.controller is not None and self.controller.binding is not None)
 
     def verify_connections(self):
         self.discovery = None
@@ -145,6 +154,8 @@ class MainWindow(QMainWindow):
         self.suppliers.clear()
         self.link_model.replace([])
         self.saved_offset, self.saved_has_more = 0, False
+        self.experiment.record = None
+        self.experiment.report.clear()
         self.send("VERIFY")
 
     def confirm_binding(self):
@@ -159,7 +170,12 @@ class MainWindow(QMainWindow):
         self.send("BIND", classification=Classification(customer_root=a, supplier_root=b))
 
     def receive(self, event):
-        self.busy(False)
+        self.busy(bool(getattr(self.controller, "pending", {})))
+        if event.kind.startswith("EXP_"):
+            self.experiment.receive(event)
+            self.busy(bool(getattr(self.controller, "pending", {})))
+            self.status.setText(event.error or "Experiment result displayed. No automatic create/retry is enabled.")
+            return
         if event.error:
             self.status.setText(event.error)
             return
@@ -180,7 +196,7 @@ class MainWindow(QMainWindow):
             self.status.setText("Confirm the verified pair and your group selections to enable discovery")
         elif event.kind == "BIND":
             self.show_links(event.result.links, has_more=event.result.has_more)
-            self.busy(False)
+            self.busy(bool(getattr(self.controller, "pending", {})))
             self.customers.setEnabled(False)
             self.suppliers.setEnabled(False)
             self.status.setText("Local binding confirmed. Load parties when ready.")
@@ -195,7 +211,7 @@ class MainWindow(QMainWindow):
             issues = [f"{s.side}: {i.name or i.identity or ''} — {i.message}" for s in scans for i in s.issues]
             self.details.setPlainText("\n".join(issues) or "No classification/read issues")
             self.status.setText(f"Observed parties loaded. {len(event.result.candidates)} suggestions; no automatic links.")
-            self.busy(False)
+            self.busy(bool(getattr(self.controller, "pending", {})))
         elif event.kind in {"SAVED", "LINK"}:
             if event.kind == "LINK":
                 self.discovery = None
@@ -234,7 +250,7 @@ class MainWindow(QMainWindow):
                                       for c in candidates], candidates)
 
     def pair(self):
-        if self.tabs.currentIndex() == 2:
+        if self.tabs.currentIndex() not in {0, 1}:
             return None, None
         if self.tabs.currentIndex() == 1:
             candidate = self.candidate_model.selected(self.candidate_view)

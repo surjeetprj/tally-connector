@@ -3,7 +3,7 @@
 Current baseline: Project Specification v2.1, updated 31 October 2026. The connector
 source-package layout, native source entry point and party read/link screen exist.
 Guarded readers and local persistence have live read and synthetic native-link
-evidence; remote changes remain disabled. See
+evidence; controlled synthetic supplier creation now has a separate approval gate. See
 [read-only discovery](master-sync/READ_ONLY_DISCOVERY.md). Phase 0 has executed initial
 read-only Tally/Bahi probes, offline tests and a source Qt/Huey lifecycle spike.
 The packaged spike now passes after native DLL search isolation; one authorized
@@ -20,6 +20,7 @@ not establish deployment compatibility.
 | [SVG diagrams and editable sources](diagrams/README.md) | Diagram inventory, export commands and image validation |
 | [Master sync preparation](master-sync/README.md) | Design, field mapping, matching rules, UI flow and validation for the master-first milestone |
 | [Read-only party discovery](master-sync/READ_ONLY_DISCOVERY.md) | Implemented source workflow, launch/use instructions, evidence and remaining gates |
+| [Controlled supplier experiment](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md) | Destination-only MST-004 preview, one-attempt journal, approval and live trial gates |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |
 | [Live Bahi validation](api/bahi/LIVE_VALIDATION.md) | Authenticated business identity and sampled GET contracts |

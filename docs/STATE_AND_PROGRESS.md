@@ -4,9 +4,10 @@ Last updated: 2 November 2026.
 
 ## Active milestone
 
-**Read-only party discovery and local-link desktop slice implemented.**
+**One controlled supplier creation/read-back and native restart inspection passed in Bahi 52.**
 MST-002/MST-003 party capabilities have live reader and native-screen evidence;
-broader master types, actual owner-reviewed party links and all writes remain gated.
+broader master types and automatic transfers remain gated. The owner confirmed
+that the reviewed real party link survived restart.
 CON-001 has live read/write evidence and a proposed backend contract handoff.
 CON-002 has baseline/populated Tally reads; Tally imports remain untested.
 CON-003 source/frozen checks passed on 3.12; source lifecycle was rechecked on 3.13.
@@ -24,8 +25,11 @@ The full product, clean-machine certification and automatic sync are not complet
 - Tally: `http://localhost:9000`, release 6.2, SIS Dummy GUID
   `0b212ad8-3be5-45fe-8719-e1a70e240d4c`, company number 100006. Educational mode
   is user-reported; transaction-date restrictions have not been write-tested.
-- Bahi and Tally data differ. No production cross-system master mappings were
-  confirmed, and no bulk alignment or historical overwrite is authorized.
+- Bahi and Tally data differ. One real party link is owner-confirmed and persisted
+  after restart; no bulk alignment or historical overwrite is authorized.
+- Both systems are owner-designated test environments. The owner selected
+  Tally → Bahi (business 52) for one synthetic SUPPLIER experiment. Approval of
+  the exact generated preview is required before creation; retain the test record.
 - On 2 November the user confirmed Sundry Debtors as customers and Sundry
   Creditors as suppliers, including descendants, for this pair's read-only
   classification. This does not confirm any individual party link or write policy.
@@ -35,6 +39,33 @@ The full product, clean-machine certification and automatic sync are not complet
   need authoritative source or the backend developer.
 
 ## Latest repository update
+
+MST-004 adds a native destination-only supplier preview, named approval bound to
+payload/context and five-minute expiry, narrow Bahi POST and Tally single-ledger
+Create adapters, metadata v3 and shared durable external-attempt recovery.
+Unknown outcomes cannot be overwritten by generic read completion or retried on
+startup. Known target IDs permit read-only reconciliation; mismatches and unknown
+identities block another test. No synthetic source ID or entity mapping is created.
+See [controlled experiment](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md).
+Offline regression: **134 passed, 1 opt-in live test skipped**. Focused experiment
+persistence/UI: **23 passed**, including abrupt subprocess exits. Native pair
+verification/root reopening and actual preview passed; a Qt direction-to-string
+conversion issue found during preview testing was fixed and regression-tested.
+The owner explicitly approved experiment e69dc947-97fb-4d22-bee5-7696f229baa7,
+reviewer surjeet. One Bahi create attempt returned account ID 275; detail read-back
+matched exact synthetic name/email, SUPPLIER type and observable group semantics.
+The retained record is MST004-SUP-20261102-d5a58e36. Durable state is SUCCEEDED;
+one attempt and zero synthetic mappings/audits exist in the isolated test runtime.
+Native Quit/restart restored the successful result, target ID, reviewer and all
+comparisons; Create remained disabled. Subsequent ID-based GET-only reconciliation
+also passed. Existing environment/dependencies are reused; no versions changed.
+Final checks: 26 changed/new Python files parsed, one sanitized evidence JSON
+validated, eight Markdown files/110 local links and anchors checked; task-file
+whitespace and git diff --check passed. Supplied handbooks are unchanged.
+No installer build or frozen Python 3.13 certification ran. Broader foundation,
+Phase 0 and full MST-004 remain pending; no automatic synchronization is enabled.
+
+### Earlier read-only slice evidence
 
 Implemented guarded Bahi party GETs, serialized Tally export readers, native
 review/link UI, source entry point, Credential Manager retrieval, instance lock,
@@ -60,7 +91,8 @@ confirmation, restart and saved-link retrieval. Actual source-app startup and
 connection verification passed through Windows UI automation; Quit closed cleanly.
 After the user's root confirmation, the live screen loaded one Bahi party, 48
 Tally parties and one suggestion. The live UI uses ignored `build/live-party-ui/`;
-its database contains one confirmed setup and zero real party links.
+its preserved database contains no real links. The owner's persisted real link
+belongs to the separate user runtime and was not migrated or modified in this trial.
 
 Reused Python 3.13.15 and all installed dependency versions; `pip check` passed.
 Python/network checks required approved execution outside the sandbox. No
@@ -132,11 +164,13 @@ for deferred master types, accounting transfers and broader operational features
 
 ## Next concrete task
 
-Use [the source review screen](master-sync/READ_ONLY_DISCOVERY.md#run-and-use) to
-review actual candidate identities with the owner and save only explicitly
-confirmed local links. Prepare bounded party create/update/read-back experiments
-and required MD-01/03/05/06 decisions before enabling any master write. Groups,
-items, UOM discovery/transfer and the purchase slice remain separate milestones.
+Review the [controlled supplier evidence](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md)
+and choose the next bounded MST-004 gate. Do not repeat the already-approved/
+executed creation of supplier 275. Tally destination creation still needs its own
+exact preview approval and live field/identity verification. Preserve the existing
+real link in the user's separate runtime.
+Other destination/customer/update trials, broader policy decisions, groups,
+items, UOM transfer and the purchase slice remain separate milestones.
 
 Use [the backend handoff](api/bahi/SYNC_EXTENSION_CONTRACT.md) to resolve the sync
 extension design with the backend developer. Continue CON-002 read-back/import

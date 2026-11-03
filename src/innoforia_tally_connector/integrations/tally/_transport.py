@@ -5,6 +5,8 @@ import httpx
 
 from innoforia_tally_connector.domain.errors import ReadError
 from innoforia_tally_connector.integrations.tally.xml_codec import parse
+from innoforia_tally_connector.integrations.tally.builders.masters import validate_supplier_xml
+from innoforia_tally_connector.domain.experiments import UncertainWrite
 
 MAX_BYTES = 8 * 1024 * 1024
 
@@ -34,3 +36,20 @@ class Transport:
 
     def close(self):
         self.client.close()
+
+    def import_test_supplier(self, request):
+        validate_supplier_xml(request)
+        started = time.monotonic()
+        try:
+            with self.client.stream("POST", "http://localhost:9000", content=request, follow_redirects=False,
+                headers={"Content-Type": "text/xml; charset=utf-8"}) as response:
+                if response.status_code != 200:
+                    raise UncertainWrite(f"Tally import returned HTTP {response.status_code}; do not create again")
+                raw = bytearray()
+                for chunk in response.iter_bytes():
+                    raw.extend(chunk)
+                    if len(raw) > MAX_BYTES or time.monotonic() - started > 15:
+                        raise UncertainWrite("Tally import response exceeded limits; do not create again")
+                return bytes(raw)
+        except httpx.HTTPError:
+            raise UncertainWrite("Tally import outcome is unknown; do not create again") from None

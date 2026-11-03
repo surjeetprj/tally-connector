@@ -148,7 +148,29 @@ This is not a certified production/frozen lock. The historical Phase 0 lock and
 3.12 frozen evidence remain unchanged. No installer build or live Bahi/Tally call
 ran in this milestone. Runtime journals and retained Bahi invoice 69 were untouched.
 
-## Next controlled read-back experiments
+## Subsequent delivery and current experiment
+
+The party readers and native review/link screen described below have since been
+implemented; see [read-only discovery](READ_ONLY_DISCOVERY.md). The owner confirmed
+that the actual reviewed party link survived restart. The controlled supplier
+experiment now adds metadata migration 3, preview/approval UI and durable single
+attempt execution for both destination adapters. The owner selected Tally → Bahi
+for the first live trial, with exact-record creation approval still required.
+See [experiment workflow and evidence gates](CONTROLLED_SUPPLIER_EXPERIMENT.md).
+Existing runtime data, confirmed links, journals and invoice 69 are preserved.
+
+The exact synthetic preview was subsequently approved by the owner in chat.
+One Bahi POST returned supplier account 275; actual ID-based read-back matched
+name, email, SUPPLIER classification and observable server-group semantics.
+Native Quit/restart restored the reviewer, target and successful comparisons;
+GET-only reconciliation after restart also passed. One durable attempt and zero
+synthetic mappings exist in the isolated test runtime. The owner's real link in
+the separate user runtime was not modified. Both destinations have offline tests;
+Tally creation remains live-unverified. Full MST-004 is still pending.
+Final regression and documentation-check totals are in
+[current state](../STATE_AND_PROGRESS.md); no installer or frozen certification ran.
+
+## Original read-back gates (historical foundation handoff)
 
 Before implementing the Tally reader, recheck SIS Dummy's known GUID and keep all
 requests export-only. Establish company-scoped single-ledger lookup by GUID,
@@ -163,7 +185,7 @@ claim a lossless snapshot from total_pages or timestamps. Connect both readers v
 background execution and a native review screen before claiming MST-002 complete.
 Then verify confirmed-link restart behavior through that screen for MST-003.
 
-Create/read-back experiments remain prepared, not authorized or executed: obtain
+Create/read-back experiments require exact-record approval before execution: obtain
 reviewed disposable test identities and exact customer/supplier groups and fields,
 record intent before each import, then verify stable identity/classification and
 every enabled field. Unknown outcomes must block another create. Do not invent

@@ -2,8 +2,11 @@
 
 Prepared: 31 October 2026; implementation updated 2 November. The
 [read-only party desktop slice](READ_ONLY_DISCOVERY.md) now has guarded live
-readers and native local-link/restart evidence. Remote writes and broader master
-types remain pending. The [initial foundation](READ_LINK_FOUNDATION.md) is historical.
+readers and native local-link/restart evidence. The
+[controlled supplier experiment](CONTROLLED_SUPPLIER_EXPERIMENT.md) adds a separate
+exact-record approval gate; one approved supplier creation/read-back in Bahi and
+native restart inspection passed. Tally creation and broader master types remain pending.
+The [initial foundation](READ_LINK_FOUNDATION.md) is historical.
 
 The first feature milestone is **SUPERVISED MASTER TRANSFER**, before invoices.
 The user selects records and a direction, confirms links and proposed changes,
