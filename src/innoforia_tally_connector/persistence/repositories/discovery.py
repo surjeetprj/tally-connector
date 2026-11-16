@@ -14,12 +14,17 @@ class DiscoveryStore:
         self.engine = engine
 
     def capture(self, command):
-        key = None if command.kind in {"LINK", "EXP_CREATE"} else f"{command.generation}:{command.kind}"
+        key = None if command.kind in {"LINK", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_CANCEL", "ACTIVITY_DETAIL", "BATCH_STEP", "BATCH_APPROVE", "BATCH_CANCEL", "POLICY_SAVE", "BATCH_PREPARE"} else f"{command.generation}:{command.kind}"
         try:
             with self.engine.begin() as connection:
                 connection.execute(insert(operations).values(id=command.id, command_json=command.model_dump_json(exclude_unset=True),
                                                              coalesce_key=key, state="PENDING"))
                 connection.execute(insert(outbox).values(operation_id=command.id))
+                if command.kind == "BATCH_CANCEL" and command.binding:
+                    from innoforia_tally_connector.persistence.migrations.versions.v0005_batches import batches
+                    connection.execute(update(batches).where(batches.c.id == command.batch_id,
+                        batches.c.binding_key == f"{command.binding.id}:{command.binding.generation}",
+                        batches.c.state.in_(["PENDING", "APPLYING"])).values(cancel_requested=1))
             return command.id
         except IntegrityError:
             with self.engine.connect() as connection:
@@ -33,6 +38,15 @@ class DiscoveryStore:
     def pending(self):
         with self.engine.connect() as connection:
             return list(connection.execute(select(outbox.c.operation_id)).scalars())
+
+    def command(self, identity):
+        with self.engine.connect() as connection:
+            raw = connection.execute(select(operations.c.command_json).where(operations.c.id == identity)).scalar_one_or_none()
+        return Command.model_validate_json(raw) if raw else None
+
+    def pause_batch(self, command):
+        from innoforia_tally_connector.persistence.repositories.batches import BatchStore
+        BatchStore(self.engine).finish_step(command, pause=True)
 
     def dispatched(self, identity):
         with self.engine.begin() as connection:
@@ -67,10 +81,15 @@ class DiscoveryStore:
         from innoforia_tally_connector.persistence.repositories.experiments import ExperimentStore
         ExperimentStore(self.engine).recover()
         with self.engine.connect() as connection:
+            version = connection.exec_driver_sql("PRAGMA user_version").scalar_one()
+        if version >= 5:
+            from innoforia_tally_connector.persistence.repositories.batches import BatchStore
+            BatchStore(self.engine).recover()
+        with self.engine.connect() as connection:
             rows = connection.execute(select(operations).where(operations.c.state.in_(["PENDING", "VALIDATING"]))).mappings().all()
         for row in rows:
             command = Command.model_validate_json(row["command_json"])
-            if command.kind in {"LINK", "BIND", "EXP_CREATE"}:
+            if command.kind in {"LINK", "BIND", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_PREPARE", "TRANSFER_CANCEL", "BATCH_APPROVE", "BATCH_STEP", "BATCH_PREPARE", "POLICY_SAVE", "BATCH_CANCEL"}:
                 applied = command.kind == "LINK" and links.by_id(command.id) is not None
                 self.finish(command.id, None if applied else "Interrupted confirmation requires renewed review")
                 self.dispatched(command.id)

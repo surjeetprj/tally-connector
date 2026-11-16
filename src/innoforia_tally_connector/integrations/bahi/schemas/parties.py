@@ -16,6 +16,9 @@ class Party(BaseModel):
     address: str | None = None
     state: str | None = None
     pincode: str | None = None
+    country: str | None = None
+    pan: str | None = None
+    gst_reg_type: str | None = None
     updated_dtm: str | None = None
 
 

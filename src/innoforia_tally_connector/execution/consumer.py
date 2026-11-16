@@ -33,11 +33,19 @@ class Runtime:
                     pass  # Leave durable evidence for startup recovery.
                 command = self.commands.get(operation_id)
                 if command:
+                    if command.kind == "BATCH_STEP":
+                        try:
+                            self.store.pause_batch(command)
+                        except Exception:
+                            pass  # Durable attempt/lease survives until restart recovery.
                     message = ("Local storage failed. Restart and inspect the durable experiment; do not create again."
-                               if command.kind in {"EXP_CREATE", "EXP_RECONCILE"} else
+                               if command.kind in {"EXP_CREATE", "EXP_RECONCILE", "TRANSFER_CREATE", "TRANSFER_RECONCILE", "BATCH_APPROVE", "BATCH_STEP"} else
                                "Local storage failed. Restore storage access and restart; inspect saved links before confirming again")
                     self._emit(Event(command.id, command.generation, command.kind,
                         error=message))
+            finally:
+                if not self.stopping.is_set():
+                    self.actor.submit(self._dispatch)
         self.task = execute_operation
 
         @self.queue.on_shutdown()
@@ -51,16 +59,21 @@ class Runtime:
     def _emit(self, event):
         from dataclasses import replace
         original_id = event.request_id
+        command = self.commands.get(original_id)
         alias = self.aliases.pop(original_id, None) if event.final else self.aliases.get(original_id)
         if alias:
             event = replace(event, request_id=alias)
         if event.final:
             self.commands.pop(original_id, None)
             with self.guard:
-                key = (event.generation, event.kind)
+                key = self._key(event.kind, event.generation, command.experiment_id if command else None)
                 if self.inflight.get(key) == event.request_id:
                     self.inflight.pop(key)
         self.emit(event)
+
+    @staticmethod
+    def _key(kind, generation, record_id=None):
+        return (generation, kind, record_id) if kind == "ACTIVITY_DETAIL" else (generation, kind)
 
     def start(self):
         # Consumer.start registers signals: call on the process main thread.
@@ -77,6 +90,10 @@ class Runtime:
         for identity in self.store.pending():
             if self.stopping.is_set():
                 break
+            if identity not in self.commands:
+                command = self.store.command(identity)
+                if command:
+                    self.commands[identity] = command
             self.task(identity)
             self.store.dispatched(identity)
 
@@ -84,7 +101,7 @@ class Runtime:
         if self.stopping.is_set():
             raise ValueError("Connector is shutting down")
         with self.guard:
-            key = (generation, kind)
+            key = self._key(kind, generation, values.get("experiment_id"))
             if key in self.inflight:
                 return self.inflight[key]
             command = Command(id=str(uuid4()), kind=kind, generation=generation, **values)
@@ -100,6 +117,9 @@ class Runtime:
                 self.aliases[actual] = command.id
             self._dispatch()
         except Exception:
+            # Capture failures still need the targeted record ID to release
+            # ACTIVITY_DETAIL's per-record in-flight key.
+            self.commands[command.id] = command
             self._emit(Event(command.id, command.generation, command.kind,
                              error="Unable to persist or dispatch the request; retry after checking local storage"))
 

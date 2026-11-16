@@ -40,6 +40,13 @@ def records(raw: bytes, entity: str) -> list[dict[str, str]]:
     for coll in collections:
         for node in coll.findall(entity.upper()):
             row = {child.tag: child.text or "" for child in node if len(child) == 0}
+            addresses = node.findall("ADDRESS.LIST")
+            if len(addresses) > 1 or (addresses and any(child.tag != "ADDRESS" or len(child) for child in addresses[0])):
+                row["ADDRESS_UNRESOLVED"] = "Mailing structure requires explicit exclusion or further evidence"
+            elif addresses:
+                row["ADDRESS_LINES"] = tuple(child.text or "" for child in addresses[0].findall("ADDRESS"))
+            if node.find("LEDGSTREGDETAILS.LIST") is not None or node.find("LEDGSTREGDETAILS") is not None:
+                row["NESTED_GST_UNRESOLVED"] = "Yes"
             row["NAME"] = row.get("NAME") or node.get("NAME", "")
             result.append(row)
     return result

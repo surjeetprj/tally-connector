@@ -5,6 +5,18 @@ the observations below do not establish import, idempotency or crash recovery.
 
 ## Party read-back update — 2 November 2026
 
+Subsequent update (3 November): [actual-party transfers](../../master-sync/PARTY_TRANSFER.md)
+add documented structured mailing XML and typed customer/supplier creates with
+mocked transport and read-back tests. No live export/import ran for that update.
+The [official mailing example](https://help.tallysolutions.com/sample-xml/) and
+[dated GST schema changes](https://help.tallysolutions.com/developer-reference/release-3-tdl-enhancements-tally-prime/what-are-the-changes-in-xml-tags/)
+do not establish exact PAN/GST create or applicable-date behavior on this 6.2
+deployment. Tally tax writes and PAN/registration reads remain unavailable;
+explicit exclusions are required. Owner screenshots/read-back and exported XML
+can supply the next evidence without guessing tags or defaults. The command
+scripts/master_sync/party_field_evidence.py supports owner-invoked read-only field
+availability and offline XML-shape inspection; it was not run against live systems.
+
 The export-only [party experiment](../../../scripts/phase0/probe_party_reads.py)
 verified all 60 ledger GUID lookups against their collection observations,
 including GUID/MasterID/AlterID/name/parent and observed optional scalar fields.

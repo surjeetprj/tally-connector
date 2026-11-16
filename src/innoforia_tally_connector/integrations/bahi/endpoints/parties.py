@@ -21,7 +21,9 @@ class PartyReader:
         return PartyObservation(binding=binding, side=Side.BAHI, identity=str(row.account_id),
                                 party_type=PartyType(row.party_type), classification_evidence="Bahi party_type",
                                 content=PartyContent(**content), version=row.updated_dtm,
-                                is_active=row.is_active, observed_at=datetime.now(timezone.utc))
+                                # System flags are not exposed by the supplied party contract.
+                                is_active=row.is_active, is_system=None, content_schema=2,
+                                observed_at=datetime.now(timezone.utc))
 
     def detail(self, binding, identity):
         self.client.business(binding.business_id)

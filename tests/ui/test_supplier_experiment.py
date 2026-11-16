@@ -20,9 +20,8 @@ def test_main_window_experiment_dispatch(qtbot, binding):
     window.controller = Controller()
     window.controller.binding = binding
     window.busy(False)
-    window.experiment.direction.setCurrentIndex(2)
-    window.experiment.prepare.click()
-    assert sent == [("EXP_PREPARE", {"direction": Direction.TO_BAHI})]
+    window.activity.load(0)
+    assert sent == [("ACTIVITY", {"offset": 0, "status_filter": None, "type_filter": None})]
 
 
 def test_direction_approval_cancellation_and_exact_digest(qtbot, binding, monkeypatch):

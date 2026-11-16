@@ -1,5 +1,17 @@
 # Test organization
 
+The default party workspace now has offline batch/auto-restore coverage:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q tests/integration/test_party_batches.py tests/ui/test_workspace_batches.py tests/ui/test_batch_review_controls.py tests/persistence/test_batch_migration.py tests/unit/application/masters/test_restore.py
+```
+
+These cover saved policy/identity restoration, exact Ready-subset approval, both
+types/directions, migration v5 rollback, source/binding reservations, cancelled and
+expired approval, known-ID reconciliation, lost acknowledgments, dispatch gaps,
+atomic audit recovery, GUI heartbeat and restart without creating. All services
+are fake and SQLite databases temporary. Computer-use/live verification is owner-run.
+
 The existing executable offline checks remain under `phase0/`:
 
 ```powershell
@@ -10,6 +22,21 @@ Run the complete configured offline suite (including Phase 0) with
 `.\.venv\Scripts\python.exe -m pytest -q`. Party discovery/linking, metadata
 transactions/migrations and architecture checks now have executable tests; they
 use synthetic observations and temporary databases, with no live adapter calls.
+
+Actual-party transfer coverage now includes all four direction/type combinations
+through Qt/controller/Huey/bootstrap/adapters/SQLite and restart using fake remote
+systems, plus reservations, atomic mapping audits, exclusions, history and v4
+migration recovery. These are unit/offline integration tests, not computer-use
+automation or live field verification. Focused commands:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q tests/integration/test_party_transfers.py tests/ui/test_party_transfer_flow.py tests/ui/test_party_drag_review.py
+.\.venv\Scripts\python.exe -m pytest -q tests/persistence/test_transfer_migration_recovery.py tests/contract/bahi/test_party_transfer_payload.py tests/contract/tally/test_party_transfer_xml.py
+```
+
+The [manual checklist](../docs/master-sync/MANUAL_PARTY_TRANSFER_CHECKLIST.md)
+defines owner screenshots and remaining live gates. Do not run live creates in
+automated tests or infer Tally tax support from mock responses.
 
 The read-only desktop milestone adds guarded HTTP/XML contracts, migration v2
 backups, durable dispatch/recovery, Qt responsiveness and native-screen

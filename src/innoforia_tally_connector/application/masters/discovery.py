@@ -20,6 +20,7 @@ class Bound:
     classification: Classification
     links: tuple[ConfirmedPartyLink, ...]
     has_more: bool = False
+    snapshot: ConnectionSnapshot | None = None
 
 
 @dataclass(frozen=True)
@@ -30,13 +31,47 @@ class SavedPage:
 
 
 class DiscoveryWorkflow:
-    def __init__(self, verify, readers, validate_groups, store, links, credential_reference, experiments=None):
+    def __init__(self, verify, readers, validate_groups, store, links, credential_reference, experiments=None, transfers=None, batches=None):
         self.verify, self.readers, self.validate_groups = verify, readers, validate_groups
         self.store, self.links, self.credential_reference = store, links, credential_reference
         self.active = None
         self.experiments = experiments
+        self.transfers = transfers
+        self.batches = batches
 
     def handle(self, command):
+        if command.kind == "RESTORE":
+            self.active = None
+            old = self.store.setup()
+            snapshot = self.verify()
+            if old is None:
+                return Verified(snapshot, None)
+            binding, classification, previous = old
+            if (snapshot.business_id != binding.business_id or snapshot.company_guid != binding.company_guid
+                or snapshot.business_name != previous.business_name or snapshot.company_name != previous.company_name):
+                raise ContextMismatch("Saved connection identity changed; review Settings")
+            self.validate_groups(classification, snapshot.groups)
+            def evidence(groups):
+                by_id, by_name = {g.identity: g for g in groups}, {g.name: g for g in groups}
+                result = set()
+                for root in (classification.customer_root, classification.supplier_root):
+                    group = by_id.get(root)
+                    visited = set()
+                    while group:
+                        if group.identity in visited:
+                            raise ContextMismatch("Saved classification ancestry is cyclic")
+                        visited.add(group.identity)
+                        result.add((group.identity, group.name, group.parent))
+                        if not group.parent or group.parent == "Primary": break
+                        group = by_name.get(group.parent)
+                        if group is None:
+                            raise ContextMismatch("Saved classification ancestry is unresolved")
+                return result
+            if evidence(snapshot.groups) != evidence(previous.groups):
+                raise ContextMismatch("Saved classification changed; review Settings")
+            self.active = (binding, classification, command.generation)
+            links = self.links.list(binding, limit=201)
+            return Bound(binding, classification, links[:200], len(links) > 200, snapshot)
         if command.kind == "VERIFY":
             self.active = None
             return Verified(self.verify(), self.store.setup())
@@ -54,11 +89,25 @@ class DiscoveryWorkflow:
             self.store.bind(binding, command.classification, snapshot, self.credential_reference)
             self.active = (binding, command.classification, command.generation)
             links = self.links.list(binding, limit=201)
-            return Bound(binding, command.classification, links[:200], len(links) > 200)
+            return Bound(binding, command.classification, links[:200], len(links) > 200, snapshot)
         if not self.active or command.binding != self.active[0] or command.generation != self.active[2]:
             raise ContextMismatch("Verify and explicitly confirm the current binding first")
         binding, classification, _ = self.active
+        if command.kind.startswith(("BATCH_", "POLICY_")):
+            if self.batches is None:
+                raise ReadError("Batch transfers unavailable")
+            if command.kind == "BATCH_RECOVER" and self.experiments:
+                for record in self.transfers.store.reconciliation_candidates(binding):
+                    if record.preview.kind == "EXPERIMENT" and record.attempted and record.target and record.state not in {"SUCCEEDED", "FAILED", "CANCELLED"}:
+                        self.experiments.handle(command.model_copy(update={"kind": "EXP_RECONCILE", "experiment_id": record.preview.id}), binding, classification)
+            return self.batches.handle(command, binding, classification)
+        if command.kind.startswith("TRANSFER_") or command.kind in {"ACTIVITY", "ACTIVITY_DETAIL"}:
+            if self.transfers is None:
+                raise ReadError("Party transfers are unavailable")
+            return self.transfers.handle(command, binding, classification)
         if command.kind.startswith("EXP_"):
+            if command.kind in {"EXP_PREPARE", "EXP_CREATE"}:
+                raise ReadError("Legacy synthetic creation is retired; select a real source party for transfer")
             if self.experiments is None:
                 raise ReadError("Controlled experiments are unavailable")
             return self.experiments.handle(command, binding, classification)

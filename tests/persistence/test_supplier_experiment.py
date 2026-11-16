@@ -214,7 +214,7 @@ def test_v2_upgrade_preserves_link_audit_and_consistent_backup(tmp_path, binding
         runner.migrate(engine)
         assert links.by_id(saved.id) == saved
         with engine.connect() as connection:
-            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == 3
+            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == 5
             assert connection.exec_driver_sql("SELECT count(*) FROM party_link_audit").scalar_one() == 1
         with sqlite3.connect(next(tmp_path.glob("*.backup"))) as backup:
             assert backup.execute("PRAGMA user_version").fetchone()[0] == 2

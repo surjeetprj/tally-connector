@@ -1,14 +1,16 @@
-"""One synthetic destination-only supplier, never a fabricated source mapping."""
+"""Journal snapshots for legacy synthetic experiments and real party transfers."""
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 import hashlib
 import json
 import re
 from uuid import uuid4
+from typing import Literal
 
 from pydantic import AwareDatetime, model_validator
 
-from innoforia_tally_connector.domain.masters import Binding, PartyObservation, Value
+from innoforia_tally_connector.domain.masters import Binding, PartyObservation, Side, Value
+from innoforia_tally_connector.domain.party_transfer import FieldDecision, PartyDraft
 
 
 class Direction(StrEnum):
@@ -26,6 +28,7 @@ class OperationState(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     BLOCKED = "BLOCKED"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class TestSupplier(Value):
@@ -52,10 +55,27 @@ class ExperimentPreview(Value):
     binding: Binding
     generation: int
     direction: Direction
-    party: TestSupplier
+    party: TestSupplier | PartyDraft
     preflight: Preflight
     created_at: AwareDatetime
     expires_at: AwareDatetime
+    kind: Literal["EXPERIMENT", "TRANSFER"] = "EXPERIMENT"
+    source: PartyObservation | None = None
+    decisions: tuple[FieldDecision, ...] = ()
+    source_confirmation_required: bool = False
+
+    @model_validator(mode="after")
+    def consistent_intent(self):
+        if self.kind == "TRANSFER":
+            expected_side = Side.BAHI if self.direction == Direction.TO_TALLY else Side.TALLY
+            if (not isinstance(self.party, PartyDraft) or self.source is None or self.source.binding != self.binding
+                or self.source.side != expected_side or self.source.party_type != self.party.party_type
+                or self.source.content.name != self.party.name
+                or self.source_confirmation_required != (self.source.is_system is None)):
+                raise ValueError("Transfer identity, classification, name and direction must match the selected source")
+        elif self.source is not None or not isinstance(self.party, TestSupplier):
+            raise ValueError("Legacy experiment cannot represent a real source transfer")
+        return self
 
     @property
     def digest(self):
@@ -84,6 +104,13 @@ class ExperimentResult(Value):
     message: str = ""
     reviewer: str | None = None
     observation: PartyObservation | None = None
+    source_normal_party_confirmed: bool = False
+
+
+class ActivityPage(Value):
+    records: tuple[ExperimentResult, ...] = ()
+    offset: int = 0
+    has_more: bool = False
 
 
 def new_preview(binding, generation, direction, party, preflight, now=None):

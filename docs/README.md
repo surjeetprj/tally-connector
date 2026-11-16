@@ -3,7 +3,9 @@
 Current baseline: Project Specification v2.1, updated 31 October 2026. The connector
 source-package layout, native source entry point and party read/link screen exist.
 Guarded readers and local persistence have live read and synthetic native-link
-evidence; controlled synthetic supplier creation now has a separate approval gate. See
+evidence. Supervised actual-party transfer now has preview/approval, mapping and
+history with offline integration coverage; owner live verification remains pending. See
+[party transfer](master-sync/PARTY_TRANSFER.md) and
 [read-only discovery](master-sync/READ_ONLY_DISCOVERY.md). Phase 0 has executed initial
 read-only Tally/Bahi probes, offline tests and a source Qt/Huey lifecycle spike.
 The packaged spike now passes after native DLL search isolation; one authorized
@@ -11,6 +13,11 @@ Bahi purchase and a known-ID recovery test passed. Handbook examples alone do
 not establish deployment compatibility.
 
 ## Reading order and ownership
+
+The default native entry point uses the
+[automated party workspace](master-sync/AUTOMATED_PARTY_WORKSPACE.md): saved
+settings, automatic read preparation, selected batches and one approval. Older
+single-party controls remain advanced history/recovery tools.
 
 | Document | Owns |
 | --- | --- |
@@ -21,6 +28,8 @@ not establish deployment compatibility.
 | [Master sync preparation](master-sync/README.md) | Design, field mapping, matching rules, UI flow and validation for the master-first milestone |
 | [Read-only party discovery](master-sync/READ_ONLY_DISCOVERY.md) | Implemented source workflow, launch/use instructions, evidence and remaining gates |
 | [Controlled supplier experiment](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md) | Destination-only MST-004 preview, one-attempt journal, approval and live trial gates |
+| [Supervised party transfer](master-sync/PARTY_TRANSFER.md) | Actual source records, drag/drop, exclusions, atomic mapping and persistent activity history |
+| [Owner manual checklist](master-sync/MANUAL_PARTY_TRANSFER_CHECKLIST.md) | Four live direction/type cases, expected exclusions and screenshots to provide |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |
 | [Live Bahi validation](api/bahi/LIVE_VALIDATION.md) | Authenticated business identity and sampled GET contracts |

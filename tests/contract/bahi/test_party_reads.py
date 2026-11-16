@@ -110,6 +110,43 @@ def test_wrong_business_stops_before_party_request(binding):
         api.close()
 
 
+@pytest.mark.parametrize("route", ["check_api_biz_setup.php", "api-party.php"])
+@pytest.mark.parametrize("mode,expected", [
+    ("timeout", "timed out"), ("connect", "could not connect securely"),
+    ("protocol", "transport failed"), ("json", "invalid JSON"),
+    ("encoding", "invalid JSON"), ("http", "HTTP 503"),
+])
+def test_read_failures_identify_stage_without_leaking_remote_content(route, mode, expected):
+    calls = []
+    sensitive = "synthetic-secret-and-private-server-content"
+    failing = True
+    def handler(request):
+        calls.append((request.method, request.url.path))
+        assert request.method == "GET"
+        if request.url.path.endswith(route) and failing:
+            if mode == "timeout": raise httpx.ReadTimeout(sensitive, request=request)
+            if mode == "connect": raise httpx.ConnectError(sensitive, request=request)
+            if mode == "protocol": raise httpx.RemoteProtocolError(sensitive, request=request)
+            if mode == "http": return httpx.Response(503, content=sensitive.encode())
+            return httpx.Response(200, content=sensitive.encode() if mode == "json" else b'"\xff"')
+        return httpx.Response(200, json={"success": True, "data": {"biz_id": 52, "biz_name": "Synthetic"}})
+    api = Client(lambda: sensitive, httpx.Client(transport=httpx.MockTransport(handler)))
+    try:
+        with pytest.raises(ReadError) as caught:
+            api.business()
+            api.get("api-party.php", {"id": "123"})
+        message = str(caught.value)
+        assert route in message and expected in message
+        assert sensitive not in message and "123" not in message
+        # The explicit retry remains GET-only. No automatic retry is performed.
+        assert len(calls) == (1 if route == "check_api_biz_setup.php" else 2)
+        failing = False
+        assert api.business()["biz_id"] == 52
+        assert all(method == "GET" for method, _ in calls)
+    finally:
+        api.close()
+
+
 def test_wrong_detail_identity(live_binding):
     api = client(lambda request: httpx.Response(200, json={"success": True, "data": party(2)}))
     try:

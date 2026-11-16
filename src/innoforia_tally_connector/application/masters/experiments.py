@@ -2,7 +2,8 @@
 from datetime import datetime, timezone
 
 from innoforia_tally_connector.domain.errors import ReadError
-from innoforia_tally_connector.domain.experiments import new_preview, synthetic_supplier, UncertainWrite, WriteRejected
+from innoforia_tally_connector.application.sync.external_create import apply_once
+from innoforia_tally_connector.domain.experiments import new_preview, synthetic_supplier
 
 
 class SupplierExperimentWorkflow:
@@ -26,6 +27,8 @@ class SupplierExperimentWorkflow:
         if record is None:
             raise ValueError("Prepare an experiment before creating or reconciling")
         preview = record.preview
+        if preview.kind != "EXPERIMENT":
+            raise ValueError("A real transfer must use transfer reconciliation and mapping completion")
         destination = self.destinations(preview.direction, classification)
         if command.kind == "EXP_RECONCILE":
             if not record.attempted:
@@ -43,24 +46,10 @@ class SupplierExperimentWorkflow:
         current = destination.preflight(binding, preview.party)
         if self.stopped():
             raise ReadError("Shutdown started; no create attempted")
-        self.store.begin_attempt(preview, command, current)
-        try:
-            target = destination.create(preview, current)
-        except WriteRejected as error:
-            self.store.result(preview.id, command.id, "FAILED", message=str(error))
-        except UncertainWrite as error:
-            self.store.result(preview.id, command.id, "OUTCOME_UNKNOWN", target=error.target,
-                              message=str(error))
-        except Exception:
-            self.store.result(preview.id, command.id, "OUTCOME_UNKNOWN",
-                              message="Create may have started; do not create again. Reconcile through reads only.")
-        else:
-            # Persist returned identifiers/receipt before performing any further IO.
-            self.store.result(preview.id, command.id, "VERIFYING", target=target,
-                              message="Create receipt saved; verification pending")
-            record = self.store.get(preview.id, binding)
+        record = apply_once(self.store, command, record, current, destination.create)
+        if record.state == "VERIFYING":
             return self._verify(command, record, destination)
-        return self.store.get(preview.id, binding)
+        return record
 
     def _verify(self, command, record, destination):
         preview = record.preview

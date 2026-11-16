@@ -14,7 +14,7 @@ from innoforia_tally_connector.diagnostics.log_setup import configure
 from innoforia_tally_connector.host.windows.single_instance import acquire
 from innoforia_tally_connector.ui.bridge import Bridge
 from innoforia_tally_connector.ui.controllers.discovery import Controller
-from innoforia_tally_connector.ui.main_window import MainWindow
+from innoforia_tally_connector.ui.workspace import Workspace
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     except (OSError, ValueError):
         QMessageBox.warning(None, "Connector unavailable", "Connector may already be running, or its runtime directory is unavailable.")
         return 1
-    bridge, window = Bridge(), MainWindow()
+    bridge, window = Bridge(), Workspace()
     window.tray_available = QSystemTrayIcon.isSystemTrayAvailable()
     app.setQuitOnLastWindowClosed(False)
     runtime, cleanup, closing, startup_failed = None, None, False, False

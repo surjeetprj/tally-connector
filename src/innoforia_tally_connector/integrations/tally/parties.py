@@ -59,14 +59,21 @@ class PartyReader:
         if len(matches) != 1:
             raise ReadError("Ledger is outside the confirmed party classifications")
         fields = {"EMAIL": "email", "LEDGERPHONE": "phone", "PARTYGSTIN": "gstin",
-                  "PINCODE": "pincode", "LEDSTATENAME": "state"}
+                  "PINCODE": "pincode", "LEDSTATENAME": "state", "COUNTRYNAME": "country"}
         content = {dest: row[src] for src, dest in fields.items() if src in row}
+        unavailable = ["pan", "gst_reg_type"]
+        if "ADDRESS_LINES" in row:
+            content["address"] = "\n".join(row["ADDRESS_LINES"])
+        else:
+            unavailable.append("address")
+        if row.get("NESTED_GST_UNRESOLVED"):
+            unavailable.append("gstin")
         return PartyObservation(binding=binding, side=Side.TALLY, identity=row["GUID"],
                                 party_type=matches[0], content=PartyContent(name=row["NAME"], **content),
                                 version=row["ALTERID"], observed_at=datetime.now(timezone.utc),
                                 master_id=row.get("MASTERID"),
                                 classification_evidence=json.dumps([(g.identity, g.name, g.parent) for g in path]),
-                                unavailable_fields=("address",))
+                                unavailable_fields=tuple(unavailable), content_schema=2)
 
     def detail(self, binding, identity):
         groups = self.groups(binding)

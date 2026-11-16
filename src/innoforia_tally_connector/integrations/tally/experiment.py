@@ -15,6 +15,8 @@ def import_receipt(raw, baseline):
         raise UncertainWrite("Malformed Tally import response; do not create again") from None
     last = root.findtext(".//LASTMID", "0")
     target = TargetIdentity(kind="TALLY_MASTER_ID", identity=last) if last.isdecimal() and int(last) > 0 else None
+    if any(len(root.findall(f".//{tag}")) > 1 for tag in ("LASTMID", "CREATED", "ALTERED", "ERRORS", "STATUS")):
+        raise UncertainWrite("Duplicate Tally receipt fields; outcome requires investigation")
     good = {"CREATED": "1", "ALTERED": "0", "ERRORS": "0"}
     bad = any(root.findtext(f".//{key}") != value for key, value in good.items())
     for tag in ("DELETED", "COMBINED", "IGNORED", "CANCELLED", "EXCEPTIONS"):

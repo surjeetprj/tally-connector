@@ -40,6 +40,9 @@ class PartyContent(Value):
     address: str | None = None
     state: str | None = None
     pincode: str | None = None
+    country: str | None = None
+    pan: str | None = None
+    gst_reg_type: str | None = None
 
 
 class PartyObservation(Value):
@@ -54,6 +57,8 @@ class PartyObservation(Value):
     is_active: bool | None = None
     unavailable_fields: tuple[str, ...] = ()
     master_id: str | None = None
+    is_system: bool | None = None
+    content_schema: int = 1
 
     def comparison(self) -> dict:
         # Missing differs from explicit null; observation time is not content.
@@ -136,6 +141,9 @@ class ConfirmedPartyLink(Value):
     confirmed_by: str = Field(min_length=1)
     confirmed_at: AwareDatetime
     review_reference: str = Field(min_length=1)
+    transfer_fields: tuple[str, ...] = ()
+    transfer_exclusions: dict[str, str] = Field(default_factory=dict)
+    source_eligibility_evidence: str | None = None
 
     @model_validator(mode="after")
     def consistent_pair(self):

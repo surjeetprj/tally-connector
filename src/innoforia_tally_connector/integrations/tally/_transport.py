@@ -1,4 +1,4 @@
-"""Private, bounded HTTP export transport. Imported only by the gateway."""
+"""Private bounded export/typed-create transport, imported only by the gateway."""
 import time
 
 import httpx
@@ -6,6 +6,7 @@ import httpx
 from innoforia_tally_connector.domain.errors import ReadError
 from innoforia_tally_connector.integrations.tally.xml_codec import parse
 from innoforia_tally_connector.integrations.tally.builders.masters import validate_supplier_xml
+from innoforia_tally_connector.integrations.tally.builders.parties import validate_party_xml
 from innoforia_tally_connector.domain.experiments import UncertainWrite
 
 MAX_BYTES = 8 * 1024 * 1024
@@ -39,6 +40,13 @@ class Transport:
 
     def import_test_supplier(self, request):
         validate_supplier_xml(request)
+        return self._import(request)
+
+    def import_party(self, request):
+        validate_party_xml(request)
+        return self._import(request)
+
+    def _import(self, request):
         started = time.monotonic()
         try:
             with self.client.stream("POST", "http://localhost:9000", content=request, follow_redirects=False,

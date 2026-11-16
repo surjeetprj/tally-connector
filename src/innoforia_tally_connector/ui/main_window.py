@@ -4,9 +4,13 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QHBoxLayout, QLabel
     QMainWindow, QMessageBox, QPushButton, QSplitter, QTableView, QTabWidget, QTextEdit,
     QVBoxLayout, QWidget)
 
-from innoforia_tally_connector.domain.masters import Classification, PartyContent
-from innoforia_tally_connector.ui.models.parties import TableModel
-from innoforia_tally_connector.ui.pages.experiment import ExperimentPage
+from innoforia_tally_connector.domain.masters import Classification, PartyContent, Side
+from innoforia_tally_connector.domain.experiments import Direction
+from innoforia_tally_connector.ui.models.parties import TableModel, PartyTableModel
+from innoforia_tally_connector.ui.pages.transfer import TransferPage
+from innoforia_tally_connector.ui.pages.activity import ActivityPage
+from innoforia_tally_connector.ui.party_drag import DragSession, PartyView, CreateDropArea
+from innoforia_tally_connector.ui.confirmations import confirm_plain
 
 
 class MainWindow(QMainWindow):
@@ -17,10 +21,11 @@ class MainWindow(QMainWindow):
         self.controller, self.discovery = None, None
         self.quitting = False
         self.saved_offset, self.saved_has_more = 0, False
+        self.drag_session = DragSession()
         root = QWidget()
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
-        layout.addWidget(QLabel("Discovery is read-only · Controlled supplier experiment requires explicit creation approval · Business 52 ↔ SIS Dummy"))
+        layout.addWidget(QLabel("Discovery is read-only · Party transfers require explicit approval · Business 52 ↔ SIS Dummy"))
         self.identity = QLabel("Starting local metadata…")
         self.identity.setWordWrap(True)
         layout.addWidget(self.identity)
@@ -48,14 +53,25 @@ class MainWindow(QMainWindow):
         self.coverage.setWordWrap(True)
         layout.addWidget(self.coverage)
         self.tabs = QTabWidget()
-        self.bahi_model, self.bahi_view = self.table(["Bahi party", "Type", "Active", "ID"])
-        self.tally_model, self.tally_view = self.table(["Tally party", "Type", "GUID"])
+        self.bahi_model, self.bahi_view = self.table(["Bahi party", "Type", "Active", "ID"], Side.BAHI)
+        self.tally_model, self.tally_view = self.table(["Tally party", "Type", "GUID"], Side.TALLY)
         for view in (self.bahi_view, self.tally_view):
             view.setColumnWidth(0, 260)
             view.setColumnWidth(1, 95)
         split = QSplitter()
-        split.addWidget(self.bahi_view)
-        split.addWidget(self.tally_view)
+        self.to_tally, self.to_bahi = QPushButton("Transfer to Tally…"), QPushButton("Transfer to Bahi…")
+        self.bahi_drop, self.tally_drop = CreateDropArea(Side.BAHI, self.drag_session), CreateDropArea(Side.TALLY, self.drag_session)
+        for view, button, drop in ((self.bahi_view, self.to_tally, self.bahi_drop), (self.tally_view, self.to_bahi, self.tally_drop)):
+            panel = QWidget()
+            panel_layout = QVBoxLayout(panel)
+            panel_layout.addWidget(button)
+            panel_layout.addWidget(view)
+            panel_layout.addWidget(drop)
+            split.addWidget(panel)
+            view.review.connect(self.review_drop)
+            drop.review.connect(self.review_drop)
+        self.to_tally.clicked.connect(lambda: self.transfer_selected(self.bahi_model, self.bahi_view))
+        self.to_bahi.clicked.connect(lambda: self.transfer_selected(self.tally_model, self.tally_view))
         self.tabs.addTab(split, "Observed parties — select one on each side")
         self.candidate_model, self.candidate_view = self.table(["Bahi", "Tally", "Evidence"])
         self.candidate_view.setColumnWidth(0, 300)
@@ -65,8 +81,11 @@ class MainWindow(QMainWindow):
         for column, width in enumerate((300, 300, 220)):
             self.link_view.setColumnWidth(column, width)
         self.tabs.addTab(self.link_view, "Saved local links")
-        self.experiment = ExperimentPage(self.send)
-        self.tabs.addTab(self.experiment, "Controlled party experiment")
+        self.transfer = TransferPage(self.send, self.review_pair)
+        self.tabs.addTab(self.transfer, "Transfer review")
+        self.activity = ActivityPage(self.send)
+        self.transfer.activity.clicked.connect(self.open_activity)
+        self.tabs.addTab(self.activity, "Activity history")
         layout.addWidget(self.tabs, 3)
         paging = QHBoxLayout()
         self.previous_links, self.next_links = QPushButton("Previous saved links"), QPushButton("Next saved links")
@@ -103,15 +122,24 @@ class MainWindow(QMainWindow):
         self.candidate_view.selectionModel().selectionChanged.connect(self.show_difference)
         self.bahi_view.selectionModel().selectionChanged.connect(self.show_difference)
         self.tally_view.selectionModel().selectionChanged.connect(self.show_difference)
+        self.link_view.selectionModel().selectionChanged.connect(self.show_saved_link)
         self.tabs.currentChanged.connect(self.show_difference)
         self.tabs.currentChanged.connect(self.tab_changed)
+        self.busy(False)
 
     def tab_changed(self, index):
         for widget in (self.details, self.reviewer, self.link, self.coverage):
-            widget.setVisible(index != 3)
+            widget.setVisible(index < 3)
 
-    def table(self, headers):
-        model, view = TableModel(headers), QTableView()
+    def open_activity(self):
+        self.tabs.setCurrentWidget(self.activity)
+        self.activity.status.setCurrentIndex(0)
+        self.activity.kind.setCurrentIndex(0)
+        self.activity.load(0)
+
+    def table(self, headers, side=None):
+        model = PartyTableModel(headers) if side else TableModel(headers)
+        view = PartyView(side, self.drag_session) if side else QTableView()
         view.setModel(model)
         view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -145,7 +173,14 @@ class MainWindow(QMainWindow):
             self.load.setEnabled(bound)
             self.saved.setEnabled(bound)
             self.link.setEnabled(bound and self.discovery is not None)
-        self.experiment.set_busy(busy, self.controller is not None and self.controller.binding is not None)
+        bound = self.controller is not None and self.controller.binding is not None
+        self.transfer.generation = getattr(self.controller, "generation", None)
+        self.transfer.set_busy(busy, bound)
+        self.activity.set_busy(busy, bound)
+        for widget in (self.to_tally, self.to_bahi, self.bahi_drop, self.tally_drop):
+            widget.setEnabled(bound and not busy and self.discovery is not None)
+        for view in (self.bahi_view, self.tally_view):
+            view.setDragEnabled(bound and not busy and self.discovery is not None)
 
     def verify_connections(self):
         self.discovery = None
@@ -154,8 +189,10 @@ class MainWindow(QMainWindow):
         self.suppliers.clear()
         self.link_model.replace([])
         self.saved_offset, self.saved_has_more = 0, False
-        self.experiment.record = None
-        self.experiment.report.clear()
+        self.transfer.clear()
+        self.activity.model.replace([])
+        self.activity.offset, self.activity.more, self.activity.selected_id = 0, False, None
+        self.drag_session.reset(None, None)
         self.send("VERIFY")
 
     def confirm_binding(self):
@@ -171,10 +208,23 @@ class MainWindow(QMainWindow):
 
     def receive(self, event):
         self.busy(bool(getattr(self.controller, "pending", {})))
-        if event.kind.startswith("EXP_"):
-            self.experiment.receive(event)
+        if event.kind == "ACTIVITY":
+            if event.error:
+                self.status.setText(event.error)
+            else:
+                self.activity.receive(event.result)
+                self.tabs.setCurrentIndex(4)
             self.busy(bool(getattr(self.controller, "pending", {})))
-            self.status.setText(event.error or "Experiment result displayed. No automatic create/retry is enabled.")
+            return
+        if event.kind.startswith(("TRANSFER_", "EXP_")) or event.kind == "ACTIVITY_DETAIL":
+            self.transfer.receive(event)
+            self.tabs.setCurrentIndex(3)
+            self.busy(bool(getattr(self.controller, "pending", {})))
+            self.status.setText(event.error or "Transfer/activity result displayed. No automatic create or retry.")
+            if event.kind == "TRANSFER_CREATE" and not event.error and getattr(event.result, "state", None) == "SUCCEEDED":
+                self.discovery = None
+                self.render()
+                self.send("SAVED")
             return
         if event.error:
             self.status.setText(event.error)
@@ -202,6 +252,7 @@ class MainWindow(QMainWindow):
             self.status.setText("Local binding confirmed. Load parties when ready.")
         elif event.kind == "LOAD":
             self.discovery = event.result
+            self.drag_session.reset(self.controller.binding, getattr(self.controller, "generation", 0))
             scans = (event.result.bahi, event.result.tally)
             self.coverage.setText(" | ".join(
                 f"{s.side}: {len(s.records)} parties; pages {len(s.pages_read)}/{s.total_pages if s.total_pages is not None else '?'}; "
@@ -271,6 +322,53 @@ class MainWindow(QMainWindow):
         lines = [f"{left.content.name} ↔ {right.content.name}", "Identity link only; differing content remains separate."]
         lines += [f"{field}: Bahi {value(left, field)} | Tally {value(right, field)}" for field in PartyContent.model_fields]
         self.details.setPlainText("\n".join(lines))
+
+    def show_saved_link(self, *_):
+        link = self.link_model.selected(self.link_view)
+        if link:
+            self.details.setPlainText(f"Saved link: {link.id}\nBahi ID: {link.bahi.identity}\nTally GUID: {link.tally.identity}\n"
+                f"Reviewer: {link.confirmed_by}\nConfirmed UTC: {link.confirmed_at.isoformat()}\n"
+                f"Bahi: {link.bahi.content.model_dump(exclude_unset=True)!r}\nTally: {link.tally.content.model_dump(exclude_unset=True)!r}\n"
+                f"Transferred fields: {link.transfer_fields}\nRecorded exclusions: {link.transfer_exclusions}\n"
+                f"Source eligibility evidence: {link.source_eligibility_evidence or '[legacy local identity confirmation]'}\n"
+                "Separate observations; no whole-record equality is implied. Full transfer evidence is in Activity history.")
+
+    def transfer_selected(self, model, view):
+        source = model.selected(view)
+        if source:
+            self.review_drop(source, None)
+        else:
+            self.status.setText("Select exactly one party in the source panel")
+
+    def review_drop(self, source, target):
+        if not self.controller or self.controller.binding != source.binding or getattr(self.controller, "pending", {}):
+            self.status.setText("Discard stale selection or wait for current work")
+            return
+        if source.is_active is False or source.is_system is True:
+            self.status.setText("Inactive or system parties cannot transfer")
+            return
+        if target is not None:
+            self.review_pair(source, target)
+            return
+        direction = Direction.TO_TALLY if source.side == Side.BAHI else Direction.TO_BAHI
+        self.transfer.clear()
+        self.tabs.setCurrentIndex(3)
+        self.send("TRANSFER_PREPARE", source=source, direction=direction)
+
+    def review_pair(self, source, target, reviewer=""):
+        if source.side == target.side or source.party_type != target.party_type or target.is_active is False or target.is_system is True:
+            self.status.setText("Select compatible parties on opposite sides")
+            return
+        left, right = (source, target) if source.side == Side.BAHI else (target, source)
+        reviewer = reviewer or self.reviewer.text().strip()
+        if not reviewer:
+            from PySide6.QtWidgets import QInputDialog
+            reviewer, accepted = QInputDialog.getText(self, "Link reviewer", "Confirming reviewer:")
+            if not accepted or not reviewer.strip():
+                return
+        text = f"Bahi {left.identity}: {left.content.model_dump(exclude_unset=True)!r}\nTally {right.identity}: {right.content.model_dump(exclude_unset=True)!r}\n\nConfirm these existing identities are the same party? No remote write."
+        if confirm_plain(self, "Review existing identity link", text):
+            self.send("LINK", bahi=left, tally=right, reviewer=reviewer.strip())
 
     def confirm_link(self):
         left, right = self.pair()

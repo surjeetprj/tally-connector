@@ -5,8 +5,34 @@ This records the initial offline-tested party discovery/linking core. The
 subsequent [read-only desktop milestone](READ_ONLY_DISCOVERY.md) now supplies
 guarded readers, bootstrap, background execution and a native review screen.
 Sections below describe the initial slice's evidence and then-pending gates;
-use the current report/state for implemented capabilities. No remote master
-mutation capability is enabled.
+use the current report/state for implemented capabilities. The initial slice
+enabled no remote master mutation capability.
+
+## Supervised transfer update — 3 November 2026
+
+Subsequent delivery on 4 November: the [default workspace](AUTOMATED_PARTY_WORKSPACE.md)
+adds saved operator/field policies, automatic verified reopening/loading, multi-party
+preparation and one batch approval. Metadata v5 extends the existing journal with
+batch membership and policy versions; sequential child execution preserves attempt,
+uncertainty, mapping and audit guards. Qt/worker/adapter/SQLite restart tests use
+fake remotes. No runtime DB upgrade or live calls ran. Current verification totals
+and remaining owner gates are in [current state](../STATE_AND_PROGRESS.md).
+
+[Actual-party transfer](PARTY_TRANSFER.md) now provides one customer/supplier at a
+time in both directions through button or internal drag/drop review. It reuses
+the shared attempt/outbox lifecycle and one Tally gateway, adds metadata v4 source
+reservations and paged legacy/transfer history, and commits verified mappings,
+audits and completion atomically. Field exclusions are recorded in the mapping
+audit; no whole-record equality is inferred.
+
+Verification uses only unit/offline integration tests, including actual Qt,
+controller, Huey, adapters with fake remotes, SQLite and restart. No computer-use
+automation or live calls ran for this feature. Existing environment/dependency
+versions, journals, links and invoice 69 were preserved. Exact test/check totals
+are in [current state](../STATE_AND_PROGRESS.md). The
+[manual checklist](MANUAL_PARTY_TRANSFER_CHECKLIST.md) covers owner verification.
+Tally tax read/write representations and all four live actual-source transfer
+combinations remain pending; broader foundation/Phase 0/frozen 3.13 gates remain open.
 
 ## MST-001 review
 

@@ -16,13 +16,13 @@ class Controller(QObject):
         bridge.event.connect(self.receive, Qt.ConnectionType.QueuedConnection)
 
     def submit(self, kind, **values):
-        if kind == "VERIFY":
+        if kind in {"VERIFY", "RESTORE"}:
             self.generation += 1
             self.binding = None
             self.pending.clear()
         elif kind == "BIND":
             self.binding = None
-        if kind in {"LOAD", "LINK", "SAVED"} or kind.startswith("EXP_"):
+        if kind in {"LOAD", "LINK", "SAVED", "ACTIVITY", "ACTIVITY_DETAIL"} or kind.startswith(("EXP_", "TRANSFER_", "BATCH_", "POLICY_")):
             values["binding"] = self.binding
         identity = self.runtime.submit(kind, self.generation, **values)
         self.pending[kind] = identity
@@ -30,12 +30,18 @@ class Controller(QObject):
 
     @Slot(object)
     def receive(self, event):
+        if event.kind == "BATCH_STEP" and event.generation == self.generation and self.binding:
+            if not event.final:
+                self.progress.emit(str(event.result))
+            elif event.error or (event.result is not None and event.result.binding == self.binding):
+                self.result.emit(event)
+            return
         if event.generation != self.generation or self.pending.get(event.kind) != event.request_id:
             return
         if not event.final:
             self.progress.emit(str(event.result))
             return
         self.pending.pop(event.kind, None)
-        if event.kind == "BIND" and event.error is None:
+        if event.kind in {"BIND", "RESTORE"} and event.error is None and hasattr(event.result, "binding"):
             self.binding = event.result.binding
         self.result.emit(event)

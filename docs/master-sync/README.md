@@ -1,5 +1,9 @@
 # Master synchronization preparation
 
+Current desktop workflow: [automated party workspace](AUTOMATED_PARTY_WORKSPACE.md)
+with saved policies and one approval for selected batches. See the
+[manual checklist](MANUAL_PARTY_TRANSFER_CHECKLIST.md) for owner acceptance.
+
 Prepared: 31 October 2026; implementation updated 2 November. The
 [read-only party desktop slice](READ_ONLY_DISCOVERY.md) now has guarded live
 readers and native local-link/restart evidence. The
@@ -7,6 +11,12 @@ readers and native local-link/restart evidence. The
 exact-record approval gate; one approved supplier creation/read-back in Bahi and
 native restart inspection passed. Tally creation and broader master types remain pending.
 The [initial foundation](READ_LINK_FOUNDATION.md) is historical.
+
+Update 3 November: [supervised actual-party transfer](PARTY_TRANSFER.md) replaces
+normal synthetic-create controls. Customers/suppliers in both directions have
+offline end-to-end coverage, audited exclusions, reservations and Activity history.
+The [owner manual checklist](MANUAL_PARTY_TRANSFER_CHECKLIST.md) owns the remaining
+live-screen/read-back evidence; Tally tax representations remain gated.
 
 The first feature milestone is **SUPERVISED MASTER TRANSFER**, before invoices.
 The user selects records and a direction, confirms links and proposed changes,

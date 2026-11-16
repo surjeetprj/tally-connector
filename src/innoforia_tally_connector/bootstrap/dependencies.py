@@ -1,6 +1,11 @@
 """Own concrete clients/gateway; application and UI only see injected capabilities."""
 from innoforia_tally_connector.application.masters.discovery import DiscoveryWorkflow
 from innoforia_tally_connector.application.masters.experiments import SupplierExperimentWorkflow
+from innoforia_tally_connector.application.masters.transfers import PartyTransferWorkflow
+from innoforia_tally_connector.application.masters.batches import BatchWorkflow
+from innoforia_tally_connector.persistence.repositories.batches import BatchStore
+from innoforia_tally_connector.integrations.bahi.endpoints.transfers import PartyDestination as BahiDestination
+from innoforia_tally_connector.integrations.tally.transfers import PartyDestination as TallyDestination
 from innoforia_tally_connector.domain.experiments import Direction
 from innoforia_tally_connector.domain.masters import ConnectionSnapshot
 from innoforia_tally_connector.execution.consumer import Runtime
@@ -46,7 +51,11 @@ def build(directory, emit, credential=read_key, bahi_client=None, tally_gateway=
     experiments = SupplierExperimentWorkflow(ExperimentStore(engine),
         lambda direction, classification: BahiExperiment(bahi) if direction == Direction.TO_BAHI
         else TallyExperiment(gateway, classification), verify, lambda: runtime.stopping.is_set())
-    workflow = DiscoveryWorkflow(verify, readers, validate_classification, store, links, REFERENCE, experiments)
+    transfers = PartyTransferWorkflow(ExperimentStore(engine), readers,
+        lambda direction, classification: BahiDestination(bahi) if direction == Direction.TO_BAHI else TallyDestination(gateway, classification),
+        verify, links, lambda: runtime.stopping.is_set())
+    batches = BatchWorkflow(BatchStore(engine), transfers, progress)
+    workflow = DiscoveryWorkflow(verify, readers, validate_classification, store, links, REFERENCE, experiments, transfers, batches)
 
     def handle(command):
         nonlocal current

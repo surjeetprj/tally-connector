@@ -298,7 +298,23 @@ real reviewed party link. Broader group/item/unit gates remain **PENDING**.
 MST-004 has a bounded synthetic supplier experiment implementation with offline
 coverage; one owner-approved synthetic supplier create/read-back and native restart
 inspection passed in Bahi 52 (account 275). The Tally destination remains live-unverified.
-Full MST-004 through MST-008 remain **PENDING**. See
+On 3 November, actual-source customer/supplier creation in both directions gained
+offline integration coverage, native drag/drop review, audited exclusions,
+transactional mapping completion and persistent history. All four actual-source
+live combinations and Tally tax representations await the
+[owner checklist](master-sync/MANUAL_PARTY_TRANSFER_CHECKLIST.md); see
+[implemented scope](master-sync/PARTY_TRANSFER.md). No live calls or computer-use automation
+ran for this update.
+Full MST-004 through MST-008 remain **PENDING**.
+
+Update 4 November: [automated party workspace](master-sync/AUTOMATED_PARTY_WORKSPACE.md)
+adds saved policies/operator, verified automatic reopening/loading, up to 100 selected
+parties per batch, one exact Ready-subset approval and sequential shared execution.
+Unsent drafts are managed automatically; uncertainty still pauses writes. Migration 5,
+backup/rollback, batch dispatch/restart and native Qt flows have offline tests.
+Owner-reported Tally-to-Bahi app success exists for an earlier actual-party transfer;
+destination/read-back details and restart evidence remain pending. This does not
+complete full MST-004 or enable MST-008 unattended writes. See
 [experiment gates](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md) and
 [reader evidence](master-sync/READ_ONLY_DISCOVERY.md).
 These are subdivisions of the existing CON

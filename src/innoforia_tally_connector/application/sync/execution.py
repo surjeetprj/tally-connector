@@ -27,7 +27,9 @@ class Runner:
         except Exception as failure:
             logging.getLogger(__name__).error("Operation %s failed: %s", identity, type(failure).__name__)
             error = ("Experiment execution interrupted; inspect the saved result and reconcile through reads only. Do not create again."
-                     if command.kind in {"EXP_CREATE", "EXP_RECONCILE"} else
+                     if command.kind in {"EXP_CREATE", "EXP_RECONCILE", "TRANSFER_CREATE", "TRANSFER_RECONCILE", "BATCH_APPROVE", "BATCH_STEP"} else
                      "Local discovery failed; inspect redacted diagnostics and retry a safe read")
         self.store.finish(identity, error)
+        if error and command.kind == "BATCH_STEP":
+            self.store.pause_batch(command)
         self.emit(Event(command.id, command.generation, command.kind, result, error))

@@ -85,6 +85,20 @@ payloads or assume that a returned schema grants write capability.
 
 ## Still pending
 
+On 3 November the actual-source customer/supplier feature generalized guarded
+party creation with contact/mailing/PAN/GST payload validation, per-field exclusions
+and atomic local mapping. Its automated evidence is mocked/offline only; this
+update made no live requests. The earlier supplier-275 result below does not
+certify the generalized fields or four transfer combinations. See
+[feature limits](../../master-sync/PARTY_TRANSFER.md) and
+[owner checks](../../master-sync/MANUAL_PARTY_TRANSFER_CHECKLIST.md).
+
+The party handbook states that system flags are not exposed in responses. The
+feature does not treat absence as is_system=False. The owner selected an explicit,
+separate named-reviewer confirmation of normal non-system source status when
+unavailable, retained with the API limitation in the operation and mapping audit.
+This is owner evidence, not verified backend system-flag support.
+
 Subsequent MST-004 evidence: the owner approved one exact synthetic SUPPLIER in
 business 52. POST api-party.php accepted party_type/account_name/email with HTTP
 201 and returned account ID 275. ID-based detail read-back matched enabled fields.

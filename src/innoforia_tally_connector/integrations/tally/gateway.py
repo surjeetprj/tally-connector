@@ -1,4 +1,4 @@
-"""One injected serialized gateway for all application Tally reads."""
+"""One injected serialized gateway for Tally reads and typed party creates."""
 from threading import Lock
 
 from innoforia_tally_connector.domain.errors import Busy, ContextMismatch, ReadError
@@ -7,6 +7,7 @@ from innoforia_tally_connector.integrations.tally.queries import collection
 from innoforia_tally_connector.integrations.tally.xml_codec import records
 from innoforia_tally_connector.domain.experiments import Preflight
 from innoforia_tally_connector.integrations.tally.builders.masters import supplier_xml
+from innoforia_tally_connector.integrations.tally.builders.parties import party_xml, ROOTS
 from innoforia_tally_connector.integrations.tally.experiment import import_receipt
 import json
 from datetime import datetime, timezone
@@ -51,14 +52,14 @@ class Gateway:
     def close(self):
         self.transport.close()
 
-    def _supplier_preflight(self, binding, root_id, party):
+    def _supplier_preflight(self, binding, root_id, party, root_name="Sundry Creditors"):
         if binding.company_guid != COMPANY_GUID or binding.business_id != 52:
             raise ContextMismatch("Only the confirmed business-52/SIS-Dummy test pair can create")
         company = self._company(binding.company_guid)
         groups = records(self._export(collection("Group", company["NAME"])), "Group")
-        matches = [g for g in groups if g.get("GUID") == root_id and g.get("NAME") == "Sundry Creditors"]
+        matches = [g for g in groups if g.get("GUID") == root_id and g.get("NAME") == root_name]
         if len(matches) != 1:
-            raise ContextMismatch("Confirmed supplier root must be the observed Sundry Creditors group")
+            raise ContextMismatch(f"Confirmed party root must be the observed {root_name} group")
         ledgers = records(self._export(collection("Ledger", company["NAME"])), "Ledger")
         if any(r.get("NAME", "").casefold() == party.name.casefold() for r in ledgers):
             raise ReadError("Test party name already exists; no creation is allowed")
@@ -93,5 +94,28 @@ class Gateway:
             raw = self.transport.import_test_supplier(supplier_xml(preview.party, context["company_name"], "Sundry Creditors"))
             # No further IO before the application persists this receipt/identity.
             return import_receipt(raw, preflight.baseline_guids)
+        finally:
+            self.lock.release()
+
+    def preflight_party(self, binding, root_id, draft):
+        if not self.lock.acquire(timeout=self.lock_timeout):
+            raise Busy("Tally busy; no party request sent")
+        try:
+            return self._supplier_preflight(binding, root_id, draft, ROOTS[draft.party_type])
+        finally:
+            self.lock.release()
+
+    def create_party(self, preview, root_id):
+        if not self.lock.acquire(timeout=self.lock_timeout):
+            raise Busy("Tally busy; no import sent")
+        try:
+            current = self._supplier_preflight(preview.binding, root_id, preview.party, ROOTS[preview.party.party_type])
+            if current.group_context != preview.preflight.group_context or current.destination != preview.preflight.destination:
+                raise ContextMismatch("Destination/group context changed; no import sent")
+            preview.require_current(preview.binding, preview.generation, preview.digest, datetime.now(timezone.utc))
+            if self.stopped():
+                raise ReadError("Shutdown started; no import sent")
+            raw = self.transport.import_party(party_xml(preview.party, json.loads(current.group_context)["company_name"], ROOTS[preview.party.party_type]))
+            return import_receipt(raw, current.baseline_guids)
         finally:
             self.lock.release()

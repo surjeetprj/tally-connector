@@ -18,6 +18,7 @@ class Discovery:
     bahi: PartyScan
     tally: PartyScan
     candidates: tuple[Candidate, ...]
+    linked: tuple[tuple[Side, str], ...] = ()
 
 
 def search_name(value: str) -> str:
@@ -36,10 +37,16 @@ def compare_scans(binding: Binding, left: PartyScan, right: PartyScan, links: Pa
         raise ValueError("Discard stale or incorrectly scoped scan")
     # Eligibility belongs to this discovery call only. Confirmation still
     # re-reads the selected records and enforces unique links transactionally.
-    sources = [record for record in left.records
-               if not links.find(binding, Side.BAHI, record.identity)]
-    targets = [(record, search_name(record.content.name)) for record in right.records
-               if not links.find(binding, Side.TALLY, record.identity)]
+    linked = []
+    sources, targets = [], []
+    for scan in (left, right):
+        for record in scan.records:
+            if links.find(binding, scan.side, record.identity):
+                linked.append((scan.side, record.identity))
+            elif scan.side == Side.BAHI:
+                sources.append(record)
+            else:
+                targets.append((record, search_name(record.content.name)))
     by_name: dict[tuple[PartyType, str], list[int]] = {}
     by_gstin: dict[tuple[PartyType, str], list[int]] = {}
     for position, (target, target_name) in enumerate(targets):
@@ -68,4 +75,4 @@ def compare_scans(binding: Binding, left: PartyScan, right: PartyScan, links: Pa
                 reasons.append("gstin")
             if reasons:
                 candidates.append(Candidate(source, target, tuple(reasons)))
-    return Discovery(left, right, tuple(candidates))
+    return Discovery(left, right, tuple(candidates), tuple(linked))

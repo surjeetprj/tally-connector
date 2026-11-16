@@ -1,8 +1,9 @@
 # Project Specification v2.1: Innoforia Bahi <-> TallyPrime Desktop Connector
 
-Updated: 31 October 2026.
+Updated: 4 November 2026 (supervised party workspace requirements).
 
-Status: implementation specification; application not yet implemented. This
+Status: requirements and architecture; implemented evidence is tracked in
+[current state](STATE_AND_PROGRESS.md). The original
 revision incorporates the supplied project specification, five Bahi API
 handbooks, [implementation plan](IMPLEMENTATION_PLAN.md)
 and [API assessment](api/bahi/README.md).
@@ -46,6 +47,19 @@ the implementation plan owns work packages and acceptance gates.
 Linked returns, tracked inventory, multi-currency, godowns, batches, serials,
 cost centres and automatic cancellation propagation are outside the first slice.
 Recognize unsupported source records and display precise blocking issues.
+
+### Supervised party workspace
+
+The approved party milestone uses saved verified connections and versioned field
+policies, automatic read preparation and one explicit approval for up to 100
+selected parties in one direction. Settings retain the named operator and permit
+audited omission of unsupported/invalid optional fields. Require a separate batch
+confirmation for unavailable source system flags. Duplicate candidates and invalid
+required fields remain blocked. Changed/expired summaries require renewed review.
+Execute sequential children through the shared lifecycle, with per-child attempt
+uniqueness, read-back and atomic mappings. Restore pending work for review after
+restart; never create automatically on startup. Known-ID reconciliation is read-only.
+See [workspace behavior](master-sync/AUTOMATED_PARTY_WORKSPACE.md).
 
 ### Core constraints
 

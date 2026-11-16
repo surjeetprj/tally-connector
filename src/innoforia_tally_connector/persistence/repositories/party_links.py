@@ -4,6 +4,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
 from innoforia_tally_connector.domain.masters import Binding, ConfirmedPartyLink, LinkConflict, Side
+from innoforia_tally_connector.domain.party_transfer import source_key
+from innoforia_tally_connector.persistence.migrations.versions.v0004_party_transfers import experiments
 from innoforia_tally_connector.persistence.migrations.versions.v0001_party_links import (
     bindings, link_audit, party_links,
 )
@@ -19,22 +21,28 @@ class SqlPartyLinks:
             connection.execute(insert(bindings).values(**binding.model_dump()))
 
     def save(self, link: ConfirmedPartyLink) -> None:
+        with self.engine.begin() as connection:
+            self.save_in_connection(connection, link)
+
+    @staticmethod
+    def save_in_connection(connection, link, reservation_id=None):
         evidence = link.model_dump_json(exclude_unset=True)
         try:
-            with self.engine.begin() as connection:
-                # Acquire SQLite's writer reservation before reading. Two
-                # deferred read transactions must not race to upgrade snapshots.
-                connection.execute(insert(party_links).values(
-                    id=link.id, binding_id=link.binding.id, generation=link.binding.generation,
-                    bahi_id=link.bahi.identity, tally_guid=link.tally.identity, evidence_json=evidence,
-                ))
-                row = connection.execute(select(bindings).where(
-                    bindings.c.id == link.binding.id,
-                    bindings.c.generation == link.binding.generation,
-                )).mappings().one_or_none()
-                if row is None or Binding.model_validate(dict(row)) != link.binding:
-                    raise ValueError("Unknown or mismatched binding generation")
-                connection.execute(insert(link_audit).values(link_id=link.id, evidence_json=evidence))
+            # Reserve the writer before looking up mappings/reservations.
+            connection.execute(insert(party_links).values(
+                id=link.id, binding_id=link.binding.id, generation=link.binding.generation,
+                bahi_id=link.bahi.identity, tally_guid=link.tally.identity, evidence_json=evidence))
+            row = connection.execute(select(bindings).where(bindings.c.id == link.binding.id,
+                bindings.c.generation == link.binding.generation)).mappings().one_or_none()
+            if row is None or Binding.model_validate(dict(row)) != link.binding:
+                raise ValueError("Unknown or mismatched binding generation")
+            if connection.exec_driver_sql("PRAGMA user_version").scalar_one() >= 4:
+                reserved = connection.execute(select(experiments.c.id).where(experiments.c.source_key.in_([
+                    source_key(link.binding, Side.BAHI, link.bahi.identity),
+                    source_key(link.binding, Side.TALLY, link.tally.identity)]))).scalars().all()
+                if any(identity != reservation_id for identity in reserved):
+                    raise LinkConflict("A transfer reserves this party; inspect activity before linking")
+            connection.execute(insert(link_audit).values(link_id=link.id, evidence_json=evidence))
         except IntegrityError as error:
             if getattr(error.orig, "sqlite_errorname", "") == "SQLITE_CONSTRAINT_FOREIGNKEY":
                 raise ValueError("Unknown binding generation") from error

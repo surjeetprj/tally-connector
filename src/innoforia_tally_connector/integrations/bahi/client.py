@@ -1,4 +1,4 @@
-"""Guarded party GETs and one narrowly typed synthetic supplier POST."""
+"""Guarded party GETs and approved, typed customer/supplier POST payloads."""
 import json
 import time
 from threading import local
@@ -7,6 +7,7 @@ import httpx
 
 from innoforia_tally_connector.domain.errors import ReadError, ContextMismatch
 from innoforia_tally_connector.domain.experiments import TestSupplier, TargetIdentity, UncertainWrite, WriteRejected
+from innoforia_tally_connector.integrations.bahi.party_payload import payload as party_payload
 
 BASE = "https://innoforia.com/201/h-bahi/bahi/web-api/"
 
@@ -33,15 +34,21 @@ class Client:
                                   headers={"Authorization": "Bearer " + key,
                                            "Accept": "application/json"}) as response:
                 if response.status_code != 200:
-                    raise ReadError(f"Bahi read failed (HTTP {response.status_code}); check access and setup")
+                    raise ReadError(f"Bahi GET {route} failed (HTTP {response.status_code}); check access and setup")
                 data = bytearray()
                 for chunk in response.iter_bytes():
                     data.extend(chunk)
                     if len(data) > 8 * 1024 * 1024 or time.monotonic() - started > 15:
                         raise ReadError("Bahi response exceeded read limits")
                 result = json.loads(data)
-        except (httpx.HTTPError, json.JSONDecodeError, UnicodeDecodeError):
-            raise ReadError("Bahi is unavailable or returned an invalid response") from None
+        except httpx.TimeoutException:
+            raise ReadError(f"Bahi GET {route} timed out; verify connections and retry the read") from None
+        except httpx.ConnectError:
+            raise ReadError(f"Bahi GET {route} could not connect securely; check network, HTTPS and server availability") from None
+        except httpx.HTTPError:
+            raise ReadError(f"Bahi GET {route} transport failed; verify connections and retry the read") from None
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            raise ReadError(f"Bahi GET {route} returned invalid JSON or text encoding; check the API/server response") from None
         if not isinstance(result, dict) or result.get("success") is not True or "data" not in result:
             raise ReadError("Bahi rejected the read; check credentials, scopes and party group setup")
         return result
@@ -71,11 +78,18 @@ class Client:
     def create_test_supplier(self, party: TestSupplier, before_send=lambda business: None):
         if not isinstance(party, TestSupplier):
             raise ValueError("Only a validated synthetic supplier can be created")
+        return self._post_party({"party_type": "SUPPLIER", "account_name": party.name, "email": party.email}, before_send)
+
+    def create_party(self, draft, before_send):
+        return self._post_party(party_payload(draft), before_send)
+
+    def _post_party(self, payload, before_send):
         business = self.business(52)
         before_send(business)
         if self.stopped():
             raise ReadError("Creation stopped before transmission")
-        payload = {"party_type": "SUPPLIER", "account_name": party.name, "email": party.email}
+        if len(json.dumps(payload, ensure_ascii=False).encode()) > 64 * 1024:
+            raise ValueError("Party payload exceeds the documented body limit")
         started = time.monotonic()
         try:
             with self.http.stream("POST", BASE + "api-party.php", json=payload, follow_redirects=False,

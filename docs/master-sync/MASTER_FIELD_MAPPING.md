@@ -5,6 +5,11 @@ handbooks; **Tally columns describe meaning, not verified XML tags**. Each enabl
 field needs adapter fixtures and live read-back evidence. Handbooks remain the
 wire-schema authority; this table is not a complete payload schema.
 
+The [implemented actual-party feature](PARTY_TRANSFER.md#field-capabilities-and-evidence-limits)
+now supports explicit exclusions and publishes its narrower capability/evidence
+limits. In particular, this semantic matrix does not enable unverified Tally
+PAN/GST registration writes or prove an end-to-end tax round trip.
+
 ## Customers and suppliers
 
 Reference: [party handbook](../api/bahi/handbooks/API-PARTY-DEVELOPER-HANDBOOK.md).
