@@ -24,7 +24,7 @@ def collection(entity: str, company: str | None = None, guid: str | None = None)
     if entity != "Company":
         fields.append("Parent")
     if entity == "Ledger":
-        fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryName"]
+        fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryofResidence"]
     for field in fields:
         ET.SubElement(coll, "FETCH").text = field
     if guid is not None:

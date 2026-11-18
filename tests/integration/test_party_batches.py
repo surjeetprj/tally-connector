@@ -387,3 +387,17 @@ def test_preparation_rejects_duplicate_ids_and_mixed_source_sides(rig):
     r.sources["2"] = r.sources["2"].model_copy(update={"side": Side.TALLY})
     with pytest.raises(ValueError, match="one current source side"): r.prepare()
     assert not r.state.creates
+
+
+def test_single_reconciled_target_completes_parent_without_creating_again(rig):
+    r = rig
+    batch = r.prepare(("1",))
+    r.state.mismatch = True
+    r.approve(batch); r.pump()
+    assert r.batch_store.get(batch.id, r.binding).state == "BLOCKED"
+    r.state.mismatch = False  # Owner corrected the existing target; reads now match.
+    r.run("BATCH_RECOVER")
+    assert r.batch_store.get(batch.id, r.binding).state == "SUCCEEDED"
+    assert r.store.by_id(batch.items[0].preview.id)
+    r.run("BATCH_RECOVER"); r.pump()
+    assert r.state.creates == ["1"]

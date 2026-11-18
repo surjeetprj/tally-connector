@@ -4,7 +4,7 @@ from innoforia_tally_connector.domain.masters import PartyType
 from innoforia_tally_connector.domain.party_transfer import PartyDraft
 from innoforia_tally_connector.integrations.tally.xml_codec import parse
 
-TAGS = {"email": "EMAIL", "phone": "LEDGERPHONE", "pincode": "PINCODE", "state": "LEDSTATENAME", "country": "COUNTRYNAME"}
+TAGS = {"email": "EMAIL", "phone": "LEDGERPHONE", "pincode": "PINCODE", "state": "LEDSTATENAME", "country": "COUNTRYOFRESIDENCE"}
 ROOTS = {PartyType.CUSTOMER: "Sundry Debtors", PartyType.SUPPLIER: "Sundry Creditors"}
 
 

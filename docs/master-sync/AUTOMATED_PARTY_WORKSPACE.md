@@ -21,6 +21,17 @@ the operator and field policy once in Settings; subsequent launches verify,
 load parties and check known unresolved targets automatically. No periodic polling
 is enabled. Failed verification leaves transfers disabled with an actionable message.
 
+The initial window fits the available logical desktop area. Tab contents scroll
+when large fonts, display scaling or advanced panels exceed the viewport, keeping
+lower controls reachable instead of forcing the window beyond the screen.
+
+When party lists are loaded before a policy is saved, Parties displays a persistent
+Finish transfer setup action. The transfer buttons then open Settings at the name
+field rather than remaining silently disabled. A visible validation message explains
+a missing name. Saving settings enables preparation but never starts a transfer;
+the exact batch still needs approval. Setup guidance disappears once the saved
+policy has been returned successfully, including after restart.
+
 Check/select 1–100 customers/suppliers on one side and use Transfer or copy-drag
 to the opposite NEW-party area. One batch has one direction and may contain both
 party types. Preparation reads fresh source details, mappings and complete
@@ -93,6 +104,11 @@ names or absence. Unresolved reservations remain until authoritative evidence
 establishes the outcome. Review remaining parties prepares a new summary without
 recreating attempted records.
 
+When read-only checks finish, Activity refreshes saved links automatically and
+shows a completion message. Newly linked parties receive Linked status. A link
+refresh failure remains visible rather than reporting success or leaving a stale
+Working in background message.
+
 Activity pages batches in groups of 50 and saved links in groups of 200. Advanced
 details retain per-party/legacy history. History belongs to its original runtime
 and binding generation; build/live-party-ui is not merged with the default
@@ -108,6 +124,13 @@ The owner supplied an actual-party Tally-to-Bahi screen showing SUCCEEDED for
 record 9b70c10d-0ade-45c5-8da2-99027a69dec9 before this batch change. This is
 owner-reported application success; the cropped screenshot does not establish
 destination identity/fields or restart persistence for that transfer.
+
+On 18 November the owner verified a new workspace supplier transfer, Apollo
+Hospital Jayanagar, to Bahi business 52 account 280. The destination screenshot
+shows Active, Vendors (A/P) / VENDOR; the owner confirmed the successful batch
+5a37f710-4ae7-4cdc-a67f-8266ea906d34 and mapping survive restart, with reviewer
+surjeet. Contact/tax fields shown are blank; this case does not verify populated
+optional fields, reverse-direction transfers, customers or multiple-party batches.
 
 Follow the [owner checklist](MANUAL_PARTY_TRANSFER_CHECKLIST.md). Full MST-004,
 Tally tax support, groups/items, transactions and unattended sync remain separate

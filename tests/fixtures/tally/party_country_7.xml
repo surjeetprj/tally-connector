@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synthetic values; country paths observed in owner TallyPrime 7.0 export.
+     No owner ledger data retained. The dated mailing shape is read evidence,
+     not a policy for inventing an applicable date on import. -->
+<COLLECTION>
+  <LEDGER NAME="Synthetic country supplier">
+    <GUID>11111111-2222-3333-4444-555555555555-00000001</GUID>
+    <MASTERID>1</MASTERID>
+    <ALTERID>1</ALTERID>
+    <NAME>Synthetic country supplier</NAME>
+    <PARENT>Sundry Creditors</PARENT>
+    <COUNTRYOFRESIDENCE>India</COUNTRYOFRESIDENCE>
+    <LEDMAILINGDETAILS.LIST>
+      <APPLICABLEFROM>20260401</APPLICABLEFROM>
+      <MAILINGNAME>Synthetic country supplier</MAILINGNAME>
+      <COUNTRY>India</COUNTRY>
+    </LEDMAILINGDETAILS.LIST>
+  </LEDGER>
+</COLLECTION>

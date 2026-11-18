@@ -207,5 +207,12 @@ class BatchStore:
         for identity in ids:
             batch = self.get(identity, binding)
             if batch.state == "BLOCKED" and all(not i.result or i.result.state in {"SUCCEEDED", "FAILED", "CANCELLED"} for i in batch.items):
+                approved = [i.result for i in batch.items if i.preview and i.preview.id in batch.approved_ids]
+                state = batch.state
+                if approved and len(approved) == len(batch.approved_ids):
+                    if all(r is not None and r.state == "SUCCEEDED" for r in approved):
+                        state = "SUCCEEDED"
+                    elif all(r is not None and r.state in {"SUCCEEDED", "FAILED"} for r in approved):
+                        state = "FAILED"
                 with self.engine.begin() as c:
-                    c.execute(update(batches).where(batches.c.id == batch.id).values(active_binding=None))
+                    c.execute(update(batches).where(batches.c.id == batch.id).values(active_binding=None, state=state))

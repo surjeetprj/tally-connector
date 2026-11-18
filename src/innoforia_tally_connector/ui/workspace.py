@@ -2,7 +2,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QLineEdit, QComboBox, QTabWidget, QTableView, QSplitter, QCheckBox,
-    QGroupBox, QTextEdit)
+    QGroupBox, QTextEdit, QScrollArea)
 from innoforia_tally_connector.domain.masters import Side, Classification
 from innoforia_tally_connector.domain.experiments import Direction
 from innoforia_tally_connector.domain.batches import TransferPolicy, CONTACT_FIELDS, TransferBatch
@@ -25,6 +25,7 @@ class Workspace(QMainWindow):
         self.linked = set()
         self.row_states = {}
         self.recovery_pending = False
+        self.recovery_links_pending = False
         root = QWidget()
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
@@ -32,6 +33,7 @@ class Workspace(QMainWindow):
         self.identity.setWordWrap(True)
         layout.addWidget(self.identity)
         self.tabs = QTabWidget()
+        self.page_scrolls = []
         layout.addWidget(self.tabs, 1)
         self.parties = QWidget()
         parties = QVBoxLayout(self.parties)
@@ -43,6 +45,16 @@ class Workspace(QMainWindow):
         self.filter.addItems(["All parties", "Customers", "Suppliers"])
         for w in (self.refresh, self.search, self.filter): toolbar.addWidget(w)
         parties.addLayout(toolbar)
+        self.setup_notice = QWidget()
+        setup_row = QHBoxLayout(self.setup_notice)
+        setup_row.setContentsMargins(0, 0, 0, 0)
+        self.setup_message = QLabel("Transfers need one-time setup: enter your name and save the transfer policy in Settings.")
+        self.setup_message.setWordWrap(True)
+        self.finish_setup = QPushButton("Finish transfer setup")
+        self.finish_setup.clicked.connect(self.open_transfer_setup)
+        setup_row.addWidget(self.setup_message, 1)
+        setup_row.addWidget(self.finish_setup)
+        parties.addWidget(self.setup_notice)
         self.coverage = QLabel("No observations loaded")
         self.coverage.setWordWrap(True)
         parties.addWidget(self.coverage)
@@ -70,7 +82,7 @@ class Workspace(QMainWindow):
             split.addWidget(panel)
             self.models[side], self.views[side], self.transfer_buttons[side] = model, view, button
         parties.addWidget(split, 1)
-        self.tabs.addTab(self.parties, "Parties")
+        self.add_page(self.parties, "Parties")
         self.activity_page = QWidget()
         activity = QVBoxLayout(self.activity_page)
         controls = QHBoxLayout()
@@ -130,7 +142,7 @@ class Workspace(QMainWindow):
         self.advanced_tabs.hide()
         self.advanced.toggled.connect(self.advanced_tabs.setVisible)
         activity.addWidget(self.advanced)
-        self.tabs.addTab(self.activity_page, "Activity")
+        self.add_page(self.activity_page, "Activity")
         settings = QWidget()
         form = QVBoxLayout(settings)
         self.verify = QPushButton("Verify connections / review setup")
@@ -143,8 +155,13 @@ class Workspace(QMainWindow):
         roots.addWidget(self.bind)
         form.addLayout(roots)
         self.operator = QLineEdit()
+        form.addWidget(QLabel("Your name (required once for transfer approvals)"))
         self.operator.setPlaceholderText("Operator name, saved for transfer approvals")
         form.addWidget(self.operator)
+        self.setup_error = QLabel()
+        self.setup_error.setWordWrap(True)
+        self.setup_error.hide()
+        form.addWidget(self.setup_error)
         note = QLabel("Saved policy: omit unavailable/invalid optional fields with audited reasons. "
             "GSTIN, PAN and registration type remain disabled pending verified Tally contracts. "
             "Only exact source values are transferred. No updates or unattended creation.")
@@ -163,7 +180,7 @@ class Workspace(QMainWindow):
         self.save_policy = QPushButton("Save operator and transfer policy")
         form.addWidget(self.save_policy)
         form.addStretch()
-        self.tabs.addTab(settings, "Settings")
+        self.add_page(settings, "Settings")
         self.status = QLabel("Waiting for local startup")
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
@@ -179,6 +196,21 @@ class Workspace(QMainWindow):
         self.search.textChanged.connect(self.render)
         self.filter.currentIndexChanged.connect(self.render)
         self.update_controls()
+        screen = self.screen()
+        if screen:
+            available = screen.availableGeometry()
+            self.resize(min(1250, max(1, available.width() - 40)),
+                min(850, max(1, available.height() - 80)))
+
+    def add_page(self, page, title):
+        # Tall tables/advanced forms must not become the main window's minimum
+        # height. Scroll overflow at small logical sizes (including high DPI).
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll.setWidget(page)
+        self.page_scrolls.append(scroll)
+        self.tabs.addTab(scroll, title)
 
     def attach(self, controller):
         self.controller = controller
@@ -210,10 +242,15 @@ class Workspace(QMainWindow):
         self.links_next.setEnabled(bound and not busy and self.links_more)
         self.batch_previous.setEnabled(bound and not busy and self.batch_offset > 0)
         self.batch_next.setEnabled(bound and not busy and self.batch_more)
+        needs_policy = bound and self.policy is None
+        self.setup_notice.setVisible(needs_policy)
+        self.finish_setup.setEnabled(needs_policy and not busy and not executing)
         for side, button in self.transfer_buttons.items():
-            enabled = bound and not busy and not executing and self.policy is not None and self.discovery is not None
+            destination = "Tally" if side == Side.BAHI else "Bahi"
+            button.setText(f"Set up transfers to {destination}…" if needs_policy else f"Transfer selected to {destination}…")
+            enabled = bound and not busy and not executing and self.discovery is not None
             button.setEnabled(enabled)
-            self.views[side].setDragEnabled(enabled)
+            self.views[side].setDragEnabled(enabled and not needs_policy)
         self.legacy.set_busy(busy, bound)
         self.technical.generation = getattr(self.controller, "generation", None)
         self.technical.set_busy(busy, bound)
@@ -224,24 +261,33 @@ class Workspace(QMainWindow):
             f"\nCustomers: {self.customers.currentText()}\nSuppliers: {self.suppliers.currentText()}\nSave this local classification?"):
             self.send("BIND", classification=Classification(customer_root=self.customers.currentData(), supplier_root=self.suppliers.currentData()))
 
+    def open_transfer_setup(self):
+        self.tabs.setCurrentIndex(2)
+        self.page_scrolls[2].ensureWidgetVisible(self.operator)
+        self.operator.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.status.setText("Enter your name, review the field choices and click Save operator and transfer policy once")
+
     def save_settings(self):
         try:
             policy = TransferPolicy(binding=self.controller.binding, version=self.policy.version if self.policy else 1,
                 operator=self.operator.text().strip(), **{("to_bahi" if d == Direction.TO_BAHI else "to_tally"):
                 tuple(f for f in CONTACT_FIELDS if self.field_boxes[d, f].isChecked()) for d in Direction})
         except ValueError:
+            self.open_transfer_setup()
+            self.setup_error.setText("Enter your name above before saving. No transfer has been started.")
+            self.setup_error.show()
             self.status.setText("Enter the operator name before saving settings")
             return
+        self.setup_error.hide()
         self.send("POLICY_SAVE", policy=policy)
 
     def prepare(self, sources):
+        if not self.policy:
+            self.open_transfer_setup()
+            return
         sources = sources if isinstance(sources, tuple) else (sources,)
         if not 1 <= len(sources) <= 100:
             self.status.setText("Select 1–100 unique source parties")
-            return
-        if not self.policy:
-            self.tabs.setCurrentIndex(2)
-            self.status.setText("Save the operator and field policy first")
             return
         if self.controller.pending or (self.current_batch and self.current_batch.state == "APPLYING"): return
         self.send("BATCH_PREPARE", sources=sources,
@@ -264,6 +310,10 @@ class Workspace(QMainWindow):
     def receive(self, event):
         if event.error:
             self.status.setText(event.error)
+            if event.kind == "SAVED": self.recovery_links_pending = False
+            if event.kind == "POLICY_SAVE":
+                self.setup_error.setText(event.error)
+                self.setup_error.show()
             if event.kind.startswith("BATCH_"):
                 self.review.error.setText(event.error)
                 self.review.error.show()
@@ -305,6 +355,7 @@ class Workspace(QMainWindow):
         elif kind in {"POLICY_GET", "POLICY_SAVE"}:
             self.policy = result
             if result:
+                self.setup_error.hide()
                 self.operator.setText(result.operator)
                 for d in Direction:
                     fields = result.to_bahi if d == Direction.TO_BAHI else result.to_tally
@@ -324,7 +375,8 @@ class Workspace(QMainWindow):
                 for s in (result.bahi, result.tally)) + " | Paginated observations are not a stable snapshot.")
             self.linked = set(result.linked)
             self.render()
-            self.status.setText("Select parties and transfer. Creation always needs batch approval.")
+            self.status.setText("Select parties and transfer. Creation always needs batch approval." if self.policy else
+                "Transfers are not set up yet. Use Finish transfer setup to save your name and policy once.")
             if self.recovery_pending:
                 self.recovery_pending = False
                 self.send("BATCH_RECOVER")
@@ -350,9 +402,24 @@ class Workspace(QMainWindow):
                     if updated:
                         self.current_batch = updated
                         self.review.receive(updated, self.controller.generation)
+                if kind == "BATCH_RECOVER":
+                    self.recovery_links_pending = True
+                    self.send("SAVED", offset=0)
+                    self.status.setText("Read-only result checks completed. Refreshing saved links…")
         elif kind == "SAVED":
             self.show_links(result.links)
             self.links_offset, self.links_more = result.offset, result.has_more
+            if self.recovery_links_pending:
+                self.recovery_links_pending = False
+                for link in result.links:
+                    for party in (link.bahi, link.tally):
+                        key = (party.side, party.identity)
+                        self.linked.add(key)
+                        self.row_states[key] = "Linked"
+                self.render()
+                self.status.setText("Read-only result checks complete. Saved links refreshed.")
+            else:
+                self.status.setText("Saved links refreshed.")
         elif kind == "LINK":
             self.status.setText("Identity link saved; no remote fields changed")
             self.send("LOAD"); self.send("SAVED")

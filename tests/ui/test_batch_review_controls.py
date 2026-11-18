@@ -126,3 +126,80 @@ def test_batch_events_keep_generation_binding_and_errors(qtbot, binding):
     assert not received
     controller.receive(Event("failure", generation, "BATCH_STEP", error="Storage interrupted; restart and inspect"))
     assert received[0].error.startswith("Storage interrupted")
+
+
+def test_unsaved_policy_has_setup_action_and_cannot_prepare_transfer(qtbot, binding, observation):
+    from innoforia_tally_connector.domain.masters import PartyScan
+    window = Workspace(); window.quitting = True; qtbot.addWidget(window)
+    sent = []
+    window.controller = SimpleNamespace(binding=binding, generation=1, pending={},
+        submit=lambda kind, **values: sent.append((kind, values)))
+    window.show()
+    source = observation(Side.TALLY, "source", is_active=True)
+    def scan(side, records):
+        return PartyScan(binding=binding, side=side, records=records, observed_at=datetime.now(timezone.utc),
+            pages_read=(1,) if records else (), total_pages=1 if records else 0)
+    discovery = SimpleNamespace(bahi=scan(Side.BAHI, ()), tally=scan(Side.TALLY, (source,)), candidates=(), linked=())
+    window.receive(Event("load", 1, "LOAD", discovery))
+    window.tabs.setCurrentIndex(0)
+    assert window.setup_notice.isVisible()
+    assert "not set up" in window.status.text()
+    button = window.transfer_buttons[Side.TALLY]
+    assert button.isEnabled() and button.text() == "Set up transfers to Bahi…"
+    window.models[Side.TALLY].checked.add(source.identity)
+    button.click()
+    assert window.tabs.currentIndex() == 2 and window.focusWidget() == window.operator
+    assert not sent
+    window.operator.setText("   ")
+    window.save_policy.click()
+    assert window.setup_error.isVisible() and "Enter your name" in window.setup_error.text()
+    assert not sent
+    window.operator.setText("Reviewer")
+    window.save_policy.click()
+    assert [kind for kind, _ in sent] == ["POLICY_SAVE"]
+    assert window.policy is None and not window.setup_notice.isHidden()
+    window.receive(Event("save", 1, "POLICY_SAVE", error="Could not save settings"))
+    assert window.policy is None and window.setup_error.text() == "Could not save settings"
+    policy = sent[0][1]["policy"]
+    window.receive(Event("saved", 1, "POLICY_SAVE", policy))
+    assert window.setup_notice.isHidden()
+    assert button.isEnabled() and button.text() == "Transfer selected to Bahi…"
+    assert not any(kind.startswith("BATCH_") for kind, _ in sent)
+    # Returning to Parties after saving enables explicit preparation, not creation.
+    button.click()
+    assert sent[-1][0] == "BATCH_PREPARE" and sent[-1][1]["sources"] == (source,)
+
+
+def test_reconciliation_refreshes_saved_links_and_finishes_status(qtbot, preview_batch, observation):
+    from innoforia_tally_connector.domain.batches import BatchPage
+    from innoforia_tally_connector.domain.masters import ConfirmedPartyLink
+    from innoforia_tally_connector.application.masters.discovery import SavedPage
+    window = Workspace(); window.quitting = True; qtbot.addWidget(window)
+    sent = []
+    batch = preview_batch.model_copy(update={"state": "SUCCEEDED"})
+    window.controller = SimpleNamespace(binding=batch.binding, generation=1, pending={},
+        submit=lambda kind, **values: sent.append((kind, values)))
+    window.current_batch = preview_batch.model_copy(update={"state": "BLOCKED"})
+    window.receive(Event("checked", 1, "BATCH_RECOVER", BatchPage(records=(batch,))))
+    assert window.current_batch.state == "SUCCEEDED"
+    assert sent == [("SAVED", {"offset": 0})]
+    assert "checks completed" in window.status.text()
+    source = batch.items[0].source
+    target = observation(Side.TALLY, "existing-guid", name=source.content.name)
+    link = ConfirmedPartyLink(id="reconciled", binding=batch.binding, bahi=source, tally=target,
+        confirmed_by="Owner", confirmed_at=datetime.now(timezone.utc), review_reference="approved")
+    window.receive(Event("links", 1, "SAVED", SavedPage((link,), 0, False)))
+    assert window.saved_model.objects == [link]
+    assert window.row_states[(Side.TALLY, target.identity)] == "Linked"
+    assert not window.recovery_links_pending
+    assert window.status.text() == "Read-only result checks complete. Saved links refreshed."
+    assert not any(kind in {"BATCH_APPROVE", "BATCH_STEP", "TRANSFER_CREATE"} for kind, _ in sent)
+
+
+def test_failed_link_refresh_keeps_recovery_error_visible(qtbot, binding):
+    window = Workspace(); window.quitting = True; qtbot.addWidget(window)
+    window.controller = SimpleNamespace(binding=binding, generation=1, pending={})
+    window.recovery_links_pending = True
+    window.receive(Event("links", 1, "SAVED", error="Unable to read saved links"))
+    assert not window.recovery_links_pending
+    assert window.status.text() == "Unable to read saved links"

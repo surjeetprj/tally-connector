@@ -62,6 +62,12 @@ class PartyReader:
                   "PINCODE": "pincode", "LEDSTATENAME": "state", "COUNTRYNAME": "country"}
         content = {dest: row[src] for src, dest in fields.items() if src in row}
         unavailable = ["pan", "gst_reg_type"]
+        # Owner-supplied TallyPrime 7.0 export uses this native scalar. Retain
+        # legacy COUNTRYNAME reads, but never treat conflicting values as verified.
+        if "COUNTRYOFRESIDENCE" in row:
+            content["country"] = row["COUNTRYOFRESIDENCE"]
+            if "COUNTRYNAME" in row and row["COUNTRYNAME"] != row["COUNTRYOFRESIDENCE"]:
+                unavailable.append("country")
         if "ADDRESS_LINES" in row:
             content["address"] = "\n".join(row["ADDRESS_LINES"])
         else:

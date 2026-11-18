@@ -1,6 +1,81 @@
 # Current state and progress
 
-Last updated: 16 November 2026.
+Last updated: 18 November 2026.
+
+## Current repair: transfer setup guidance
+
+Latest layout repair (18 November): owner Windows scaling exposed a minimum
+window height larger than available desktop space, clipping Activity controls.
+Primary pages now scroll overflow instead of forcing that minimum on the window;
+initial sizing uses available logical screen geometry. Focused checks: 18 passed,
+including larger-font/smaller-window reachability and normal transfer flows.
+Full offline suite: **276 passed, one live check skipped**. Changed documentation
+links/fences and git diff --check passed. The owner restarted and reports no
+terminal geometry warning; this confirms warning removal on their installation.
+No computer-use automation, live calls or runtime edits ran. Scroll reachability
+has offline coverage; broader native layout inspection remains owner-run.
+
+Latest recovery verification (18 November): owner clicked read-only result checks
+and the Bahi-to-Tally batch 2da2cf3d-5040-4145-bce8-5680bb4a6262 now shows
+SUCCEEDED. Read-only local journal inspection confirms all stored comparisons,
+including country, pass and the identity link exists. Its target was corrected
+by the owner; this does not verify the new create XML on a fresh ledger.
+Activity was showing stale saved links and Working in background after completion.
+The recovery result now refreshes links automatically, updates party link status
+and displays explicit completion; errors remain visible. Focused checks: 14 passed.
+Full offline regression: **272 passed, one live check skipped**. Documentation
+link/fence checks and git diff --check passed.
+No live calls or runtime edits were performed during this repair.
+
+Latest country fix (18 November): the owner reports TallyPrime 7.0 and supplied
+an all-ledger XML export. It uses COUNTRYOFRESIDENCE (16 occurrences), not
+COUNTRYNAME (zero); the blocked ledger has no country. The builder/query now use
+the observed native country field, with strict read-back comparisons retained.
+No date is invented for dated mailing records. Synthetic country-shape fixtures
+and known-GUID read-only reconciliation tests were added; reconciled child success
+now updates a fully completed parent batch. Focused mapping/batch checks: 44 passed;
+complete offline suite after recovery test: **270 passed, one live check skipped**.
+See [export evidence and limitations](api/tally/README.md#supplied-tallyprime-70-export).
+No live API requests, remote corrections, runtime edits or duplicate creates ran.
+Corrected create XML is offline-tested, not live-import-certified.
+
+Owner screenshots show loaded parties and preserved identity links, but no saved
+operator/field policy; transfer buttons were silently disabled. Parties now shows
+Finish transfer setup and its buttons open Settings at the required name field.
+Blank-name validation is visible in Settings; failed saves retain the setup gate.
+Successful save enables preparation without starting a transfer. The LOAD status
+no longer tells the user to transfer when setup is incomplete. Existing verified
+binding, approval, execution and recovery guards are unchanged.
+
+Focused offline UI/integration checks: 12 passed. The tests reproduce Refresh
+before saving settings, both transfer directions/types and saved-policy restart.
+Complete offline regression: **265 passed, one opt-in live check skipped**.
+Changed documentation links/fences and git diff whitespace checks passed.
+No live calls, computer-use automation or owner-runtime edits were performed.
+Owner verification on 18 November: Apollo Hospital Jayanagar transferred from
+Tally to Bahi business 52 as account 280, Active, Vendors (A/P) / VENDOR. Batch
+5a37f710-4ae7-4cdc-a67f-8266ea906d34 and its saved identity link survived restart,
+confirmed by the owner and screenshots; reviewer surjeet. Displayed contact/tax
+fields are blank, so populated-field round trips are not established by this case.
+The reverse trial on 18 November created a Tally supplier but is BLOCKED:
+batch 2da2cf3d-5040-4145-bce8-5680bb4a6262, source
+MST004-SUP-20261102-7a5d3198, destination GUID
+0b212ad8-3be5-45fe-8719-e1a70e240d4c-0000016a. Read-only inspection of the saved
+runtime comparison evidence shows name, email, identity, supplier type and group
+matching; only country fails (approved India, country absent from read-back).
+No live requests, runtime edits, reconciliation or repeat creation were performed
+while diagnosing this case. Do not recreate or weaken its approved comparisons.
+The subsequent Tally screenshot confirms Country is Not Applicable rather than
+India, so this is a saved-value mismatch, not merely an absent read field. The
+current root COUNTRYNAME payload did not establish the approved country on this
+deployment. Official generic samples show that tag, while the release-3 schema
+documents dated LedMailingDetails/Country; neither alone verifies the required
+7.0 create shape/date. The supplied export establishes the native country field;
+the owner's correction and read-only reconciliation have now completed this
+existing transfer as recorded above. Do not transfer the source again. The new
+create mapping still needs live verification. Customer and multi-party live
+cases remain pending.
+Ledger/UOM work remains deferred while party transfers are being verified.
 
 ## Latest contract refresh
 
@@ -24,7 +99,7 @@ remains pending. Historical verification below describes the 4 November implemen
 The default native app now provides **Parties, Activity and Settings**, saved
 operator/field policies, automatic verified connection restoration/loading and
 selected party batches with one approval. Offline implementation is complete;
-owner manual verification of the new workspace remains pending. Full MST-004,
+one Tally-to-Bahi supplier and restart are owner-verified; other live cases remain pending. Full MST-004,
 Phase 0/foundation and frozen Python 3.13/clean-machine certification remain open.
 
 See [workspace behavior](master-sync/AUTOMATED_PARTY_WORKSPACE.md),
@@ -113,7 +188,8 @@ Items/groups, transactions, party updates and unattended sync remain separate ga
 - The user authorized implementation of supervised batches and saved omission
   policies. Each exact Ready subset still needs explicit in-app approval. No
   assistant-driven live creation, cleanup, deletion or unattended sync is authorized.
-- Known pair: Bahi 52, SISOFT Technologies Private Limited, and Tally release 6.2,
+- Known pair: Bahi 52, SISOFT Technologies Private Limited, and owner-reported
+  TallyPrime 7.0 (original probes used 6.2),
   SIS Dummy GUID 0b212ad8-3be5-45fe-8719-e1a70e240d4c. Sundry Debtors/customers and
   Sundry Creditors/suppliers with descendants were owner-confirmed on 2 November.
 - Bahi base: https://innoforia.com/201/h-bahi/bahi/web-api/. Existing Credential
@@ -130,12 +206,11 @@ Items/groups, transactions, party updates and unattended sync remain separate ga
 
 ## Next concrete action
 
-The owner should quit the old connector and launch the same runtime. Save the
-operator/default field policy once, verify automatic reopening on a second launch,
-then follow the short manual checklist for single/multiple customer/supplier
-transfers in both directions. Include a mixed Ready/Linked/Needs-review selection,
-destination field inspection, saved links and restart screenshots. Record actual
-outcomes as owner-reported evidence. Do not run live transfers automatically.
+The existing country mismatch is resolved and its mapping persisted. Restart to
+load the Activity refresh fix; inspect the completed batch and saved link.
+Then follow the short manual checklist for remaining customer/supplier and batch
+cases. The corrected create path needs a separately reviewed live case. Record
+owner evidence honestly; do not run live transfers automatically.
 
 ## References
 

@@ -36,7 +36,8 @@ def test_structured_mailing_create_and_readback(kind, binding):
     response = b"<COLLECTION>" + etree.tostring(ledger) + b"</COLLECTION>"
     row = records(response, "Ledger")[0]
     assert row["ADDRESS_LINES"] == ("First", "", "Third")
-    assert row["COUNTRYNAME"] == "India" and row["PINCODE"] == "012345"
+    assert row["COUNTRYOFRESIDENCE"] == "India" and row["PINCODE"] == "012345"
+    assert parse(raw).find(".//COUNTRYNAME") is None
 
 
 @pytest.mark.parametrize("mutation", ["alter", "delete", "extra", "multiple", "context"])

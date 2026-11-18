@@ -18,6 +18,9 @@ computer-use verification ran for this milestone.
    For first setup only, use Settings to verify and explicitly confirm the observed
    roots. Save operator `surjeet` and review/save the contact-field policy once.
    Tax fields are currently excluded; optional omissions receive audited reasons.
+   If transfers are not set up, Parties shows Finish transfer setup; its buttons
+   open Settings at Your name. Enter your name and click Save operator and transfer
+   policy. A blank name must show a visible message and start no transfer.
 3. Confirm Parties loads automatically. Quit/reopen and check that no Verify,
    group confirmation, operator entry or Load click is required. Saved links must
    retain your earlier real link. Activity > Advanced retains legacy history.
@@ -59,6 +62,13 @@ experiment records. Verify these four cases across your selections:
    crashes/timeouts; uncertain cases already have offline coverage.
 
 ## Expected exceptions
+
+- Existing blocked country trial: the supplied 7.0 export identified the native
+  country tag and the connector mapping is corrected. On the already-created
+  MST004-SUP-20261102-7a5d3198 ledger, set Country to the previously approved India
+  in Tally and save. Restart the connector and Check unresolved results (reads
+  only). All original comparisons must pass before its mapping/batch completes.
+  Do not create a second ledger. Future create XML acceptance remains a live gate.
 
 - Changed identity/classification: transfers stop and Settings explains the issue.
 - Read failure: restore connection access and Refresh; do not cancel unrelated work.

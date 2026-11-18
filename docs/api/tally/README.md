@@ -1,5 +1,43 @@
 # Tally Phase 0 evidence
 
+## Country write mismatch — 18 November 2026
+
+Owner screenshot of SIS Dummy ledger MST004-SUP-20261102-7a5d3198 shows Country
+Not Applicable after an approved country India create. Saved GUID read-back also
+omits country; other approved comparisons matched. The existing root COUNTRYNAME
+mapping follows the [generic sample](https://help.tallysolutions.com/sample-xml/),
+but does not establish working country transfer on this release. The
+[release-3 schema](https://help.tallysolutions.com/developer-reference/release-3-tdl-enhancements-tally-prime/what-are-the-changes-in-xml-tags/)
+documents Ledger/LedMailingDetails with ApplicableFrom and Country, requiring
+deployment-specific XML evidence before selecting its shape/date. Preserve the blocked
+record and all comparisons; no repeat creation, country inference or remote
+alteration is authorized by the screenshot. No live API calls were performed
+during this investigation; official documentation was read on the web.
+
+### Supplied TallyPrime 7.0 export
+
+The owner reports the current installation is 7.0; prior 6.2 probes are historical.
+The supplied UTF-16 Ledgers.xml contains 65 ledgers, 16 COUNTRYOFRESIDENCE elements
+and zero COUNTRYNAME elements. India ledgers also show dated
+LEDMAILINGDETAILS.LIST/COUNTRY with APPLICABLEFROM. The blocked test ledger has
+neither country representation. Source SHA-256:
+`881a653688ee189d6871962fd6991d422143d060a1438e3cc3b6fe57ddf67abd`.
+
+The create builder now uses COUNTRYOFRESIDENCE, and the company-scoped collection
+query fetches CountryofResidence. Reads preserve missing/empty values and mark
+conflicting native/legacy country fields unavailable. No applicable date is
+invented and no dated mailing aggregate is sent by this change. The
+[synthetic fixture](../../../tests/fixtures/tally/party_country_7.xml) retains
+observed tag shapes with synthetic ledger values; the owner export is not copied
+into the repository. Offline checks do not certify live import acceptance:
+the corrected create mapping still needs an owner-approved future live trial.
+
+The already-created ledger is not altered or recreated. If the owner corrects
+its Country to the previously approved India in Tally, known-GUID read-only
+reconciliation can verify all original fields and complete the local mapping.
+A fully reconciled batch now reflects its child success; unsent cancelled rows
+still require renewed review. No remote update method has been added.
+
 Observed 29 October 2026, approximately 19:47 IST. CON-002 is partially validated;
 the observations below do not establish import, idempotency or crash recovery.
 

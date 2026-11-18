@@ -97,6 +97,14 @@ def test_workspace_batch_and_automatic_restart(qtbot, tmp_path, monkeypatch, sid
         window.bind.click()
         qtbot.waitUntil(lambda: window.controller.binding is not None and not window.controller.pending, timeout=10000)
         assert window.policy is None
+        # Reproduce the owner's screenshot: lists loaded via Refresh, policy missing.
+        window.tabs.setCurrentIndex(0)
+        window.refresh.click()
+        qtbot.waitUntil(lambda: window.discovery is not None and not window.controller.pending, timeout=10000)
+        assert window.setup_notice.isVisible()
+        window.models[side].checked.add(window.models[side].objects[0].identity)
+        window.transfer_buttons[side].click()
+        assert window.tabs.currentIndex() == 2 and state["posts"] + state["imports"] == 0
         window.operator.setText("Owner")
         window.save_policy.click()
         try:
@@ -128,6 +136,7 @@ def test_workspace_batch_and_automatic_restart(qtbot, tmp_path, monkeypatch, sid
         # No Verify, group selection, Bind, operator entry or Load clicks on restart.
         qtbot.waitUntil(lambda: window.discovery is not None and window.policy is not None and not window.controller.pending, timeout=10000)
         assert window.operator.text() == "Owner" and window.saved_model.rowCount() == 2
+        assert window.setup_notice.isHidden()
         assert state["posts"] + state["imports"] == 2
         assert batch_id in {b.id for b in window.batch_model.objects}
         restored = next(b for b in window.batch_model.objects if b.id == batch_id)
