@@ -67,9 +67,9 @@ See [workspace behavior](master-sync/AUTOMATED_PARTY_WORKSPACE.md).
 1. No FastAPI, Flask, Uvicorn, local web server, WebSockets or SSE.
 2. All connector-originated Tally HTTP calls run with concurrency one, including
    connection checks, company lists, master lookups, reads and writes.
-3. Closing the main window hides it to the system tray when the tray is available.
-   Only explicit Quit ends execution. If no usable tray exists, keep the window
-   accessible instead of hiding the only UI.
+3. Closing the main window with X invokes the same graceful shutdown as Quit.
+   Stop new work and finish bounded work before ending the process; do not hide
+   on close. The standard minimize action keeps the connector running.
 4. Acquire a single-instance lock before starting scheduling or workers. A local
    lock does not establish exclusive ownership across computers/Windows users.
 5. No network calls or lengthy SQLite work on the GUI thread. Workers never

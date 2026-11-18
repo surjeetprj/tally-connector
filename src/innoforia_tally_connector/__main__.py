@@ -49,6 +49,8 @@ def main():
         if runtime:
             runtime.shutdown(cleanup)
         elif startup_failed:
+            window.quitting = True
+            tray.hide()
             app.quit()
 
     window.request_quit = quit_connector
@@ -81,6 +83,8 @@ def main():
                 window.status.setText("Startup failed. Metadata is preserved; inspect redacted diagnostics and recover from backup if needed.")
                 startup.shutdown(wait=False)
                 if closing:
+                    window.quitting = True
+                    tray.hide()
                     app.quit()
                 return
         if closing and runtime and runtime.closed.is_set():

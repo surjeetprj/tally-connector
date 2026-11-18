@@ -4,6 +4,16 @@ Last updated: 18 November 2026.
 
 ## Current repair: transfer setup guidance
 
+Latest close behavior (18 November, owner request): X now invokes graceful Quit
+instead of hiding in the tray. The existing worker/resource shutdown path remains
+in control; no force termination is added. Startup-failure exit paths also mark
+the window ready to close. Subprocess tests exercise the real entry-point event
+loop with fake services for tray/no-tray, pending startup and startup failure.
+Full offline verification: **281 passed, one live test skipped**. Documentation
+links/fences and git diff --check passed. The owner restarted and confirmed X
+now exits correctly and returns the PowerShell prompt. Use minimize to keep the
+app running. No assistant live calls/runtime edits ran.
+
 Latest layout repair (18 November): owner Windows scaling exposed a minimum
 window height larger than available desktop space, clipping Activity controls.
 Primary pages now scroll overflow instead of forcing that minimum on the window;

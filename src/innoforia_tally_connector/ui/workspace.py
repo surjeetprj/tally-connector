@@ -478,7 +478,6 @@ class Workspace(QMainWindow):
 
     def closeEvent(self, event):
         if self.quitting: event.accept()
-        elif getattr(self, "tray_available", False): self.hide(); event.ignore()
         else:
             if hasattr(self, "request_quit"): self.request_quit()
             event.ignore()

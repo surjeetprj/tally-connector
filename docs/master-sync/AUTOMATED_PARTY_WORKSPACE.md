@@ -25,6 +25,11 @@ The initial window fits the available logical desktop area. Tab contents scroll
 when large fonts, display scaling or advanced panels exceed the viewport, keeping
 lower controls reachable instead of forcing the window beyond the screen.
 
+Closing the main window with X now runs the same graceful shutdown as Quit
+connector, including while startup is pending or has failed. The process exits
+after bounded work/resources finish. Use the standard minimize button to keep
+the connector running; closing no longer hides it in the tray.
+
 When party lists are loaded before a policy is saved, Parties displays a persistent
 Finish transfer setup action. The transfer buttons then open Settings at the name
 field rather than remaining silently disabled. A visible validation message explains
