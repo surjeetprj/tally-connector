@@ -1,6 +1,6 @@
 # Project Specification v2.1: Innoforia Bahi <-> TallyPrime Desktop Connector
 
-Updated: 4 November 2026 (supervised party workspace requirements).
+Updated: 16 November 2026 (ledger/UOM handbook availability; party workspace scope retained).
 
 Status: requirements and architecture; implemented evidence is tracked in
 [current state](STATE_AND_PROGRESS.md). The original
@@ -29,8 +29,9 @@ guarantees. Distinguish the following operating modes in implementation and UI:
 Initial scope is one active Bahi business/Tally company binding, CUSTOMER and
 SUPPLIER parties, item groups, untracked items and ordinary PURCHASE. Add ordinary
 SALES and supported CREDIT/DEBIT notes after the purchase flow passes accounting
-and recovery gates. Receipt/Payment and general ledger/UOM synchronization require
-additional API contracts. Do not present them as implemented or infer routes.
+and recovery gates. Receipt/Payment requires additional API contracts. Ledger/UOM
+CRUD is now documented, but connector implementation, deployment validation and
+approved mapping/write policies remain pending. Do not present it as implemented.
 
 The selected delivery order is now master-first: after the foundation, deliver
 supervised discovery, confirmed existing-record linking and controlled master
@@ -501,7 +502,8 @@ confirms business/authentication, not all endpoint permissions or posting setup.
    Names are not guaranteed unique. Keep hierarchy and taxability explicit.
 4. Item create requires `item_name`, `item_desc`, `item_grp_id`, `manu_code`,
    `item_type`, `item_uom` and `item_sale_price`. Bahi group and UOM must exist.
-   No UOM endpoint is supplied. Never invent required manufacturer/price fields.
+   The supplied UOM API documents lookup/create/update; its connector adapter and
+   deployment validation are pending. Never invent required manufacturer/price fields.
 5. Whitelist item metadata; never mirror `avail_qty` or running balances.
    Invoice posting changes stock separately. Resolve group-sourced tax explicitly.
 6. Invoice create produces DRAFT without accounting/stock effects. PATCH is
@@ -543,7 +545,8 @@ implement a fake production success response. Agree contracts for:
 - Conditional version updates and conflict responses.
 - Change origin, acknowledgments and echo suppression.
 - Connector registration/lease enforcing one writer per binding across PCs.
-- Missing UOM/general-ledger and Receipt/Payment resource APIs.
+- Unverified ledger/UOM deployment and missing connector adapters; still-missing
+  Receipt/Payment contracts. Ledger master CRUD is not a journal/balance API.
 
 Where a backend feed is unavailable, supervised scans can enumerate pages,
 deduplicate by ID, fetch invoice details and compare canonical hashes. They are
@@ -807,6 +810,8 @@ See the [documentation index](README.md) for reading order and document ownershi
 
 - [Business setup handbook](api/bahi/handbooks/API-BIZ-SETUP-CHECK-HANDBOOK.md)
 - [Party handbook](api/bahi/handbooks/API-PARTY-DEVELOPER-HANDBOOK.md)
+- [Ledger handbook](api/bahi/handbooks/API-LEDGER-DEVELOPER-HANDBOOK.md)
+- [UOM handbook](api/bahi/handbooks/API-UOM-DEVELOPER-HANDBOOK.md)
 - [Item-group handbook](api/bahi/handbooks/API-ITEM-GROUP-DEVELOPER-HANDBOOK.md)
 - [Item handbook](api/bahi/handbooks/API-ITEM-DEVELOPER-HANDBOOK.md)
 - [Invoice handbook v2](api/bahi/handbooks/API-INVOICE-DEVELOPER-HANDBOOK_v2.md)

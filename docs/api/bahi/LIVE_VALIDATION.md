@@ -113,7 +113,9 @@ and [workflow/remaining gates](../../master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.
 - Numbering ownership and confirmed party/item/unit/tax/charge mappings.
 - Server idempotency/external identity, expected versions, change feed/origin and
   cross-PC ownership contracts. No unprovided `/sync/*` endpoint was probed.
-- UOM/general-ledger/Receipt/Payment API discovery through authoritative contracts.
+- Ledger/UOM deployment validation against the contracts supplied on 16 November
+  2026; no new live calls were made for that refresh. Receipt/Payment contracts
+  remain missing. Earlier party observations above remain historical evidence.
 - Production server crash/compensation guarantees and test-business write approval.
 
 See [integration assessment](README.md),

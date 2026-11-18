@@ -2,7 +2,7 @@
 
 Prepared 29 October 2026. Delivery backlog supporting [Project Specification v2.1](PROJECT_SPECIFICATION.md).
 
-Revised after reviewing the five supplied Bahi API handbooks. The
+Revised after reviewing the seven supplied Bahi API handbooks (refresh 16 November 2026). The
 [Bahi REST integration assessment](api/bahi/README.md)
 records actual routes, scopes, mapping rules and remaining contract gaps.
 Handbook behavior is documented capability, not verified live deployment.
@@ -38,7 +38,7 @@ status, pause, and operation visibility early so integration work is reviewable.
 | --- | --- | --- |
 | Engineering slice | Customer/vendor ledgers; ordinary purchase create/read-back; Tally-to-Bahi ingestion and supported edit; manual sync | Test companies only; simple single-currency examples |
 | Pilot | Customer/vendor parties, item groups and untracked stock items; mapped existing UOM/tax ledgers; ordinary Sales and Purchase for supported fields | One active binding; confirmed mappings; manual or supervised transfer until sync guarantees exist; explicit enablement of accounting writes |
-| v1 completion | Credit Note and Debit Note; supported entities in both directions; conflict resolution, recovery, installer and support tools | Receipts/Payments and general ledger/UOM synchronization require additional API contracts; unattended bidirectional release requires backend sync guarantees |
+| v1 completion | Credit Note and Debit Note; supported entities in both directions; conflict resolution, recovery, installer and support tools | Receipts/Payments require additional contracts; documented ledger/UOM CRUD needs deployment validation, adapters and approved policies; unattended bidirectional release requires backend sync guarantees |
 | Deferred | Multi-company UI, multiple active connectors for one binding, hard deletion, automatic overwriting of posted vouchers, advanced inventory/accounting features | Expose unsupported data as actionable blocked operations |
 
 Define the exact supported accounting subset during discovery: inventory versus
@@ -148,6 +148,8 @@ party group configuration or accounting readiness.
 | --- | --- |
 | `check_api_biz_setup.php` | Authenticate and bind business identity |
 | `api-party.php` | List/detail, create and patch CUSTOMER/SUPPLIER parties; DELETE deactivates |
+| `api-ledger.php` | Documented broader account masters and system-flag reads; separate ledger scopes; adapter/deployment validation pending |
+| `api-uom.php` | Documented code-keyed list/detail/create/patch with item scopes; no DELETE; adapter/deployment validation pending |
 | `api-item-group.php` | List/detail, create and patch groups; no deletion |
 | `api-item.php` | List/detail, create, patch and deactivate items; preexisting group/UOM required |
 | `api-invoice.php` | List headers, retrieve details, create/patch DRAFT, separate path-ID POST to `/post`; DELETE cancellation is an accounting action |
@@ -158,8 +160,8 @@ base URL rather than using either handbook's example URL. Start with read scopes
 provision create/update/post scopes only for enabled directions and actions.
 
 Important limitations: no documented delta filters or stable snapshot paging;
-party API explicitly lacks idempotency/external-reference support; general
-ledger, UOM and Receipt/Payment APIs are not supplied. Invoice imports must use
+party API explicitly lacks idempotency/external-reference support; ledger/UOM
+contracts are supplied but unverified, and Receipt/Payment contracts remain absent. Invoice imports must use
 explicit dates, preserve prices with sales overrides, and distinguish DRAFT from
 ACTIVE. See the linked assessment for field-level constraints and recovery rules.
 
@@ -275,7 +277,7 @@ calendar schedule is assigned.
 | **0 — Validate the integration** | CON-001 contracts/scope; CON-002 Tally capability spike; CON-003 worker/package spike | Connector + cloud + accounting | Signed scope/field matrix; API capability gap list; reproducible Tally queries for company identity, GUID/AlterID, create/read-back and incremental reads; tested Qt/Huey lifecycle and tiny packaged executable. No production writes. |
 | **1 — Establish the foundation** | CON-010 scaffold/CI; CON-011 schema/outbox; CON-012 credentials/clients; CON-013 minimal UI | Connector | Installable source project, migrations, operation store, isolated fake adapters, Credential Manager, setup/status/pause. Test second-instance rejection, migration recovery, private-transport boundaries, concurrent gateway serialization, a local operation-ID task, frozen resources and recovery of an undispatched operation. |
 | **2 — Prove one bidirectional slice** | CON-020 baseline/binding; CON-021 master dependency; CON-022 purchase flow; CON-023 reconciliation/ack | Connector + cloud | One test purchase each way with confirmed mappings and target read-back; supported edit returns once. Repeat event, restart after target commit, lost ack and repeated Sync Now produce one business effect. Cloud prerequisite: idempotent ingestion and reconciliation contracts work. |
-| **3 — Complete master synchronization** | CON-030 parties/groups/tax mappings; CON-031 existing UOM mappings/stock; CON-032 mapping/conflict UI | Connector + accounting | Supported masters both ways; stable rename handling; existing stock not silently altered; balance fields excluded from master updates; missing mappings block affected operations. General ledger/UOM CRUD depends on additional contracts. |
+| **3 — Complete master synchronization** | CON-030 parties/groups/tax mappings; CON-031 existing UOM mappings/stock; CON-032 mapping/conflict UI | Connector + accounting | Supported masters both ways; stable rename handling; existing stock not silently altered; balance fields excluded from master updates; missing mappings block affected operations. General ledger/UOM CRUD requires deployment validation, scoped adapters and approved policies against the supplied contracts. |
 | **4 — Expand voucher coverage** | CON-040 Sales/Purchase variants; CON-041 Receipts/Payments (backend-dependent); CON-042 Credit/Debit Notes | Connector + accounting + cloud | Supported invoice/note types have both-direction fixtures, draft/post separation, signs, discounts and GST validation. Receipt/Payment work cannot pass its gate without dedicated contracts. Unsupported variants produce precise errors. |
 | **5 — Finish desktop operations and resilience** | CON-050 tray/dashboard; CON-051 retries/conflicts; CON-052 diagnostics/fault tests | Connector + QA | Nonblocking logs, counts, last successful sync, company identity, pause/resume, safe retry/reconcile, conflict resolution and redacted support bundle. Fault suite and baseline/restore detection pass. |
 | **6 — Package and pilot** | CON-060 installer/upgrades; CON-061 clean-machine checks; CON-062 pilot/runbook | Connector + QA + support | Versioned PyInstaller/Inno artifacts; signature plan for distribution; standard-user install, opt-in startup, upgrade migration/backup and rollback tested; pilot reconciled and approved. |

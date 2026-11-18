@@ -16,7 +16,7 @@ Direct PHP endpoint:
 https://www.innoforia.com/201/h-bahi/bahi/web-api/api-party.php
 ```
 
-No `.htaccess` is required by the PHP code. However, the extensionless endpoint requires Apache configuration that resolves `api-party` to `api-party.php`, such as an applicable MultiViews configuration. If it returns an Apache 404, test the direct `.php` endpoint and ask the server administrator to configure extensionless resolution. PHP route matching occurs only after Apache invokes the script. Use HTTPS for remote deployments.
+The included `.htaccess` internally rewrites `api-party` to `api-party.php`, including optional numeric path IDs, while preserving the HTTP method, request body and query string. Apache must enable `mod_rewrite` and permit these rules through `AllowOverride FileInfo` (or `AllowOverride All`). Deploy `.htaccess` alongside the PHP files. Use HTTPS for remote deployments.
 
 Intended layout:
 

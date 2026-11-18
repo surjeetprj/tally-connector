@@ -51,10 +51,15 @@ fallback business values.
 
 ## Bahi API handbooks
 
-The supplied filenames and contents are preserved under `api/bahi/handbooks/`:
+The seven supplied handbook contents are preserved under `api/bahi/handbooks/`.
+Stable project filenames retain existing links; see the
+[16 November refresh](api/bahi/HANDBOOK_REFRESH_2026_11_16.md) for source filenames
+and the contract changes.
 
 - [Business setup check](api/bahi/handbooks/API-BIZ-SETUP-CHECK-HANDBOOK.md)
 - [Parties](api/bahi/handbooks/API-PARTY-DEVELOPER-HANDBOOK.md)
+- [Account ledgers](api/bahi/handbooks/API-LEDGER-DEVELOPER-HANDBOOK.md)
+- [Product UOM](api/bahi/handbooks/API-UOM-DEVELOPER-HANDBOOK.md)
 - [Item groups](api/bahi/handbooks/API-ITEM-GROUP-DEVELOPER-HANDBOOK.md)
 - [Items](api/bahi/handbooks/API-ITEM-DEVELOPER-HANDBOOK.md)
 - [Invoices v2](api/bahi/handbooks/API-INVOICE-DEVELOPER-HANDBOOK_v2.md)
@@ -74,8 +79,9 @@ context, not authorization to run writes or migrations against a live business.
    party/item/UOM mappings, with separate draft/post stages and recovery tests.
 
 Automatic bidirectional writes remain gated on verified backend change capture,
-idempotency, versions, origin and writer ownership. Receipt/Payment, general
-ledger and UOM APIs were not supplied; confirm capabilities or defer those areas.
+idempotency, versions, origin and writer ownership. Ledger and UOM contracts are
+now supplied, but their deployment and connector adapters remain unverified and
+unimplemented respectively. Receipt/Payment contracts are still missing.
 
 ## Maintenance
 

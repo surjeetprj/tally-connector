@@ -35,7 +35,7 @@ record is overwritten merely because a mapping exists.
 | --- | --- | --- | --- |
 | Bahi authentication/business identity | Live business check returned expected biz_id 52 | Verify test-business write permission; endpoint-specific read scopes worked | Bahi API + connector |
 | Supplier/item/group reads | Live one-page lists/details returned one supplier/group/item each | Confirm selected mappings; test larger datasets and inactive semantics | Connector |
-| Existing UOM mapping | Item API requires business-specific existing code, max 8 characters | Obtain authoritative lookup/configuration; verify each selected unit | Bahi API + accounting |
+| Existing UOM mapping | Item API requires business-specific existing code, max 8 characters; supplied UOM API documents code-keyed lookup | Verify UOM deployment/scopes, implement reader and confirm each selected unit; no inferred conversions | Bahi API + accounting |
 | Purchase create/update | Live purchase list/detail returned explicit ACTIVE and one detail item; DRAFT writes documented only | Verify controlled DRAFT create/update and canonical amount comparison | Bahi API + connector |
 | Separate posting | Documented path-ID `/post`, repeated known-ID post; desktop reference | Confirm DRAFT -> ACTIVE, permissions and matching stock/journal behavior in test data | Bahi API + accounting |
 | Duplicate/uncertain create | Supplier/reference/date purchase check documented; desktop attempt/reconciliation pattern | Add authoritative external identity/idempotency lookup; no blind retry after timeout | Bahi API + connector |
@@ -81,7 +81,7 @@ third-party assumptions. Exact route names and payload schemas remain proposals.
 | P0 | Source identity/origin and acknowledgment | Preserve origin, distinguish echoes from new business edits and retry acknowledgment independently |
 | P0 | Connector ownership | Reject competing writers for the same binding; define lease expiry and uncertain in-flight recovery |
 | P0 | Capabilities and UOM/configuration reads | Discover supported schemas/resources and valid business-specific unit/setup choices |
-| Later | General ledgers and Receipt/Payment contracts | Define accounting/allocations and recovery before implementing those features |
+| Later | Supplied ledger contract validation and missing Receipt/Payment contracts | Verify ledger scopes/group/system evidence; ledger CRUD does not supply accounting transactions, allocations or recovery |
 
 MyISAM compensation in the handbook is not crash atomicity. API implementation
 must specify how business writes, identity results and change events remain

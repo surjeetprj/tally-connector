@@ -81,6 +81,13 @@ Bahi units must already exist, with confirmed code spelling/case. Multiple or
 compound units need a separate conversion contract. Sale-price schedules in
 Tally may not equal a single Bahi price; block a nonrepresentable source.
 
+The supplied [UOM handbook](../api/bahi/handbooks/API-UOM-DEVELOPER-HANDBOOK.md)
+now defines business-scoped code lookup and description/UQC metadata. Its reader
+and deployment checks are pending; unit creation remains outside this slice.
+Do not infer a unit conversion from `gst_uqc`, which the API does not validate
+against an official catalog. Exclude obsolete item fields `batch_info_available`,
+`expiry_required` and `item_tax` from future payloads and read requirements.
+
 ## Comparison and update rules
 
 - Compare only the confirmed supported field set. Exclude transport metadata,

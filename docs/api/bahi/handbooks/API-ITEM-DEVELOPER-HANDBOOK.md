@@ -36,7 +36,7 @@ Send `Authorization: Bearer <API_KEY>` and `Content-Type: application/json` for 
 
 Required: `item_name`, `item_desc`, `item_grp_id`, `manu_code`, `item_type`, `item_uom`, `item_sale_price`. Omitted fields use the product_item table defaults. Group 2 and UOM PCS must already exist for the authenticated business; no group or UOM is created automatically.
 
-Writable fields use the exact product_item column names, excluding `item_id`, `biz_id`, `created_dtm`, `created_by`, `update_dtm` and `updated_by`. The server owns those fields, uses UTC timestamps, and records the actor as `api:<integration_id>`.
+Writable fields use the controller's allowlist of product_item column names, excluding `item_id`, `biz_id`, `created_dtm`, `created_by`, `update_dtm` and `updated_by`. The server owns those fields, uses UTC timestamps, and records the actor as `api:<integration_id>`. The obsolete columns `batch_info_available`, `expiry_required` and `item_tax`, removed by the supplied schema migrations, are neither selected nor accepted in requests.
 
 Validation enforces schema lengths, nullability, enum values, integer ranges, and decimal precision/scale. Integer fields require JSON integers. Send decimal strings to retain exact monetary precision; responses preserve decimal strings. Prices and GST are nonnegative, GST is at most 100, and inventory quantity may be negative. Nullable fields can explicitly be cleared with null. Required text must be nonblank.
 

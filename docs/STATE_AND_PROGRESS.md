@@ -1,6 +1,23 @@
 # Current state and progress
 
-Last updated: 4 November 2026.
+Last updated: 16 November 2026.
+
+## Latest contract refresh
+
+Imported all seven supplied Bahi handbooks, preserving their bytes and existing
+project link paths. Ledger and UOM contracts are newly supplied; party routing
+and obsolete item-field guidance changed. Invoice, group and setup content is
+unchanged. Updated the assessment, specification, plan and master/Phase 0 notes
+to distinguish documented APIs from pending adapters and deployment verification.
+See [comparison and follow-up gates](api/bahi/HANDBOOK_REFRESH_2026_11_16.md).
+
+No runtime code change was needed for the unchanged party wire contract. SHA-256
+copy checks, Markdown local links/anchors, fences and diff whitespace checks passed.
+Runtime tests/builds and live API calls were not run for this documentation task;
+the project Python launcher failed because sandbox access to its base interpreter
+was denied. PowerShell/Git supplied the document checks. Ledger/UOM reader work
+remains a separate bounded implementation task; owner workspace verification below
+remains pending. Historical verification below describes the 4 November implementation.
 
 ## Active milestone
 

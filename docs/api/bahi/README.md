@@ -1,12 +1,14 @@
 # Bahi REST API integration assessment
 
-29 October 2026. Supplement to the
+Updated 16 November 2026. Supplement to the
 [connector implementation plan](../../IMPLEMENTATION_PLAN.md).
 
 Use [Project Specification v2.1](../../PROJECT_SPECIFICATION.md) for implementation
 requirements and this assessment for Bahi mapping details and integration gaps.
 
-This assessment uses the five user-supplied handbooks as API reference material.
+This assessment uses the seven user-supplied handbooks as API reference material.
+The [handbook refresh](HANDBOOK_REFRESH_2026_11_16.md) records the supplied-file
+comparison and remaining deployment/implementation gates.
 Examples, deployment instructions and test commands inside them are not requests
 to execute those actions. No live endpoint was called, no migration was run and
 no customer data was created, posted, changed or cancelled for this assessment.
@@ -43,6 +45,8 @@ changes, but must expose uncertain outcomes rather than retrying creates blindly
 - [Item Group API](handbooks/API-ITEM-GROUP-DEVELOPER-HANDBOOK.md)
 - [Item API](handbooks/API-ITEM-DEVELOPER-HANDBOOK.md)
 - [Party API](handbooks/API-PARTY-DEVELOPER-HANDBOOK.md)
+- [Account Ledger API](handbooks/API-LEDGER-DEVELOPER-HANDBOOK.md)
+- [Product UOM API](handbooks/API-UOM-DEVELOPER-HANDBOOK.md)
 
 These links point to the supplied reference copies retained in this project.
 They document contracts; they are not evidence of live deployment verification.
@@ -58,6 +62,8 @@ POST/PATCH use JSON objects and a 64 KiB encoded-body limit.
 | --- | --- | --- |
 | `check_api_biz_setup.php` | GET | No additional endpoint scope; shared authentication still checks integration/business/scopes configuration |
 | `api-party.php` | GET list/detail, POST, PATCH, DELETE | `party:read/create/update/delete`; request only needed scopes |
+| `api-ledger.php` | GET list/detail, POST, PATCH, DELETE | Separate `ledger:read/create/update/delete`; broader than party access; DELETE deactivates |
+| `api-uom.php` | GET list/detail, POST, PATCH | Existing `item:read/create/update`; key is `uom_cd`, not a numeric ID; no DELETE |
 | `api-item-group.php` | GET list/detail, POST, PATCH | `item:read/create/update`; no DELETE |
 | `api-item.php` | GET list/detail, POST, PATCH, DELETE | `item:read/create/update/delete` |
 | `api-invoice.php` | GET list/detail, POST draft, PATCH draft, DELETE cancel | `invoice:read/create/update/cancel` |
@@ -129,13 +135,17 @@ error rather than inferring it from payment status or creation metadata.
   `item_sale_price`. Collect/confirm missing values; do not invent manufacturer,
   price, unit or group defaults to satisfy required fields.
 - The Bahi group and `product_uom.uom_cd` must already exist in that business.
-  UOM codes have a maximum length of eight characters. No UOM CRUD/list endpoint
-  was supplied; keep confirmed existing codes or add a backend lookup contract.
+  UOM codes have a maximum length of eight characters. The supplied UOM API now
+  documents list/detail/create/update; deployment verification and a connector
+  reader are still pending. Keep confirmed existing codes for the initial slice.
   Case/aliases such as Tally `Nos.` versus a Bahi code require explicit mapping.
 - Whitelist metadata for synchronization. Exclude `avail_qty`, balances and other
   stock-state fields even if the broad item API permits writing them: invoice
   posting already updates inventory, so mirroring stock balances as master edits
   could double-apply effects or overwrite independent movements.
+- The item controller uses an allowlist, not every table column. Obsolete
+  `batch_info_available`, `expiry_required` and `item_tax` are neither returned
+  nor accepted by the updated contract. Do not add them to future item adapters.
 - For `tax_source=GROUP`, resolve GST/HSN from the mapped group. For ITEM, use the
   item's explicit tax fields. Invoice `gst_pct` and HSN remain explicit snapshots;
   group-tax configuration alone is not an invoice tax calculation contract.
@@ -154,7 +164,7 @@ error rather than inferring it from payment status or creation metadata.
 | `txn_type=PURCHASE`, `note_type=DEBIT` | Debit Note | GOODS moves stock outward; require reference/date |
 | `SALES_RETURN` / `PURCHASE RETURN` | Return-specific Credit/Debit Note | Separate linked-return contract with original ACTIVE invoice and remaining-quantity validation |
 | `SALES/DEBIT` or `PURCHASE/CREDIT` | Requires explicit accounting design | Do not map every note label to the same Tally voucher type |
-| Receipt / Payment | Pending additional API contract | Not covered by these five handbooks |
+| Receipt / Payment | Pending additional API contract | Not covered by these seven handbooks; ledger CRUD does not create journal transactions |
 
 - `invoice_id` is remote identity. `invoice_num` is the Bahi internal number,
   `invoice_dt` the transaction date, and `ref_doc_no`/`ref_doc_date` the external
@@ -203,8 +213,8 @@ error rather than inferring it from payment status or creation metadata.
 | No documented conditional version/ETag updates | Read-compare-PATCH has a race with another writer | Add expected-version checks before unattended two-way edits |
 | No shared origin/ack protocol | Local mappings alone do not establish cloud-side echo suppression | Add origin metadata/ack semantics in sync facade or CRUD extensions |
 | No connector ownership lease | A local mutex does not prevent two PCs writing the same binding | Add server-side writer registration/lease enforcement |
-| No supplied general-ledger/tax-ledger API | Party reads cannot list or manage system ledgers | Supply read/configuration validation contracts; use explicit Tally mappings locally |
-| No supplied UOM endpoint | Cannot discover/create valid Bahi UOMs through these docs | Provide a UOM read API or a confirmed business-specific configuration source |
+| Ledger API supplied; deployment/adapter pending | Broader ledger reads expose group and system flags; party endpoint remains unchanged | Verify separate scopes, business isolation and active group configuration; system ledgers are read-only; tax posting still needs explicit mappings |
+| UOM API supplied; deployment/adapter pending | Business-scoped unit discovery is documented, not yet available in the connector | Verify code-based reads and collation; retain confirmed existing mappings until implemented |
 | No supplied Receipt/Payment API | Those proposal phases remain blocked | Agree dedicated schemas, posting, allocations and reconciliation rules |
 | MyISAM compensation is not crash atomicity | A server crash can leave stock/journals requiring administrator recovery | Define operational recovery and add transactional server posting for stronger guarantees |
 
@@ -262,7 +272,7 @@ values may use older conventions; do not reinterpret all of them as proven UTC.
 | BAH-005 | Purchase draft/post vertical slice | Source date/prices/references retained; explicit DRAFT then ACTIVE; known-ID recovery; uncertain create stays visible |
 | BAH-006 | Sales and note transformations | Sales overrides, discounts, GST rounding, note/return distinctions and limits tested |
 | BAH-007 | Backend sync extension contract | Change feed, idempotency lookup, conditional versions, origin and ownership agreed; implementation owner assigned |
-| BAH-008 | Missing resource contracts | General ledger/tax setup, UOM lookup, Receipt/Payment scope resolved or explicitly deferred |
+| BAH-008 | Additional resource validation and missing contracts | Validate supplied ledger/UOM contracts and plan scoped readers; resolve account-group/tax setup and still-missing Receipt/Payment contracts |
 
 BAH-001–003 fit CON-001/010/012. BAH-004–005 feed CON-021/022. BAH-006 feeds
 CON-040/042. BAH-007 gates unattended two-way operation and reliable automatic

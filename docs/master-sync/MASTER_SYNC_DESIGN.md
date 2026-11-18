@@ -12,7 +12,7 @@ Status: mutation workflows are planned. The
 | **SUPPLIERS** | Link existing records; create and allowlisted updates in either selected direction | Map SUPPLIER to an explicitly confirmed creditor-ledger classification |
 | **ITEM GROUPS** | Link/create groups; verify hierarchy and supported metadata | Bahi tax attributes do not automatically have a Tally stock-group equivalent |
 | **ITEMS** | Link/create supported untracked GOODS after group/unit mapping | Missing manufacturer, sale price or type blocks Bahi creation |
-| **UNITS** | Link existing units only | No supplied Bahi UOM API; obtain confirmed codes from the business owner |
+| **UNITS** | Link existing units only | UOM API now documented; reader/deployment verification pending; retain owner-confirmed codes until available |
 
 SERVICE/CHARGE representation needs separate live/accounting validation; never
 convert these to inventory stock items by default. The current Bahi sample item
@@ -23,6 +23,12 @@ as blocking issues until a specific contract is approved and tested.
 Exclude invoice/voucher creation, opening/running balances, stock quantities,
 automatic deactivation/deletion, general ledger CRUD and automatic lifecycle
 propagation. Existing inactive/system parties are not update candidates.
+
+The [ledger/UOM handbook refresh](../api/bahi/HANDBOOK_REFRESH_2026_11_16.md)
+does not expand this release scope. Ledger reads could later supply `is_system`
+and account-group evidence for the same `account_id`, but require separate scopes,
+business checks and an implemented reader. The current party endpoint still omits
+those fields; retain its existing unavailable-evidence approval policy.
 
 ## Direction and ownership
 
