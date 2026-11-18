@@ -21,10 +21,12 @@ def collection(entity: str, company: str | None = None, guid: str | None = None)
     coll = ET.SubElement(msg, "COLLECTION", NAME=name, ISMODIFY="No")
     ET.SubElement(coll, "TYPE").text = entity
     fields = ["Name", "GUID", "MasterID", "AlterID"]
+    if entity == "Company":
+        fields.append("BooksFrom")
     if entity != "Company":
         fields.append("Parent")
     if entity == "Ledger":
-        fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryofResidence"]
+        fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryofResidence", "LedMailingDetails.*"]
     for field in fields:
         ET.SubElement(coll, "FETCH").text = field
     if guid is not None:

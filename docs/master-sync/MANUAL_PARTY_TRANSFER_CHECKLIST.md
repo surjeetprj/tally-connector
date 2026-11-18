@@ -1,8 +1,8 @@
 # Owner manual verification: automated party workspace
 
 Use Bahi business 52 and SIS Dummy. Automated checks use fake remotes; these
-checks establish behavior in your installation. No assistant live calls or
-computer-use verification ran for this milestone.
+checks establish behavior in your installation. The mailing repair used export-only
+diagnostics, with no assistant creates, updates or computer-use verification.
 
 ## Setup once
 
@@ -63,12 +63,20 @@ experiment records. Verify these four cases across your selections:
 
 ## Expected exceptions
 
-- Existing blocked country trial: the supplied 7.0 export identified the native
-  country tag and the connector mapping is corrected. On the already-created
-  MST004-SUP-20261102-7a5d3198 ledger, set Country to the previously approved India
-  in Tally and save. Restart the connector and Check unresolved results (reads
-  only). All original comparisons must pass before its mapping/batch completes.
-  Do not create a second ledger. Future create XML acceptance remains a live gate.
+- Airtel India / Bahi 281: retain the existing Tally ledger (GUID ending 0000016b).
+  The owner has corrected its mailing values. Its remaining address mismatch came
+  from the legacy export replacing an en dash with a question mark. The fixed
+  UTF-16 production reader now matches all approved values on the same GUID.
+  No further ledger edits are needed: restart the connector and Check unresolved
+  results (reads only). Verify Airtel becomes SUCCEEDED, its link appears and both
+  survive restart. Do not create a replacement or change punctuation to hide the
+  mismatch. The new dated builder still needs a distinct-record live trial.
+- The earlier MST004-SUP-20261102-7a5d3198 country trial already completed after
+  owner correction and read-only checks. Do not recreate it. Test the dated fix on
+  a distinct unlinked party only after resolving the current mismatch. Inspect
+  address, state, country and PIN directly in Tally, then restart/check persistence.
+  New summaries show the company-derived mailing date in destination/group details.
+  Live acceptance of this new create shape remains pending.
 
 - Changed identity/classification: transfers stop and Settings explains the issue.
 - Read failure: restore connection access and Refresh; do not cancel unrelated work.

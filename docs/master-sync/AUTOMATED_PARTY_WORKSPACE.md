@@ -141,3 +141,18 @@ Follow the [owner checklist](MANUAL_PARTY_TRANSFER_CHECKLIST.md). Full MST-004,
 Tally tax support, groups/items, transactions and unattended sync remain separate
 gates. Backend idempotency/outcome lookup, conditional versions, change capture and
 cross-PC writer ownership are not established by a local reservation/preflight scan.
+
+TallyPrime 7.0 mailing repair (18 November): root mailing writes were ignored on
+the owner's Airtel trial. New creates now use one dated mailing aggregate with
+the verified destination Company.BooksFrom bound to approval. Read-back verifies
+that dated representation; empty/root-only echoes cannot pass. Ambiguous history
+and unavailable/changed dates block. See [evidence and remaining live gate](../api/tally/README.md#dated-mailing-repair--18-november-2026).
+125 focused checks and the full offline suite (310 passed, one live skipped) pass.
+Export-only diagnostics ran; no assistant remote writes or runtime edits occurred.
+
+The subsequent owner-corrected Airtel address exposed lossy legacy HTTP exports:
+an en dash became a question mark. The private transport now uses UTF-16 XML,
+with strict native reply decoding and exact field comparison retained. All
+approved Airtel fields match via live exports; owner-run reconciliation is next.
+153 focused checks and the full offline suite (338 passed, one live skipped) pass.
+See [Unicode evidence and create limitation](../api/tally/README.md#unicode-http-repair--18-november-2026).

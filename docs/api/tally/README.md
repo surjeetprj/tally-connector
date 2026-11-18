@@ -23,20 +23,109 @@ LEDMAILINGDETAILS.LIST/COUNTRY with APPLICABLEFROM. The blocked test ledger has
 neither country representation. Source SHA-256:
 `881a653688ee189d6871962fd6991d422143d060a1438e3cc3b6fe57ddf67abd`.
 
-The create builder now uses COUNTRYOFRESIDENCE, and the company-scoped collection
-query fetches CountryofResidence. Reads preserve missing/empty values and mark
-conflicting native/legacy country fields unavailable. No applicable date is
-invented and no dated mailing aggregate is sent by this change. The
+The first repair used COUNTRYOFRESIDENCE and fetched CountryofResidence. The
+fresh Airtel trial below establishes that this root-only write was insufficient.
+Root-only legacy reads preserve missing/empty values and flag native/legacy
+conflicts; dated mailing reads now take precedence. The
 [synthetic fixture](../../../tests/fixtures/tally/party_country_7.xml) retains
 observed tag shapes with synthetic ledger values; the owner export is not copied
-into the repository. Offline checks do not certify live import acceptance:
-the corrected create mapping still needs an owner-approved future live trial.
+into the repository. Offline checks do not certify live import acceptance.
 
 The already-created ledger is not altered or recreated. If the owner corrects
 its Country to the previously approved India in Tally, known-GUID read-only
 reconciliation can verify all original fields and complete the local mapping.
 A fully reconciled batch now reflects its child success; unsent cancelled rows
 still require renewed review. No remote update method has been added.
+
+### Dated mailing repair — 18 November 2026
+
+Fresh source 281 / Airtel India created GUID
+0b212ad8-3be5-45fe-8719-e1a70e240d4c-0000016b. The saved comparison evidence shows
+address/state/PIN false and root country true. The owner's Tally screenshot shows
+empty mailing address and Not Applicable State/Country. Therefore root country
+alone cannot certify the saved mailing values. No repeat create or update ran.
+
+Serialized export-only investigation used the existing gateway/private bounded
+transport, adding Company FETCH BooksFrom/StartingFrom and Ledger FETCH
+LedMailingDetails.*. The GUID-selected SIS Dummy company returned both dates as
+20260401. Airtel returned an empty LEDMAILINGDETAILS.LIST despite root country
+India. The earlier owner-corrected GUID ending 0000016a returned a mailing
+aggregate with APPLICABLEFROM 20260401, PINCODE, MAILINGNAME, STATE and COUNTRY.
+Only tag/date findings are retained; raw customer responses are not committed.
+Before owner correction, an export-only scan using the updated query/reader
+completed with 54 eligible parties and 12 classification exclusions. Airtel's
+mailing fields then reported absent; one ambiguous mailing history was unavailable.
+The supplied all-ledger export has 48 empty aggregates and one ledger with two
+populated mailing records, so history must not be selected arbitrarily.
+
+The [official aggregate schema](https://help.tallysolutions.com/developer-reference/release-3-tdl-enhancements-tally-prime/what-are-the-changes-in-xml-tags/)
+defines Ledger/LedMailingDetails/ApplicableFrom, Address, State, Country and PINCode.
+The [official Company method example](https://help.tallysolutions.com/user-defined-fields-validations-and-controls-in-tdl/)
+uses BooksFrom. Production [queries](../../../src/innoforia_tally_connector/integrations/tally/queries.py)
+now fetch BooksFrom and LedMailingDetails.*. The
+[builder](../../../src/innoforia_tally_connector/integrations/tally/builders/parties.py)
+places mailing fields inside one LEDMAILINGDETAILS.LIST, with ADDRESS.LIST and
+APPLICABLEFROM/PINCODE/STATE/COUNTRY. Email/phone remain ledger scalars.
+
+For **new ledgers only**, the chosen initial mailing effective date is the verified
+destination Company.BooksFrom. This is not a historical mailing update policy.
+No date is inferred from another party, the computer's date, or a fixture. The
+gateway binds the date/source to the approved group context and rechecks it before
+import; unavailable, invalid, future or changed dates block. Strict typed XML
+validation rejects old root mailing payloads, multiple aggregates and other imports.
+The effective date is visible in the exact preview's destination/group evidence.
+
+Read-back prefers the dated mailing aggregate, even when empty, and new dated
+creates require the same applicable date. Multiple populated aggregates,
+unsupported structures, invalid dates and future records mark mailing fields
+unavailable. A missing aggregate cannot pass a new create using root echoes.
+Legacy saved previews remain readable/reconcilable against their original fields;
+no approved payload or comparison is rewritten. Mismatches now name failed fields.
+
+Offline: 125 focused tests and the complete suite (310 passed, one live skipped).
+Tests use independent sanitized native export shapes, real HTTPX/gateway adapters,
+temporary SQLite, both classifications, date invalidation and known-ID recovery.
+No live import or remote alteration was performed. Dated create acceptance still
+requires the owner's distinct-record test after resolving the existing mismatch;
+the code change cannot repair the already-created Airtel ledger.
+
+### Unicode HTTP repair — 18 November 2026
+
+After the owner's manual correction, the saved journal reported only address
+false; state, country, PIN and other approved comparisons were true. Both root
+and dated address in the raw legacy HTTP export substituted U+003F question mark
+for the approved U+2013 en dash. Explicit Content-Type UTF-8 also substituted it.
+The same GUID exported with a UTF-16-encoded request and Content-Type UTF-16
+returned an exact match. Therefore this remaining failure was a lossy export,
+not evidence that the owner needed to edit the ledger again. No characters are
+normalized or accepted as equivalent in the comparison.
+
+[Tally's HTTP prerequisites](https://help.tallysolutions.com/pre-requisites-for-integrations/)
+document UTF-16 content for special characters. The observed reply is UTF-16LE
+without BOM or an XML declaration; generic byte parsing alone failed on it.
+The [private transport](../../../src/innoforia_tally_connector/integrations/tally/_transport.py)
+now sends guarded exports and already-validated typed imports as UTF-16 XML.
+The [strict decoder](../../../src/innoforia_tally_connector/integrations/tally/xml_codec.py)
+recognizes observed XML UTF-16 byte signatures/BOMs, decodes without replacement,
+validates declarations and applies the same DTD/entity/control checks. Only the
+previously verified Primary parent sentinel is normalized. No broad XML recovery,
+business-value substitution, new import method or retry path was added.
+
+An export-only check using the updated production gateway/reader/destination
+adapter confirmed the existing Airtel GUID, classification/group and every
+approved field. No local journal/link was committed by the diagnostic. The owner
+subsequently confirms Airtel shows SUCCEEDED after the prescribed restart/read-only
+reconciliation. The owner also confirms its saved link is visible and persists
+after restart. Retain the existing ledger. Added GST values
+visible in the owner's screenshot do not verify
+or enable connector tax writes, which remain excluded.
+
+Offline: **153 focused passed; 338 passed, one live skipped** in the full suite.
+Coverage includes dash/accent/Indian-script/currency/non-BMP values, UTF-16 with
+and without BOM, malformed encodings/declarations, XML attacks and controls,
+typed create wire payloads/receipts, independent native read-back and SQLite
+reconciliation/restart without duplicate creates. No live import ran; Unicode
+create and the new dated create shape still need owner-approved live acceptance.
 
 Observed 29 October 2026, approximately 19:47 IST. CON-002 is partially validated;
 the observations below do not establish import, idempotency or crash recovery.

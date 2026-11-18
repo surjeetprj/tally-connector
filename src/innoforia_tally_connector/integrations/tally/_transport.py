@@ -4,7 +4,7 @@ import time
 import httpx
 
 from innoforia_tally_connector.domain.errors import ReadError
-from innoforia_tally_connector.integrations.tally.xml_codec import parse
+from innoforia_tally_connector.integrations.tally.xml_codec import parse, unicode_request
 from innoforia_tally_connector.integrations.tally.builders.masters import validate_supplier_xml
 from innoforia_tally_connector.integrations.tally.builders.parties import validate_party_xml
 from innoforia_tally_connector.domain.experiments import UncertainWrite
@@ -19,11 +19,12 @@ class Transport:
     def export(self, request: bytes) -> bytes:
         if parse(request).findtext("HEADER/TALLYREQUEST") != "Export":
             raise ReadError("Only Tally exports are enabled")
+        request = unicode_request(request)
         started = time.monotonic()
         try:
             with self.client.stream("POST", "http://localhost:9000", content=request,
                                     follow_redirects=False,
-                                    headers={"Content-Type": "text/xml; charset=utf-8"}) as response:
+                                    headers={"Content-Type": "UTF-16"}) as response:
                 if response.status_code != 200:
                     raise ReadError(f"Tally read failed (HTTP {response.status_code})")
                 data = bytearray()
@@ -47,10 +48,11 @@ class Transport:
         return self._import(request)
 
     def _import(self, request):
+        request = unicode_request(request)
         started = time.monotonic()
         try:
             with self.client.stream("POST", "http://localhost:9000", content=request, follow_redirects=False,
-                headers={"Content-Type": "text/xml; charset=utf-8"}) as response:
+                headers={"Content-Type": "UTF-16"}) as response:
                 if response.status_code != 200:
                     raise UncertainWrite(f"Tally import returned HTTP {response.status_code}; do not create again")
                 raw = bytearray()

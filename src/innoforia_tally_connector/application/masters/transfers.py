@@ -146,8 +146,9 @@ class PartyTransferWorkflow:
                 comparisons[field] = (field in observed.content.model_fields_set and field not in observed.unavailable_fields
                                      and getattr(observed.content, field) == getattr(preview.party, field))
             if not all(comparisons.values()):
+                differences = ", ".join(sorted(field for field, matches in comparisons.items() if not matches))
                 self.store.result(preview.id, command.id, "BLOCKED", target=target, observation=observed,
-                                  comparisons=comparisons, message="Created target differs; no retry or correction is enabled")
+                                  comparisons=comparisons, message=f"Created target differs: {differences}; no retry or correction is enabled")
             else:
                 self.store.result(preview.id, command.id, "VERIFYING", target=target, observation=observed, comparisons=comparisons)
                 source = self._fresh_source(preview.source, source_reader)

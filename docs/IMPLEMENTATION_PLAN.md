@@ -401,8 +401,11 @@ the agent operates in the signed-in user's session, not as a Windows service.
 
 ## 11. Reuse assessment from BahiAI-Desktop
 
-Use the current desktop project as a source of proven behavior and regression
-fixtures, not as a runtime dependency of the connector:
+Owner-selected order: use official Tally documentation first, then verify gaps
+through read-only investigation and focused tests. Consult BahiAI implementation
+only if that work does not resolve the issue. Treat its code as a candidate,
+not verified behavior; independently test any adapted code. It is never a runtime
+dependency of the connector. Potential fallback references include:
 
 - `desktop_app/erp/tally/responses.py`: counters, LINEERROR parsing and friendly
   errors; extend with reconciliation rather than assuming counters prove identity.

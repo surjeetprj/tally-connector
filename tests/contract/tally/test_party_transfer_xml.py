@@ -15,10 +15,16 @@ from innoforia_tally_connector.integrations.tally.experiment import import_recei
 def test_structured_mailing_create_and_readback(kind, binding):
     draft = PartyDraft(name="Source & <party>", party_type=kind, email="a@example.invalid", phone="00123",
                       address="First\n\nThird", pincode="012345", country="India", state="State")
-    raw = party_xml(draft, "SIS & Dummy", ROOTS[kind])
+    raw = party_xml(draft, "SIS & Dummy", ROOTS[kind], "20260401")
     validate_party_xml(raw)
     assert parse(raw).findtext(".//SVCURRENTCOMPANY") == "SIS & Dummy"
     assert [node.text or "" for node in parse(raw).findall(".//ADDRESS.LIST/ADDRESS")] == ["First", "", "Third"]
+    ledger = parse(raw).find(".//LEDGER")
+    assert ledger.findtext("LEDMAILINGDETAILS.LIST/APPLICABLEFROM") == "20260401"
+    assert ledger.findtext("LEDMAILINGDETAILS.LIST/COUNTRY") == "India"
+    assert ledger.findtext("LEDMAILINGDETAILS.LIST/STATE") == "State"
+    assert ledger.findtext("LEDMAILINGDETAILS.LIST/PINCODE") == "012345"
+    assert all(ledger.find(tag) is None for tag in ("ADDRESS.LIST", "COUNTRYOFRESIDENCE", "COUNTRYNAME", "LEDSTATENAME", "PINCODE"))
     calls = []
     def handler(request):
         calls.append(request)
@@ -35,8 +41,7 @@ def test_structured_mailing_create_and_readback(kind, binding):
     from lxml import etree
     response = b"<COLLECTION>" + etree.tostring(ledger) + b"</COLLECTION>"
     row = records(response, "Ledger")[0]
-    assert row["ADDRESS_LINES"] == ("First", "", "Third")
-    assert row["COUNTRYOFRESIDENCE"] == "India" and row["PINCODE"] == "012345"
+    assert row["MAILING_CONTENT"] == {"address": "First\n\nThird", "state": "State", "country": "India", "pincode": "012345"}
     assert parse(raw).find(".//COUNTRYNAME") is None
 
 

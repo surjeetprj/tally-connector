@@ -31,8 +31,9 @@ class PartyDestination:
         return self.gateway.create_party(preview, self.root(preview.party.party_type))
 
     def read_back(self, preview, target):
+        mailing_date = json.loads(preview.preflight.group_context).get("mailing_applicable_from")
         if target.kind == "TALLY_GUID" and target.identity:
-            row = self.reader.detail(preview.binding, target.identity)
+            row = self.reader.detail(preview.binding, target.identity, mailing_date=mailing_date)
         else:
             rows = self.gateway.read("Ledger", preview.binding.company_guid)
             if target.kind == "TALLY_MASTER_ID" and target.identity:
@@ -43,6 +44,6 @@ class PartyDestination:
                 raise ReadError("No authoritative receipt/identity; name matches cannot reconcile uncertainty")
             if len(matches) != 1 or not matches[0].get("GUID"):
                 raise ReadError("Created Tally identity cannot be resolved uniquely")
-            row = self.reader.detail(preview.binding, matches[0]["GUID"])
+            row = self.reader.detail(preview.binding, matches[0]["GUID"], mailing_date=mailing_date)
         path = json.loads(row.classification_evidence)
         return row, TargetIdentity(kind="TALLY_GUID", identity=row.identity), bool(path) and path[0][0] == self.root(preview.party.party_type)

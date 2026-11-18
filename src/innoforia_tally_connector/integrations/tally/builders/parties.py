@@ -3,8 +3,11 @@ import xml.etree.ElementTree as ET
 from innoforia_tally_connector.domain.masters import PartyType
 from innoforia_tally_connector.domain.party_transfer import PartyDraft
 from innoforia_tally_connector.integrations.tally.xml_codec import parse
+from innoforia_tally_connector.integrations.tally.dates import xml_date
 
-TAGS = {"email": "EMAIL", "phone": "LEDGERPHONE", "pincode": "PINCODE", "state": "LEDSTATENAME", "country": "COUNTRYOFRESIDENCE"}
+TAGS = {"email": "EMAIL", "phone": "LEDGERPHONE"}
+MAILING_TAGS = {"pincode": "PINCODE", "state": "STATE", "country": "COUNTRY"}
+MAILING_FIELDS = frozenset({"address", *MAILING_TAGS})
 ROOTS = {PartyType.CUSTOMER: "Sundry Debtors", PartyType.SUPPLIER: "Sundry Creditors"}
 
 
@@ -21,9 +24,14 @@ def validate(draft):
     return errors
 
 
-def party_xml(draft, company, parent):
+def party_xml(draft, company, parent, applicable_from=None):
     if not isinstance(draft, PartyDraft) or validate(draft) or parent != ROOTS[draft.party_type] or not company.strip():
         raise ValueError("Invalid typed party or destination group")
+    mailing_required = bool(draft.model_fields_set & MAILING_FIELDS)
+    if mailing_required:
+        xml_date(applicable_from)  # Must come from the verified company preflight.
+    elif applicable_from is not None:
+        raise ValueError("Mailing date without mailing fields is not allowed")
     root = ET.Element("ENVELOPE")
     ET.SubElement(ET.SubElement(root, "HEADER"), "TALLYREQUEST").text = "Import Data"
     data = ET.SubElement(ET.SubElement(root, "BODY"), "IMPORTDATA")
@@ -36,10 +44,16 @@ def party_xml(draft, company, parent):
     for field, tag in TAGS.items():
         if field in draft.model_fields_set:
             ET.SubElement(ledger, tag).text = getattr(draft, field)
-    if "address" in draft.model_fields_set:
-        lines = ET.SubElement(ledger, "ADDRESS.LIST", TYPE="String")
-        for line in draft.address.split("\n"):
-            ET.SubElement(lines, "ADDRESS").text = line
+    if mailing_required:
+        mailing = ET.SubElement(ledger, "LEDMAILINGDETAILS.LIST")
+        if "address" in draft.model_fields_set:
+            lines = ET.SubElement(mailing, "ADDRESS.LIST", TYPE="String")
+            for line in draft.address.split("\n"):
+                ET.SubElement(lines, "ADDRESS").text = line
+        ET.SubElement(mailing, "APPLICABLEFROM").text = applicable_from
+        for field, tag in MAILING_TAGS.items():
+            if field in draft.model_fields_set:
+                ET.SubElement(mailing, tag).text = getattr(draft, field)
     raw = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     if len(raw) > 64 * 1024:
         raise ValueError("Party XML exceeds the bounded request size")
@@ -60,10 +74,17 @@ def validate_party_xml(raw):
     for field, tag in TAGS.items():
         if ledger.find(tag) is not None:
             values[field] = ledger.findtext(tag, "")
-    address = ledger.find("ADDRESS.LIST")
-    if address is not None:
-        values["address"] = "\n".join(node.text or "" for node in address.findall("ADDRESS"))
-    expected = parse(party_xml(PartyDraft(**values), root.findtext(".//SVCURRENTCOMPANY", ""), parent))
+    mailing = ledger.find("LEDMAILINGDETAILS.LIST")
+    applicable_from = None
+    if mailing is not None:
+        applicable_from = mailing.findtext("APPLICABLEFROM")
+        for field, tag in MAILING_TAGS.items():
+            if mailing.find(tag) is not None:
+                values[field] = mailing.findtext(tag, "")
+        address = mailing.find("ADDRESS.LIST")
+        if address is not None:
+            values["address"] = "\n".join(node.text or "" for node in address.findall("ADDRESS"))
+    expected = parse(party_xml(PartyDraft(**values), root.findtext(".//SVCURRENTCOMPANY", ""), parent, applicable_from))
     def shape(node):
         return node.tag, sorted(node.attrib.items()), (node.text or "").strip() if len(node) else node.text or "", tuple(shape(child) for child in node)
     if shape(root) != shape(expected):

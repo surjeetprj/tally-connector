@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Synthetic values; country paths observed in owner TallyPrime 7.0 export.
-     No owner ledger data retained. The dated mailing shape is read evidence,
-     not a policy for inventing an applicable date on import. -->
+<!-- Synthetic values; dated mailing paths observed in owner TallyPrime 7.0
+     export. No owner ledger data retained. Import dates must come from the
+     verified destination company's BooksFrom, never from this fixture. -->
 <COLLECTION>
   <LEDGER NAME="Synthetic country supplier">
     <GUID>11111111-2222-3333-4444-555555555555-00000001</GUID>
@@ -11,8 +11,15 @@
     <PARENT>Sundry Creditors</PARENT>
     <COUNTRYOFRESIDENCE>India</COUNTRYOFRESIDENCE>
     <LEDMAILINGDETAILS.LIST>
+      <ADDRESS.LIST TYPE="String">
+        <ADDRESS>First</ADDRESS>
+        <ADDRESS></ADDRESS>
+        <ADDRESS>Third</ADDRESS>
+      </ADDRESS.LIST>
       <APPLICABLEFROM>20260401</APPLICABLEFROM>
+      <PINCODE>012345</PINCODE>
       <MAILINGNAME>Synthetic country supplier</MAILINGNAME>
+      <STATE>State</STATE>
       <COUNTRY>India</COUNTRY>
     </LEDMAILINGDETAILS.LIST>
   </LEDGER>

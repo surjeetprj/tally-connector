@@ -7,10 +7,12 @@ from innoforia_tally_connector.integrations.tally.queries import collection
 from innoforia_tally_connector.integrations.tally.xml_codec import records
 from innoforia_tally_connector.domain.experiments import Preflight
 from innoforia_tally_connector.integrations.tally.builders.masters import supplier_xml
-from innoforia_tally_connector.integrations.tally.builders.parties import party_xml, ROOTS
+from innoforia_tally_connector.integrations.tally.builders.parties import party_xml, ROOTS, MAILING_FIELDS
+from innoforia_tally_connector.integrations.tally.dates import xml_date
+from innoforia_tally_connector.domain.party_transfer import PartyDraft
 from innoforia_tally_connector.integrations.tally.experiment import import_receipt
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 COMPANY_GUID = "0b212ad8-3be5-45fe-8719-e1a70e240d4c"
 
@@ -65,10 +67,22 @@ class Gateway:
             raise ReadError("Test party name already exists; no creation is allowed")
         if any(not r.get("GUID") for r in ledgers):
             raise ReadError("Tally baseline has missing identities; cannot prepare creation")
-        if self._company(binding.company_guid)["NAME"] != company["NAME"]:
+        after = self._company(binding.company_guid)
+        if after["NAME"] != company["NAME"]:
             raise ContextMismatch("Company changed during preflight")
-        context = json.dumps({"company_guid": company["GUID"], "company_name": company["NAME"],
-                               "group": matches[0]}, sort_keys=True)
+        context = {"company_guid": company["GUID"], "company_name": company["NAME"], "group": matches[0]}
+        if isinstance(party, PartyDraft) and party.model_fields_set & MAILING_FIELDS:
+            try:
+                books_date = xml_date(company.get("BOOKSFROM"))
+            except ValueError:
+                raise ReadError("Tally company books date is unavailable/invalid; mailing creation is blocked") from None
+            if books_date > datetime.now(timezone(timedelta(hours=5, minutes=30))).date():
+                raise ReadError("Tally company books date is in the future; mailing creation is blocked")
+            if after.get("BOOKSFROM") != company["BOOKSFROM"]:
+                raise ContextMismatch("Company books date changed during preflight")
+            context["mailing_applicable_from"] = company["BOOKSFROM"]
+            context["mailing_date_source"] = "Company.BooksFrom"
+        context = json.dumps(context, sort_keys=True)
         return Preflight(group_context=context, destination=f"Tally {company['NAME']} ({company['GUID']})",
                          baseline_guids=tuple(sorted(r["GUID"] for r in ledgers)))
 
@@ -115,7 +129,9 @@ class Gateway:
             preview.require_current(preview.binding, preview.generation, preview.digest, datetime.now(timezone.utc))
             if self.stopped():
                 raise ReadError("Shutdown started; no import sent")
-            raw = self.transport.import_party(party_xml(preview.party, json.loads(current.group_context)["company_name"], ROOTS[preview.party.party_type]))
+            context = json.loads(current.group_context)
+            raw = self.transport.import_party(party_xml(preview.party, context["company_name"],
+                ROOTS[preview.party.party_type], context.get("mailing_applicable_from")))
             return import_receipt(raw, current.baseline_guids)
         finally:
             self.lock.release()

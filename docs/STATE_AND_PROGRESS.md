@@ -2,90 +2,94 @@
 
 Last updated: 18 November 2026.
 
-## Current repair: transfer setup guidance
+## Current repair: TallyPrime 7.0 mailing and Unicode
 
-Latest close behavior (18 November, owner request): X now invokes graceful Quit
-instead of hiding in the tray. The existing worker/resource shutdown path remains
-in control; no force termination is added. Startup-failure exit paths also mark
-the window ready to close. Subprocess tests exercise the real entry-point event
-loop with fake services for tray/no-tray, pending startup and startup failure.
-Full offline verification: **281 passed, one live test skipped**. Documentation
-links/fences and git diff --check passed. The owner restarted and confirmed X
-now exits correctly and returns the PowerShell prompt. Use minimize to keep the
-app running. No assistant live calls/runtime edits ran.
+The owner corrected Airtel's mailing fields in its existing Tally ledger. The
+remaining saved failure was address only: approved U+2013 en dash, read-back U+003F
+question mark. Export-only comparison proved the value is correct in Tally:
+legacy and explicit UTF-8 HTTP exports substitute the character, while UTF-16
+returns the exact approved address. No further owner correction is needed.
 
-Latest layout repair (18 November): owner Windows scaling exposed a minimum
-window height larger than available desktop space, clipping Activity controls.
-Primary pages now scroll overflow instead of forcing that minimum on the window;
-initial sizing uses available logical screen geometry. Focused checks: 18 passed,
-including larger-font/smaller-window reachability and normal transfer flows.
-Full offline suite: **276 passed, one live check skipped**. Changed documentation
-links/fences and git diff --check passed. The owner restarted and reports no
-terminal geometry warning; this confirms warning removal on their installation.
-No computer-use automation, live calls or runtime edits ran. Scroll reachability
-has offline coverage; broader native layout inspection remains owner-run.
+The private transport now sends Unicode XML with Content-Type UTF-16 for guarded
+exports/typed imports. Strict parsing accepts observed UTF-16LE no-BOM replies
+and BOM-marked UTF-16, without replacement decoding. XML declaration, DTD/entity,
+invalid-control and typed-create guards remain enforced. Production-reader live
+exports now match Airtel's existing identity, group/type and **every approved
+field**. The owner now confirms Airtel shows **SUCCEEDED** after the prescribed
+restart/read-only reconciliation. The owner also confirms its saved link is
+visible and remains after restart. No assistant
+journal writes, remote imports or remote corrections ran. See
+[Unicode evidence](api/tally/README.md#unicode-http-repair--18-november-2026).
 
-Latest recovery verification (18 November): owner clicked read-only result checks
-and the Bahi-to-Tally batch 2da2cf3d-5040-4145-bce8-5680bb4a6262 now shows
-SUCCEEDED. Read-only local journal inspection confirms all stored comparisons,
-including country, pass and the identity link exists. Its target was corrected
-by the owner; this does not verify the new create XML on a fresh ledger.
-Activity was showing stale saved links and Working in background after completion.
-The recovery result now refreshes links automatically, updates party link status
-and displays explicit completion; errors remain visible. Focused checks: 14 passed.
-Full offline regression: **272 passed, one live check skipped**. Documentation
-link/fence checks and git diff --check passed.
-No live calls or runtime edits were performed during this repair.
+Owner's fresh Bahi-to-Tally supplier Airtel India (source 281) was created as GUID
+0b212ad8-3be5-45fe-8719-e1a70e240d4c-0000016b, but mailing address/state/PIN were
+not saved. Saved comparisons blocked completion. A root country field returned
+India despite the owner's mailing Country showing Not Applicable. The previous
+root COUNTRYOFRESIDENCE-only fix was insufficient; it is not a verified import.
 
-Latest country fix (18 November): the owner reports TallyPrime 7.0 and supplied
-an all-ledger XML export. It uses COUNTRYOFRESIDENCE (16 occurrences), not
-COUNTRYNAME (zero); the blocked ledger has no country. The builder/query now use
-the observed native country field, with strict read-back comparisons retained.
-No date is invented for dated mailing records. Synthetic country-shape fixtures
-and known-GUID read-only reconciliation tests were added; reconciled child success
-now updates a fully completed parent batch. Focused mapping/batch checks: 44 passed;
-complete offline suite after recovery test: **270 passed, one live check skipped**.
-See [export evidence and limitations](api/tally/README.md#supplied-tallyprime-70-export).
-No live API requests, remote corrections, runtime edits or duplicate creates ran.
-Corrected create XML is offline-tested, not live-import-certified.
+The builder now uses the observed dated LEDMAILINGDETAILS.LIST for address,
+state, country and PIN. Its applicable date comes from the destination company's
+BooksFrom, is bound to approval context, and is checked again before import.
+Missing/invalid/future/changed dates block creation. Export-only checks on SIS
+Dummy returned BooksFrom 20260401; known-GUID exports confirmed an empty mailing
+aggregate for Airtel and a dated aggregate for the earlier owner-corrected ledger.
+Before owner correction, the export-only scan completed with 54 eligible parties
+and 12 classification exclusions; Airtel's mailing fields then read as absent.
+See [actual evidence and limits](api/tally/README.md#dated-mailing-repair--18-november-2026).
 
-Owner screenshots show loaded parties and preserved identity links, but no saved
-operator/field policy; transfer buttons were silently disabled. Parties now shows
-Finish transfer setup and its buttons open Settings at the required name field.
-Blank-name validation is visible in Settings; failed saves retain the setup gate.
-Successful save enables preparation without starting a transfer. The LOAD status
-no longer tells the user to transfer when setup is incomplete. Existing verified
-binding, approval, execution and recovery guards are unchanged.
+Reads prefer dated mailing values, including their absence, over root echoes.
+Multiple/unsupported/not-yet-effective mailing records remain unavailable; no
+history row is chosen by guesswork. New creates require the approved dated
+aggregate on read-back. Blocked results now name failed comparisons. Name/email/
+phone-only creation, legacy journals and one-attempt recovery remain unchanged.
+No schema/dependency/environment changes, live imports, remote corrections,
+computer-use testing or owner-runtime edits ran. Existing Airtel must not be
+recreated. Its corrected fields match and owner-run reconciliation now succeeds.
 
-Focused offline UI/integration checks: 12 passed. The tests reproduce Refresh
-before saving settings, both transfer directions/types and saved-policy restart.
-Complete offline regression: **265 passed, one opt-in live check skipped**.
-Changed documentation links/fences and git diff whitespace checks passed.
-No live calls, computer-use automation or owner-runtime edits were performed.
-Owner verification on 18 November: Apollo Hospital Jayanagar transferred from
-Tally to Bahi business 52 as account 280, Active, Vendors (A/P) / VENDOR. Batch
-5a37f710-4ae7-4cdc-a67f-8266ea906d34 and its saved identity link survived restart,
-confirmed by the owner and screenshots; reviewer surjeet. Displayed contact/tax
-fields are blank, so populated-field round trips are not established by this case.
-The reverse trial on 18 November created a Tally supplier but is BLOCKED:
-batch 2da2cf3d-5040-4145-bce8-5680bb4a6262, source
-MST004-SUP-20261102-7a5d3198, destination GUID
-0b212ad8-3be5-45fe-8719-e1a70e240d4c-0000016a. Read-only inspection of the saved
-runtime comparison evidence shows name, email, identity, supplier type and group
-matching; only country fails (approved India, country absent from read-back).
-No live requests, runtime edits, reconciliation or repeat creation were performed
-while diagnosing this case. Do not recreate or weaken its approved comparisons.
-The subsequent Tally screenshot confirms Country is Not Applicable rather than
-India, so this is a saved-value mismatch, not merely an absent read field. The
-current root COUNTRYNAME payload did not establish the approved country on this
-deployment. Official generic samples show that tag, while the release-3 schema
-documents dated LedMailingDetails/Country; neither alone verifies the required
-7.0 create shape/date. The supplied export establishes the native country field;
-the owner's correction and read-only reconciliation have now completed this
-existing transfer as recorded above. Do not transfer the source again. The new
-create mapping still needs live verification. Customer and multi-party live
-cases remain pending.
-Ledger/UOM work remains deferred while party transfers are being verified.
+Verification: existing Python **3.13.15**; **153 focused checks passed**;
+complete offline suite **338 passed, one opt-in live check skipped**. Tests include
+real gateway/HTTPX XML adapters and temporary SQLite, both party types, independent
+native export fixtures, ignored-field failures, date guards, persisted results,
+atomic mapping/audit, exact Unicode values through transport/SQLite and known-GUID
+reconciliation without a second create. Unicode transport's create path is tested
+offline only; this turn's live checks were exports only.
+Documentation links/fences and git diff --check passed. Fresh live import acceptance
+of this dated payload remains owner-run and unverified.
+
+## Owner-verified behavior and next action
+
+- Apollo Hospital Jayanagar transferred to Bahi 52 account 280, Active, Vendors
+  (A/P) / VENDOR. Owner verified destination details and batch/link persistence
+  after restart; reviewer surjeet. Displayed optional fields were blank.
+- Earlier supplier source 276 / batch 2da2cf3d-5040-4145-bce8-5680bb4a6262 completed
+  after the owner corrected Country in its existing Tally ledger and ran read-only
+  reconciliation. The saved comparisons/link pass; this does not certify creates.
+- Transfer setup now explains the required saved operator/policy; recovery refreshes
+  links/status and completion messages. Scrollable pages fit scaled Windows screens.
+  The owner reports no geometry warning after restart.
+- X uses graceful Quit; minimize keeps the app running. Owner confirmed terminal
+  exit works. Shared worker/resource shutdown and startup-failure paths have tests.
+
+Next: Airtel's reconciliation and saved-link restart checks are owner-confirmed.
+No further ledger edits or repeat create are needed. Verify
+a distinct, approved customer/supplier with populated mailing fields and inspect
+Tally directly plus restart persistence. Customer/multi-party live cases, tax
+support, broader MST-004 and Phase 0/foundation/frozen certification remain pending.
+Ledger/UOM work stays deferred while party transfers are verified.
+
+Owner-selected development order: official Tally documentation first, then
+read-only investigation/tests; BahiAI implementation is a fallback only when the
+issue remains unresolved. Independently verify adapted code rather than inheriting
+its assumptions. See the plan's reuse assessment.
+
+Read-only BahiAI source comparison: its add_vendor_mailing_details uses the same
+dated aggregate concept already implemented here. Useful behavior can be ported
+as connector-owned code/fixtures, per the plan's reuse assessment; no runtime
+dependency is needed. Its fallback to today's date, PIN extraction from address,
+extra alias tags and counter-only create result are not adopted as verified
+connector policies. Its application/xml HTTP path has no explicit UTF-16 handling;
+source inspection does not establish equivalent live Unicode behavior. No BahiAI
+files, connector runtime code or live records changed during this comparison.
 
 ## Latest contract refresh
 

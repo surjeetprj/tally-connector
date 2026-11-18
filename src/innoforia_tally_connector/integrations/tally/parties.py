@@ -46,7 +46,7 @@ class PartyReader:
         validate_classification(self.classification, groups)
         return groups
 
-    def _observation(self, row, binding, groups):
+    def _observation(self, row, binding, groups, mailing_date=None):
         if not row.get("GUID") or not row.get("NAME") or not row.get("ALTERID"):
             raise ReadError("Tally ledger identity/name/version is missing")
         path = ancestry(row.get("PARENT", ""), groups)
@@ -72,6 +72,20 @@ class PartyReader:
             content["address"] = "\n".join(row["ADDRESS_LINES"])
         else:
             unavailable.append("address")
+        # In 7.0 the root country can echo an ignored create while mailing stays
+        # empty. Prefer the actual dated mailing record, including its absence.
+        mailing_fields = {"address", "state", "country", "pincode"}
+        if "MAILING_CONTENT" in row:
+            for field in mailing_fields:
+                content.pop(field, None)
+            content.update(row["MAILING_CONTENT"])
+            unavailable = [field for field in unavailable if field not in mailing_fields]
+        elif "MAILING_UNRESOLVED" in row:
+            unavailable.extend(sorted(mailing_fields - set(unavailable)))
+        if mailing_date is not None and row.get("MAILING_APPLICABLE_FROM") != mailing_date:
+            # New creates must prove the approved dated aggregate was saved,
+            # even if an older/root representation happens to echo the values.
+            unavailable.extend(sorted(mailing_fields - set(unavailable)))
         if row.get("NESTED_GST_UNRESOLVED"):
             unavailable.append("gstin")
         return PartyObservation(binding=binding, side=Side.TALLY, identity=row["GUID"],
@@ -81,12 +95,12 @@ class PartyReader:
                                 classification_evidence=json.dumps([(g.identity, g.name, g.parent) for g in path]),
                                 unavailable_fields=tuple(unavailable), content_schema=2)
 
-    def detail(self, binding, identity):
+    def detail(self, binding, identity, *, mailing_date=None):
         groups = self.groups(binding)
         rows = self.gateway.read("Ledger", binding.company_guid, identity)
         if len(rows) != 1 or rows[0].get("GUID") != identity:
             raise ReadError("Tally GUID was not found uniquely; no name fallback is allowed")
-        return self._observation(rows[0], binding, groups)
+        return self._observation(rows[0], binding, groups, mailing_date)
 
     def scan(self, binding):
         groups = self.groups(binding)
