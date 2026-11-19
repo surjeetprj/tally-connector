@@ -1,8 +1,64 @@
 # Current state and progress
 
-Last updated: 18 November 2026.
+Last updated: 19 November 2026.
+
+## Current milestone: repeatable supplier State updates
+
+The owner verified controlled record `bcc0b354-14ab-4f7b-a1c1-cfc5d277d778`
+(Bahi source 282, Tally GUID ending 0000016c) directly in Tally: Delhi and
+unselected details are correct. The saved SUCCEEDED result also survives restart.
+All seven read-back/preservation comparisons pass. This owner evidence completes
+the [controlled trial](master-sync/CONTROLLED_STATE_UPDATE.md).
+
+The normal [State update feature](master-sync/SUPPLIER_STATE_UPDATES.md) now supports
+successive Bahi-to-Tally supplier State changes: **Review linked changes → Review
+State update → Confirm State update**. Saved operator, automatic party-scoped latest
+result and post-success refresh replace test-labelled controls. Each new change
+requires fresh exact approval; startup and refresh never write.
+
+Successful audit evidence is the separate State-only acknowledgement. Future State
+reviews use it, while original identity links/other-field observations stay intact.
+Approval binds the predecessor acknowledgement; transactional reservation/attempt/
+completion checks reject stale baselines. Uncertain/blocked outcomes do not advance
+it or permit another write. Migration 7 backs up and preserves v6 trial evidence,
+removing only the one-audit-per-link restriction; operation uniqueness remains.
+The typed mailing contract, preservation rules, shared journal and gateway remain.
+No GUID-only/remote conditional-write guarantee is claimed.
+
+**87 focused checks passed** for State XML, actual gateway/HTTPX with fake remotes,
+repeat updates, State-only baselines, conflicts/clears, uncertainty/no resend,
+old approval hashes, migration backup/rollback and offscreen UI/restart. Complete
+offline suite: **425 passed, one opt-in live test skipped**. Documentation checks
+pass for 9 Markdown files and 129 local links/anchors; git diff --check passes.
+No dependencies/environment changes, computer use,
+BahiAI reuse, assistant live writes or runtime journal changes ran for this work.
+
+Owner screenshots on 19 November confirm the repeat update **Delhi to Haryana**,
+record `ec02114b-7aa7-46a5-bf70-b2fe4901ef81`, source 282 and the same GUID.
+The normal feature shows SUCCEEDED, all seven comparisons true, original link/audit
+preserved and State baseline saved. Tally directly shows Haryana with the same
+visible address, country India and PIN 110019. This verifies a second live update;
+restart persistence of this new record and independent-edit conflict handling
+remain pending owner checks.
+
+Next: restart and load this latest result; confirm both update histories/original
+link remain. Then check an independent Tally edit blocks propagation using the
+short feature checklist. No additional write is needed for the restart check.
+Customers, other fields, clears, multi-entry mailing history, reverse/batch updates
+and unattended sync remain separate gates. Preserve journals, records and invoice 69.
 
 ## Current repair: TallyPrime 7.0 mailing and Unicode
+
+Fresh owner-run supplier trial: Reliance Jio Infocomm Limited, Bahi source 282,
+batch 3dc1c9d0-a034-41e9-b018-ce0cb7339562, now shows SUCCEEDED and a saved link.
+Tally screenshot shows populated address, country India and PIN. Read-only local
+journal inspection confirms GUID ending 0000016c and all approved comparisons
+true: name, address, country, PIN, identity and supplier/group context. State was
+null and explicitly omitted by saved policy, as were null email/phone; tax fields
+were disabled. Tally's Not Applicable state therefore does not contradict the
+approved manifest. This establishes fresh dated/Unicode creation for this subset;
+populated state/contact fields, customers and multi-party cases remain pending.
+Restart persistence for this new Reliance link is not yet owner-confirmed.
 
 The owner corrected Airtel's mailing fields in its existing Tally ledger. The
 remaining saved failure was address only: approved U+2013 en dash, read-back U+003F
@@ -54,7 +110,7 @@ atomic mapping/audit, exact Unicode values through transport/SQLite and known-GU
 reconciliation without a second create. Unicode transport's create path is tested
 offline only; this turn's live checks were exports only.
 Documentation links/fences and git diff --check passed. Fresh live import acceptance
-of this dated payload remains owner-run and unverified.
+now has the owner-run Reliance evidence above for its exact included fields.
 
 ## Owner-verified behavior and next action
 
@@ -70,10 +126,10 @@ of this dated payload remains owner-run and unverified.
 - X uses graceful Quit; minimize keeps the app running. Owner confirmed terminal
   exit works. Shared worker/resource shutdown and startup-failure paths have tests.
 
-Next: Airtel's reconciliation and saved-link restart checks are owner-confirmed.
-No further ledger edits or repeat create are needed. Verify
-a distinct, approved customer/supplier with populated mailing fields and inspect
-Tally directly plus restart persistence. Customer/multi-party live cases, tax
+Other pending create acceptance: confirm the new Reliance result/link survive restart, then verify a fresh
+party with populated state/contact fields and customer/multi-party cases.
+Airtel's reconciliation and saved-link restart checks are already owner-confirmed.
+No repeat create is needed for either source. Customer/multi-party live cases, tax
 support, broader MST-004 and Phase 0/foundation/frozen certification remain pending.
 Ledger/UOM work stays deferred while party transfers are verified.
 

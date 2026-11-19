@@ -23,7 +23,7 @@ def test_v5_backup_preserves_v4_pending_and_completed_evidence(tmp_path, binding
         runner.migrate(engine)
         assert records.get(preview.id, binding).state == "PENDING"
         with engine.connect() as c:
-            assert c.exec_driver_sql("PRAGMA user_version").scalar_one() == 5
+            assert c.exec_driver_sql("PRAGMA user_version").scalar_one() == runner.MIGRATIONS[-1].VERSION
             assert c.exec_driver_sql("SELECT count(*) FROM party_batch_members").scalar_one() == 0
         with sqlite3.connect(next(tmp_path.glob("*.backup"))) as c:
             assert c.execute("PRAGMA user_version").fetchone()[0] == 4

@@ -3,9 +3,11 @@ import xml.etree.ElementTree as ET
 import re
 
 
-def collection(entity: str, company: str | None = None, guid: str | None = None) -> bytes:
+def collection(entity: str, company: str | None = None, guid: str | None = None, *, complete=False) -> bytes:
     if entity not in {"Company", "Group", "Ledger"}:
         raise ValueError("Unsupported read collection")
+    if complete and (entity != "Ledger" or not company or not guid):
+        raise ValueError("Full native snapshot requires one company-scoped ledger GUID")
     root = ET.Element("ENVELOPE")
     header = ET.SubElement(root, "HEADER")
     name = f"ConnectorRead{entity}"
@@ -27,6 +29,8 @@ def collection(entity: str, company: str | None = None, guid: str | None = None)
         fields.append("Parent")
     if entity == "Ledger":
         fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryofResidence", "LedMailingDetails.*"]
+    if complete:
+        fields.append("*")
     for field in fields:
         ET.SubElement(coll, "FETCH").text = field
     if guid is not None:

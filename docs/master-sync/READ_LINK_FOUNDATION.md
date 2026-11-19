@@ -8,6 +8,21 @@ Sections below describe the initial slice's evidence and then-pending gates;
 use the current report/state for implemented capabilities. The initial slice
 enabled no remote master mutation capability.
 
+The [controlled State update](CONTROLLED_STATE_UPDATE.md) adds a subsequent bounded
+experiment: exact approval, known-GUID/native snapshots, one shared-journal attempt
+and preservation read-back. Migration 6 appends local verification/audit evidence;
+original links remain unchanged. 45 focused checks pass; full suite: 404 passed,
+one live skipped. Live alteration and owner restart acceptance are still pending;
+this is not general party update support or a broader foundation completion.
+
+18 November: [linked-party change review](LINKED_PARTY_CHANGES.md) now reads saved
+identity pairs and displays each side's changes against its own original
+observation. It uses the existing background command/outbox path and native
+QTableView; no links/audits or remote fields are updated. 30 focused checks pass;
+the full offline suite is 363 passed, one live skipped. A source-282 GET/export-only
+check detected the owner's Bahi state change. Approval/Alter execution remains
+gated on exact targeting and dated mailing update contracts; see the linked report.
+
 ## Supervised transfer update — 3 November 2026
 
 Subsequent delivery on 4 November: the [default workspace](AUTOMATED_PARTY_WORKSPACE.md)

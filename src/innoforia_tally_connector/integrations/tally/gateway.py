@@ -11,6 +11,9 @@ from innoforia_tally_connector.integrations.tally.builders.parties import party_
 from innoforia_tally_connector.integrations.tally.dates import xml_date
 from innoforia_tally_connector.domain.party_transfer import PartyDraft
 from innoforia_tally_connector.integrations.tally.experiment import import_receipt
+from innoforia_tally_connector.integrations.tally.state_update import native_snapshot, native_shape, expected_native, state_xml, state_receipt
+from innoforia_tally_connector.domain.experiments import TargetIdentity
+from innoforia_tally_connector.integrations.tally.xml_codec import parse
 import json
 from datetime import datetime, timezone, timedelta
 
@@ -53,6 +56,50 @@ class Gateway:
 
     def close(self):
         self.transport.close()
+
+    def _state_snapshot(self, binding, identity):
+        if binding.business_id != 52 or binding.company_guid != COMPANY_GUID:
+            raise ContextMismatch("Controlled state updates support the confirmed test pair only")
+        company = self._company(binding.company_guid)
+        raw = self._export(collection("Ledger", company["NAME"], identity, complete=True))
+        snapshot = native_snapshot(raw, identity)
+        if self._company(binding.company_guid)["NAME"] != company["NAME"]:
+            raise ContextMismatch("Company changed during state snapshot")
+        return company, snapshot
+
+    def state_snapshot(self, binding, identity):
+        if not self.lock.acquire(timeout=self.lock_timeout): raise Busy("Tally busy; no state snapshot read")
+        try:
+            company, snapshot = self._state_snapshot(binding, identity)
+            return Preflight(destination=f"Tally {company['NAME']} ({company['GUID']})",
+                group_context=json.dumps({"company_guid": company["GUID"], "company_name": company["NAME"]}, sort_keys=True)), snapshot
+        finally: self.lock.release()
+
+    def apply_state(self, preview):
+        if preview.kind != "UPDATE": raise ValueError("Typed state update required")
+        if not self.lock.acquire(timeout=self.lock_timeout): raise Busy("Tally busy; no update sent")
+        try:
+            company, current = self._state_snapshot(preview.binding, preview.update.before.identity)
+            expected_context = json.loads(preview.preflight.group_context)
+            if company["NAME"] != expected_context["company_name"] or native_shape(current) != native_shape(preview.update.native_before):
+                raise ContextMismatch("Ledger/company changed after approval; no update sent")
+            # The official selector is NAME. Resolve it from GUID and reject a
+            # duplicate name before transmission; never use a name on failed GUID lookup.
+            name = parse(current.encode()).findtext("NAME")
+            rows = records(self._export(collection("Ledger", company["NAME"])), "Ledger")
+            matches = [r for r in rows if r.get("NAME", "").casefold() == name.casefold()]
+            if (len(matches) != 1 or matches[0].get("GUID") != preview.update.before.identity
+                or matches[0].get("ALTERID", "").strip() != parse(current.encode()).findtext("ALTERID", "").strip()):
+                raise ContextMismatch("Ledger name no longer uniquely resolves to the approved GUID")
+            if self._company(preview.binding.company_guid)["NAME"] != company["NAME"]:
+                raise ContextMismatch("Company changed before state update")
+            preview.require_current(preview.binding, preview.generation, preview.digest, datetime.now(timezone.utc))
+            if self.stopped(): raise ReadError("Shutdown started; no update sent")
+            raw = self.transport.alter_state(state_xml(current, preview.party.state, company["NAME"]),
+                current, preview.party.state, company["NAME"])
+            target = TargetIdentity(kind="TALLY_GUID", identity=preview.update.before.identity)
+            return state_receipt(raw, target)
+        finally: self.lock.release()
 
     def _supplier_preflight(self, binding, root_id, party, root_name="Sundry Creditors"):
         if binding.company_guid != COMPANY_GUID or binding.business_id != 52:

@@ -39,7 +39,7 @@ class Runtime:
                         except Exception:
                             pass  # Durable attempt/lease survives until restart recovery.
                     message = ("Local storage failed. Restart and inspect the durable experiment; do not create again."
-                               if command.kind in {"EXP_CREATE", "EXP_RECONCILE", "TRANSFER_CREATE", "TRANSFER_RECONCILE", "BATCH_APPROVE", "BATCH_STEP"} else
+                               if command.kind in {"EXP_CREATE", "EXP_RECONCILE", "TRANSFER_CREATE", "TRANSFER_RECONCILE", "BATCH_APPROVE", "BATCH_STEP", "UPDATE_APPLY", "UPDATE_RECONCILE"} else
                                "Local storage failed. Restore storage access and restart; inspect saved links before confirming again")
                     self._emit(Event(command.id, command.generation, command.kind,
                         error=message))
@@ -66,14 +66,15 @@ class Runtime:
         if event.final:
             self.commands.pop(original_id, None)
             with self.guard:
-                key = self._key(event.kind, event.generation, command.experiment_id if command else None)
+                record_id = (command.party_identity if command.kind == "PARTY_CHANGES" else command.experiment_id) if command else None
+                key = self._key(event.kind, event.generation, record_id)
                 if self.inflight.get(key) == event.request_id:
                     self.inflight.pop(key)
         self.emit(event)
 
     @staticmethod
     def _key(kind, generation, record_id=None):
-        return (generation, kind, record_id) if kind == "ACTIVITY_DETAIL" else (generation, kind)
+        return (generation, kind, record_id) if kind in {"ACTIVITY_DETAIL", "PARTY_CHANGES"} else (generation, kind)
 
     def start(self):
         # Consumer.start registers signals: call on the process main thread.
@@ -101,7 +102,7 @@ class Runtime:
         if self.stopping.is_set():
             raise ValueError("Connector is shutting down")
         with self.guard:
-            key = self._key(kind, generation, values.get("experiment_id"))
+            key = self._key(kind, generation, values.get("party_identity") if kind == "PARTY_CHANGES" else values.get("experiment_id"))
             if key in self.inflight:
                 return self.inflight[key]
             command = Command(id=str(uuid4()), kind=kind, generation=generation, **values)

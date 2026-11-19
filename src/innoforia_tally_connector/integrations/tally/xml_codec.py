@@ -34,7 +34,7 @@ def mailing_content(nodes):
     return content
 
 
-def parse(raw: bytes, check_errors=True):
+def xml_bytes(raw: bytes):
     # Tally's documented UTF-16 HTTP mode preserves characters that the legacy
     # response replaces with '?'. Observed replies are little-endian without a
     # BOM/declaration; accept those exact XML signatures and BOM-marked UTF-16.
@@ -57,6 +57,11 @@ def parse(raw: bytes, check_errors=True):
             raise ReadError("Tally returned invalid Unicode XML") from None
     if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
         raise ReadError("Tally returned forbidden XML declarations")
+    return raw
+
+
+def parse(raw: bytes, check_errors=True):
+    raw = xml_bytes(raw)
     # Verified on release 6.2: root Group PARENT uses the invalid U+0004
     # sentinel followed by " Primary". Do not strip controls elsewhere.
     raw, count = re.subn(rb'(<PARENT\b[^>]*>)(?:&#0*4;|&#x0*4;) Primary(</PARENT>)',

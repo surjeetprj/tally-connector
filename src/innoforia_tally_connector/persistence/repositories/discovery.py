@@ -14,7 +14,11 @@ class DiscoveryStore:
         self.engine = engine
 
     def capture(self, command):
-        key = None if command.kind in {"LINK", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_CANCEL", "ACTIVITY_DETAIL", "BATCH_STEP", "BATCH_APPROVE", "BATCH_CANCEL", "POLICY_SAVE", "BATCH_PREPARE"} else f"{command.generation}:{command.kind}"
+        key = None if command.kind in {"LINK", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_CANCEL", "ACTIVITY_DETAIL", "BATCH_STEP", "BATCH_APPROVE", "BATCH_CANCEL", "POLICY_SAVE", "BATCH_PREPARE", "UPDATE_APPLY", "UPDATE_CANCEL", "UPDATE_PREPARE"} else f"{command.generation}:{command.kind}"
+        if command.kind == "PARTY_CHANGES":
+            key += ":" + str(command.party_identity)
+        if command.kind in {"UPDATE_STATUS", "UPDATE_RECONCILE"}:
+            key += f":{command.binding}:{command.experiment_id}:{command.party_identity}"
         try:
             with self.engine.begin() as connection:
                 connection.execute(insert(operations).values(id=command.id, command_json=command.model_dump_json(exclude_unset=True),
@@ -89,7 +93,7 @@ class DiscoveryStore:
             rows = connection.execute(select(operations).where(operations.c.state.in_(["PENDING", "VALIDATING"]))).mappings().all()
         for row in rows:
             command = Command.model_validate_json(row["command_json"])
-            if command.kind in {"LINK", "BIND", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_PREPARE", "TRANSFER_CANCEL", "BATCH_APPROVE", "BATCH_STEP", "BATCH_PREPARE", "POLICY_SAVE", "BATCH_CANCEL"}:
+            if command.kind in {"LINK", "BIND", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_PREPARE", "TRANSFER_CANCEL", "BATCH_APPROVE", "BATCH_STEP", "BATCH_PREPARE", "POLICY_SAVE", "BATCH_CANCEL", "UPDATE_APPLY", "UPDATE_PREPARE", "UPDATE_CANCEL"}:
                 applied = command.kind == "LINK" and links.by_id(command.id) is not None
                 self.finish(command.id, None if applied else "Interrupted confirmation requires renewed review")
                 self.dispatched(command.id)

@@ -126,7 +126,9 @@ def test_workspace_batch_and_automatic_restart(qtbot, tmp_path, monkeypatch, sid
         qtbot.waitUntil(lambda: window.current_batch.state == "SUCCEEDED" and not window.controller.pending, timeout=10000)
         assert state["posts"] + state["imports"] == 2
         assert len(ticks) - before_ticks >= 2
-        assert window.saved_model.rowCount() == 2
+        # Batch-list events can expose SUCCEEDED before the separate saved-link
+        # refresh event reaches Qt. Wait for the observable refresh completion.
+        qtbot.waitUntil(lambda: window.saved_model.rowCount() == 2, timeout=10000)
         assert all(i.result.source_normal_party_confirmed for i in window.current_batch.items)
     finally:
         shutdown(window, runtime, cleanup)

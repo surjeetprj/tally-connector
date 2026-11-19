@@ -115,6 +115,6 @@ def test_v4_alter_and_index_failure_rolls_back_to_v3(tmp_path, monkeypatch):
             assert "source_key" not in {row[1] for row in connection.exec_driver_sql("PRAGMA table_info(party_experiments)")}
         runner.migrate(engine)
         with engine.connect() as connection:
-            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == 5
+            assert connection.exec_driver_sql("PRAGMA user_version").scalar_one() == runner.MIGRATIONS[-1].VERSION
     finally:
         engine.dispose()

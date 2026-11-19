@@ -12,7 +12,8 @@ class Command(Value):
     id: str
     kind: Literal["VERIFY", "BIND", "LOAD", "LINK", "SAVED", "EXP_PREPARE", "EXP_CREATE", "EXP_STATUS", "EXP_RECONCILE",
                   "TRANSFER_PREPARE", "TRANSFER_CREATE", "TRANSFER_RECONCILE", "ACTIVITY", "ACTIVITY_DETAIL", "TRANSFER_CANCEL",
-                  "RESTORE", "POLICY_GET", "POLICY_SAVE", "BATCH_PREPARE", "BATCH_APPROVE", "BATCH_STEP", "BATCH_GET", "BATCH_LIST", "BATCH_CANCEL", "BATCH_RECOVER"]
+                  "RESTORE", "POLICY_GET", "POLICY_SAVE", "BATCH_PREPARE", "BATCH_APPROVE", "BATCH_STEP", "BATCH_GET", "BATCH_LIST", "BATCH_CANCEL", "BATCH_RECOVER", "PARTY_CHANGES",
+                  "UPDATE_PREPARE", "UPDATE_APPLY", "UPDATE_RECONCILE", "UPDATE_CANCEL", "UPDATE_STATUS"]
     generation: int
     binding: Binding | None = None
     classification: Classification | None = None
@@ -32,6 +33,7 @@ class Command(Value):
     policy: TransferPolicy | None = None
     approval: BatchApproval | None = None
     batch_id: str | None = None
+    party_identity: str | None = None
 
 
 @dataclass(frozen=True)

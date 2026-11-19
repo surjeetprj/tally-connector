@@ -124,8 +124,72 @@ Offline: **153 focused passed; 338 passed, one live skipped** in the full suite.
 Coverage includes dash/accent/Indian-script/currency/non-BMP values, UTF-16 with
 and without BOM, malformed encodings/declarations, XML attacks and controls,
 typed create wire payloads/receipts, independent native read-back and SQLite
-reconciliation/restart without duplicate creates. No live import ran; Unicode
-create and the new dated create shape still need owner-approved live acceptance.
+reconciliation/restart without duplicate creates. No assistant live import ran.
+
+### Fresh supplier acceptance — Reliance Jio
+
+The owner supplied a new successful Bahi-to-Tally trial for source 282, Reliance
+Jio Infocomm Limited, batch 3dc1c9d0-a034-41e9-b018-ce0cb7339562. Screenshots show
+SUCCEEDED, a saved identity link and populated address/country/PIN in SIS Dummy.
+Read-only journal inspection confirms target GUID ending 0000016c and every
+approved comparison true. Included fields were name, address, PIN, country and
+supplier type; state/email/phone were null and omitted by saved policy, and tax
+fields were disabled. The displayed Not Applicable state is consistent with that
+manifest; this trial does not verify populated state or tax transfer. This is
+fresh owner-run create/read-back evidence for the included mailing fields, beyond
+the earlier manually corrected Airtel recovery. New-link restart persistence,
+populated state/contact fields, customers and multi-party live cases remain pending.
+No remote calls, runtime changes or repeated creations ran during this inspection.
+
+### Controlled supplier State update implementation
+
+Following the owner-verified difference screen, a
+[separate controlled State experiment](../../master-sync/CONTROLLED_STATE_UPDATE.md)
+now provides exact preview/approval and one shared-journal attempt. The official
+sample's NAME selector is resolved/rechecked from saved GUID, not advertised as a
+verified GUID-only Alter. Native snapshots guard version/context and compare all
+unselected fields after transmission. Missing/ambiguous GUID/name or unsupported
+mailing history prevents a write. No race-free/conditional-write claim is made.
+
+Export-only preparation evidence on GUID ending 0000016c: full snapshot 15,393
+UTF-8 evidence bytes; one dated mailing record at 20260401; typed payload 867 bytes,
+containing GUID and the existing mailing entry with only State proposed as Delhi.
+It was **not sent**. Full native exports put NAME in an attribute and use U+0004
+references in nine tax/default scalar tags. The dedicated snapshot reader retains
+these as opaque evidence tokens, never imports them or weakens the general parser.
+Snapshot handling rejects unknown controls and unsupported mailing structures.
+
+45 focused checks and full offline suite (404 passed, one skipped) pass, including
+strict XML, actual typed transport/gateway with fake remotes, preserved failure
+snapshots, one-attempt recovery, atomic audit and native UI/restart. Migration 6
+adds appended verification/audit evidence, preserving original links. No live
+update, runtime upgrade or journal edit ran by the assistant during implementation.
+
+The owner subsequently approved and ran State trial
+`bcc0b354-14ab-4f7b-a1c1-cfc5d277d778` on source 282. State read-back was Delhi;
+the original preservation check blocked on added LEDSTATENAME (TYPE String) and
+empty REMOTEALTGUID becoming the same ledger GUID. Retained before/after evidence
+contains no other changes beyond ALTERID and the approved State. The repaired
+comparison permits only those exact representations and retains the old approved
+snapshot/hash. Wrong State, foreign import identity and all other native changes
+still fail. The [official import-definition reference](https://help.tallysolutions.com/import-file-definition-attributes/)
+uses RemoteAltGUID as import identity metadata; this trial's empty-to-self
+transition remains an observation, not a general guarantee. The owner now supplied
+a screenshot of this same record SUCCEEDED, with all seven comparisons true and
+original link/audit preserved. Direct destination and post-success restart
+acceptance were subsequently owner-confirmed with screenshots: Tally State Delhi,
+unselected details preserved and SUCCEEDED after restart. The repaired slice passes 51 focused checks and the complete offline
+suite (413 passed, one live skipped). No second import or runtime journal edit
+ran during this repair.
+
+The approved [repeatable supplier State feature](../../master-sync/SUPPLIER_STATE_UPDATES.md)
+reuses this contract with fresh approval per change and a separate verified State
+baseline. It adds no broader XML mutation support. On 19 November the owner supplied
+the normal feature's second successful live result, record
+`ec02114b-7aa7-46a5-bf70-b2fe4901ef81`: Delhi to Haryana on source 282 and the same
+saved GUID, all seven comparisons true. The Tally screenshot shows Haryana and
+unchanged visible address/country/PIN. Post-second-update restart persistence and
+independent-edit conflict acceptance remain pending.
 
 Observed 29 October 2026, approximately 19:47 IST. CON-002 is partially validated;
 the observations below do not establish import, idempotency or crash recovery.

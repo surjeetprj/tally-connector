@@ -11,6 +11,7 @@ from innoforia_tally_connector.ui.party_drag import PartyView, DragSession, Crea
 from innoforia_tally_connector.ui.pages.batch_review import BatchReview
 from innoforia_tally_connector.ui.pages.activity import ActivityPage
 from innoforia_tally_connector.ui.pages.transfer import TransferPage
+from innoforia_tally_connector.ui.pages.party_changes import PartyChangesDialog
 from innoforia_tally_connector.ui.confirmations import confirm_plain
 
 
@@ -78,6 +79,10 @@ class Workspace(QMainWindow):
             view.review.connect(self.drop)
             column.addWidget(view, 1)
             column.addWidget(button)
+            if side == Side.BAHI:
+                self.review_changes = QPushButton("Review linked changes → Tally…")
+                self.review_changes.clicked.connect(self.inspect_changes)
+                column.addWidget(self.review_changes)
             column.addWidget(drop)
             split.addWidget(panel)
             self.models[side], self.views[side], self.transfer_buttons[side] = model, view, button
@@ -164,7 +169,8 @@ class Workspace(QMainWindow):
         form.addWidget(self.setup_error)
         note = QLabel("Saved policy: omit unavailable/invalid optional fields with audited reasons. "
             "GSTIN, PAN and registration type remain disabled pending verified Tally contracts. "
-            "Only exact source values are transferred. No updates or unattended creation.")
+            "Only exact source values are transferred. General updates and unattended writes remain disabled; "
+            "supplier State updates have their own exact approval.")
         note.setWordWrap(True)
         form.addWidget(note)
         self.field_boxes = {}
@@ -185,6 +191,7 @@ class Workspace(QMainWindow):
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
         self.review = BatchReview(self, self.send, self.review_pair)
+        self.changes_review = PartyChangesDialog(self, self.send)
         self.review.activity.clicked.connect(self.open_activity)
         self.refresh.clicked.connect(lambda: self.send("LOAD"))
         self.verify.clicked.connect(lambda: self.send("VERIFY"))
@@ -224,6 +231,7 @@ class Workspace(QMainWindow):
             self.discovery = self.policy = self.current_batch = None
             self.drag_session.reset(None, None)
             self.review.hide()
+            self.changes_review.clear()
             self.technical.clear()
             self.render()
         self.status.setText("Working in background…")
@@ -234,10 +242,14 @@ class Workspace(QMainWindow):
         bound = bool(self.controller and self.controller.binding)
         busy = bool(self.controller and self.controller.pending)
         executing = bool(self.current_batch and self.current_batch.state == "APPLYING")
+        self.changes_review.busy = busy
+        self.changes_review.generation = getattr(self.controller, "generation", None)
+        self.changes_review.actions()
         for w in (self.refresh, self.refresh_activity, self.recover, self.resume): w.setEnabled(bound and not busy and not executing)
         self.verify.setEnabled(not busy and not executing)
         self.bind.setEnabled(not busy and not executing and self.customers.count() > 0)
         self.save_policy.setEnabled(bound and not busy and not executing)
+        self.review_changes.setEnabled(bound and not busy and not executing and self.discovery is not None)
         self.links_previous.setEnabled(bound and not busy and self.links_offset > 0)
         self.links_next.setEnabled(bound and not busy and self.links_more)
         self.batch_previous.setEnabled(bound and not busy and self.batch_offset > 0)
@@ -297,6 +309,17 @@ class Workspace(QMainWindow):
         if target is None: self.prepare(source)
         else: self.review_pair(source, target)
 
+    def inspect_changes(self):
+        sources = self.models[Side.BAHI].selected_many(self.views[Side.BAHI])
+        if len(sources) != 1:
+            self.status.setText("Select exactly one linked Bahi party to review changes")
+            return
+        if (Side.BAHI, sources[0].identity) not in self.linked:
+            self.status.setText("This party has no confirmed link; use Transfer or link review first")
+            return
+        self.changes_review.clear()
+        self.send("PARTY_CHANGES", party_identity=sources[0].identity)
+
     def review_pair(self, source, target, *_):
         if not self.policy or isinstance(source, tuple) or source.party_type != target.party_type or source.side == target.side:
             return
@@ -310,6 +333,9 @@ class Workspace(QMainWindow):
     def receive(self, event):
         if event.error:
             self.status.setText(event.error)
+            if event.kind.startswith("UPDATE_"):
+                self.changes_review.result.setText(event.error + "\nLoad the saved test or prepare a renewed preview; never resend an attempted update.")
+                self.changes_review.normal.setChecked(False)
             if event.kind == "SAVED": self.recovery_links_pending = False
             if event.kind == "POLICY_SAVE":
                 self.setup_error.setText(event.error)
@@ -423,6 +449,17 @@ class Workspace(QMainWindow):
         elif kind == "LINK":
             self.status.setText("Identity link saved; no remote fields changed")
             self.send("LOAD"); self.send("SAVED")
+        elif kind == "PARTY_CHANGES":
+            self.changes_review.receive(result)
+            self.changes_review.show()
+            self.changes_review.raise_()
+            self.status.setText("Linked-party changes reviewed. No remote fields were changed.")
+        elif kind.startswith("UPDATE_") or (kind == "ACTIVITY_DETAIL" and result.preview.kind == "UPDATE"):
+            self.changes_review.show_update(result, self.policy.operator if self.policy else "")
+            self.changes_review.show(); self.changes_review.raise_()
+            self.status.setText("State update result displayed. Updates are never automatically resent.")
+            if kind in {"UPDATE_APPLY", "UPDATE_RECONCILE"} and result and result.state == "SUCCEEDED":
+                self.send("PARTY_CHANGES", party_identity=result.preview.source.identity)
         elif kind == "ACTIVITY":
             self.legacy.receive(result)
         elif kind == "ACTIVITY_DETAIL" or kind.startswith(("TRANSFER_", "EXP_")):

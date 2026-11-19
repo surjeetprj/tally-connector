@@ -8,6 +8,7 @@ from innoforia_tally_connector.integrations.tally.xml_codec import parse, unicod
 from innoforia_tally_connector.integrations.tally.builders.masters import validate_supplier_xml
 from innoforia_tally_connector.integrations.tally.builders.parties import validate_party_xml
 from innoforia_tally_connector.domain.experiments import UncertainWrite
+from innoforia_tally_connector.integrations.tally.state_update import validate_state_xml
 
 MAX_BYTES = 8 * 1024 * 1024
 
@@ -45,6 +46,10 @@ class Transport:
 
     def import_party(self, request):
         validate_party_xml(request)
+        return self._import(request)
+
+    def alter_state(self, request, snapshot, state, company):
+        validate_state_xml(request, snapshot, state, company)
         return self._import(request)
 
     def _import(self, request):

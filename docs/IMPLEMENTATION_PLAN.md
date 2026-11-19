@@ -309,6 +309,28 @@ live combinations and Tally tax representations await the
 ran for this update.
 Full MST-004 through MST-008 remain **PENDING**.
 
+18 November: the first [linked-party change review](master-sync/LINKED_PARTY_CHANGES.md)
+slice reads both confirmed identities, compares each with its separate saved
+observation and presents Bahi changes/Tally edits/conflicts in the native workspace.
+It is read-only: approval/execution await verified GUID-targeted Alter and mailing
+history semantics, then shared durable update lifecycle integration. No full
+MST-004/update/unattended gate is completed by this review screen.
+
+Subsequent 18 November slice: [controlled supplier State update](master-sync/CONTROLLED_STATE_UPDATE.md)
+adds exact preview/approval, one shared-journal attempt, full native preservation
+checks, appended verification/audit evidence and restart reads. Migration 6 takes
+the existing consistent backup. The documented NAME selector is resolved/rechecked
+from the saved GUID; no GUID-only/atomic selector is claimed. Offline coverage
+  passes; the owner verified the approved trial in Tally and after restart.
+
+The next approved increment promotes this to [repeatable supplier State updates](master-sync/SUPPLIER_STATE_UPDATES.md):
+fresh exact approval per update, separately acknowledged State baseline, conflict
+detection and unchanged original links. Migration 7 preserves prior trial evidence
+while allowing several operation audits per link. Reuse the shared engine and
+typed adapter; verify repeated changes, stale baselines, uncertainty, migrations
+and UI/restart offline before owner testing of a second live update. Other fields,
+customers, reverse updates and unattended writes retain their separate gates.
+
 Update 4 November: [automated party workspace](master-sync/AUTOMATED_PARTY_WORKSPACE.md)
 adds saved policies/operator, verified automatic reopening/loading, up to 100 selected
 parties per batch, one exact Ready-subset approval and sequential shared execution.

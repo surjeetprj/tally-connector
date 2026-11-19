@@ -30,6 +30,9 @@ single-party controls remain advanced history/recovery tools.
 | [Controlled supplier experiment](master-sync/CONTROLLED_SUPPLIER_EXPERIMENT.md) | Destination-only MST-004 preview, one-attempt journal, approval and live trial gates |
 | [Supervised party transfer](master-sync/PARTY_TRANSFER.md) | Actual source records, drag/drop, exclusions, atomic mapping and persistent activity history |
 | [Owner manual checklist](master-sync/MANUAL_PARTY_TRANSFER_CHECKLIST.md) | Four live direction/type cases, expected exclusions and screenshots to provide |
+| [Linked-party change review](master-sync/LINKED_PARTY_CHANGES.md) | Read-only comparison of linked Bahi/Tally changes, separate saved observations and pending update gates |
+| [Controlled State update](master-sync/CONTROLLED_STATE_UPDATE.md) | One approved supplier-State experiment, preservation evidence, shared recovery and live checklist |
+| [Supplier State updates](master-sync/SUPPLIER_STATE_UPDATES.md) | Repeatable approved Bahi-to-Tally State updates, separate State baselines, conflicts and owner checklist |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |
 | [Tally experiment evidence](api/tally/README.md) | Executed read-only probes, sanitized observations and unverified guarantees |
 | [Live Bahi validation](api/bahi/LIVE_VALIDATION.md) | Authenticated business identity and sampled GET contracts |

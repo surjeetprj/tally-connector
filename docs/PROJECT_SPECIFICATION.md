@@ -1,6 +1,6 @@
 # Project Specification v2.1: Innoforia Bahi <-> TallyPrime Desktop Connector
 
-Updated: 16 November 2026 (ledger/UOM handbook availability; party workspace scope retained).
+Updated: 18 November 2026 (approved repeatable supplier-State update scope).
 
 Status: requirements and architecture; implemented evidence is tracked in
 [current state](STATE_AND_PROGRESS.md). The original
@@ -61,6 +61,15 @@ Execute sequential children through the shared lifecycle, with per-child attempt
 uniqueness, read-back and atomic mappings. Restore pending work for review after
 restart; never create automatically on startup. Known-ID reconciliation is read-only.
 See [workspace behavior](master-sync/AUTOMATED_PARTY_WORKSPACE.md).
+
+The approved update increment supports repeatable Bahi-to-Tally supplier State
+updates on confirmed links, with one existing dated mailing entry. Each exact
+change requires approval, current context/content checks, one durable attempt,
+native preservation verification and atomic local completion. Store a separate
+State-only acknowledgement after success; preserve original link evidence and
+other field baselines. Destination edits/conflicts and clears remain blocked.
+No broader field, customer, reverse or unattended update scope is implied. See
+[supplier State updates](master-sync/SUPPLIER_STATE_UPDATES.md).
 
 ### Core constraints
 

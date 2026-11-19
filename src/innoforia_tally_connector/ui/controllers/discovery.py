@@ -22,7 +22,7 @@ class Controller(QObject):
             self.pending.clear()
         elif kind == "BIND":
             self.binding = None
-        if kind in {"LOAD", "LINK", "SAVED", "ACTIVITY", "ACTIVITY_DETAIL"} or kind.startswith(("EXP_", "TRANSFER_", "BATCH_", "POLICY_")):
+        if kind in {"LOAD", "LINK", "SAVED", "ACTIVITY", "ACTIVITY_DETAIL", "PARTY_CHANGES"} or kind.startswith(("EXP_", "TRANSFER_", "BATCH_", "POLICY_", "UPDATE_")):
             values["binding"] = self.binding
         identity = self.runtime.submit(kind, self.generation, **values)
         self.pending[kind] = identity
