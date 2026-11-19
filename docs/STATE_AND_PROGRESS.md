@@ -4,6 +4,48 @@ Last updated: 19 November 2026.
 
 ## Current milestone: approved linked-party updates, including dated GST
 
+Owner review recorded, 19 November: **SKE CLOUD PRIVATE LIMITED** transferred
+from Tally to Bahi successfully with **no omissions**, according to the owner.
+This supplies owner-run acceptance of the all-applicable-fields transfer workflow
+for that record. The party type, operation/destination IDs, independent destination
+field inspection and restart evidence were not supplied; no broader acceptance is
+inferred. No assistant remote write or repeat creation was performed.
+
+PAN omission investigation: SK TRADING's latest owner-prepared Tally-to-Bahi
+preview uses policy v3 with all supported fields enabled. Its selected export
+omits the PAN scalar, so the saved preview records source PAN unavailable rather
+than disabled by policy. A fresh read-only, company/GUID-scoped complete native
+export for ledger ending 00000166 confirms INCOMETAXNUMBER, NAMEONPAN, PANSTATUS
+and PARTYGSTIN are empty. There is no source PAN/GSTIN value to copy for this
+party. Do not infer a PAN or rewrite its pending preview. Once the owner populates
+a valid source value, fresh preparation can include it. No remote mutation,
+runtime database write, create attempt or new regression run was needed for this
+read-only diagnosis. The latest full implementation regression remains 678
+passed/one opt-in live check skipped.
+
+Current follow-up: include all applicable supported fields on new transfers in
+both directions. Opening saved settings or preparing a batch upgrades legacy
+contact-only policies as a new version with all supported fields enabled. Old
+unapproved drafts are cancelled; a fresh exact summary needs approval. Executing
+and historical payloads/approvals remain immutable. Field checkboxes are displayed
+as included capabilities, not routine omission tasks. Invalid, absent, unavailable
+or destination-incompatible values still have individual audited reasons.
+
+Tally creation now includes supported PAN and the exact Regular/Composition GST
+pair, using the already verified first-entry dated schema. Source State and country
+India are required for GST; no registration type or country is invented. Initial
+GST applicability uses the freshly verified destination Books From date, displayed
+in the summary and bound to approval. It is an initial master-entry date, not a
+claim about the source's legal registration date. Read-back must resolve the exact
+new GUID and verify every included value plus the approved mailing/GST dates.
+Bahi creation uses its documented scalar tax fields.
+Verification: **678 passed, one opt-in live test skipped** in the existing .venv.
+Customer/supplier typed XML, independent native export fixtures, automatic policy
+versioning, old approval hashes, exact PAN/GST/date read-back, omissions, duplicate
+suppression/recovery and all offscreen UI/architecture checks pass. Documentation
+links/fences and diff whitespace checks pass. No live creation or runtime
+record/policy edit was performed by the assistant for this implementation.
+
 Linked Tally-to-Bahi updates now use the existing UPDATE approval/attempt/audit
 lifecycle. Parties has **Review linked changes → Bahi** beside the Tally list.
 The reverse dialog automatically includes supported eligible contact, mailing,
@@ -42,7 +84,7 @@ verified updates are recorded separately. The update operation ID and restart
 persistence evidence were not supplied. Source phone
 contains combined phone/email text beyond Bahi's 16-character limit; it remains
 invalid rather than being split/truncated. New Bahi creation policies support tax
-fields; existing saved policies keep explicit choices until edited/versioned.
+fields; the latest all-fields increment versions older contact-only policies automatically.
 The owner performed the approved reverse update. No assistant remote mutation,
 runtime database edit, record recreation or computer-use automation ran.
 
@@ -121,7 +163,7 @@ Owner screenshots also verify GST operation
 
 Next: use the corrected Activity evidence view to inspect saved transfers and
 updates; continue ordinary approved linked reviews in either direction; no additional controlled owner
-trial is required. Tally tax creation, Unregistered/UIN, tax-State changes, historical
+trial is required. Live tax-creation acceptance, Unregistered/UIN, tax-State changes, historical
 corrections, future tax history, portal validation and unattended updates
 remain separate scopes. Confirmed links, existing journals, runtime identifier
 InnoforaiTallySync and invoice 69 remain preserved.

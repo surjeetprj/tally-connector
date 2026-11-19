@@ -1,11 +1,13 @@
-"""Documented single-ledger contact/mailing XML. Tax writes remain gated."""
+"""Typed single-ledger contact, mailing, PAN and dated GST creation XML."""
 import xml.etree.ElementTree as ET
+import re
+from innoforia_tally_connector.integrations.tally.gst_updates import validate as validate_gst
 from innoforia_tally_connector.domain.masters import PartyType
 from innoforia_tally_connector.domain.party_transfer import PartyDraft
 from innoforia_tally_connector.integrations.tally.xml_codec import parse
 from innoforia_tally_connector.integrations.tally.dates import xml_date
 
-TAGS = {"email": "EMAIL", "phone": "LEDGERPHONE"}
+TAGS = {"email": "EMAIL", "phone": "LEDGERPHONE", "pan": "INCOMETAXNUMBER"}
 MAILING_TAGS = {"pincode": "PINCODE", "state": "STATE", "country": "COUNTRY"}
 MAILING_FIELDS = frozenset({"address", *MAILING_TAGS})
 ROOTS = {PartyType.CUSTOMER: "Sundry Debtors", PartyType.SUPPLIER: "Sundry Creditors"}
@@ -15,12 +17,18 @@ def validate(draft):
     errors = {}
     for field in draft.model_fields_set - {"party_type"}:
         value = getattr(draft, field)
-        if field in {"gstin", "pan", "gst_reg_type"}:
-            errors[field] = "Tally 6.2 tax create representation is not verified; explicitly exclude pending evidence"
-        elif value is None:
+        if value is None:
             errors[field] = "XML null representation unavailable; explicitly exclude"
         elif any(ord(char) < 32 and char not in "\n\t" for char in value):
             errors[field] = "Value contains unsupported XML/control or carriage-return representation"
+    if 'pan' in draft.model_fields_set and (not isinstance(draft.pan,str) or not re.fullmatch(r'[A-Za-z]{5}[0-9]{4}[A-Za-z]',draft.pan)):
+        errors['pan'] = 'PAN must retain its supported ten-character source representation'
+    if draft.model_fields_set & {'gstin','gst_reg_type'}:
+        try: validate_gst({'gstin':draft.gstin,'gst_reg_type':draft.gst_reg_type})
+        except ValueError as error:
+            errors.update({f:str(error) for f in ('gstin','gst_reg_type') if f in draft.model_fields_set})
+        if not isinstance(draft.state,str) or not draft.state.strip() or draft.country != 'India':
+            errors.update({f:'Dated GST creation requires populated source State and country India' for f in ('gstin','gst_reg_type') if f in draft.model_fields_set})
     return errors
 
 
@@ -54,6 +62,11 @@ def party_xml(draft, company, parent, applicable_from=None):
         for field, tag in MAILING_TAGS.items():
             if field in draft.model_fields_set:
                 ET.SubElement(mailing, tag).text = getattr(draft, field)
+    if draft.model_fields_set & {'gstin','gst_reg_type'}:
+        xml_date(applicable_from)
+        tax = ET.SubElement(ledger,'LEDGSTREGDETAILS.LIST')
+        for tag,value in (('APPLICABLEFROM',applicable_from),('GSTREGISTRATIONTYPE',draft.gst_reg_type),('STATE',draft.state),('GSTIN',draft.gstin)):
+            ET.SubElement(tax,tag).text = value
     raw = ET.tostring(root, encoding="utf-8", xml_declaration=True)
     if len(raw) > 64 * 1024:
         raise ValueError("Party XML exceeds the bounded request size")
@@ -84,6 +97,11 @@ def validate_party_xml(raw):
         address = mailing.find("ADDRESS.LIST")
         if address is not None:
             values["address"] = "\n".join(node.text or "" for node in address.findall("ADDRESS"))
+    tax = ledger.find('LEDGSTREGDETAILS.LIST')
+    if tax is not None:
+        if tax.findtext('APPLICABLEFROM') != applicable_from or tax.findtext('STATE') != values.get('state'):
+            raise ValueError('GST date/State differs from the approved mailing context')
+        values.update(gstin=tax.findtext('GSTIN',''),gst_reg_type=tax.findtext('GSTREGISTRATIONTYPE',''))
     expected = parse(party_xml(PartyDraft(**values), root.findtext(".//SVCURRENTCOMPANY", ""), parent, applicable_from))
     def shape(node):
         return node.tag, sorted(node.attrib.items()), (node.text or "").strip() if len(node) else node.text or "", tuple(shape(child) for child in node)

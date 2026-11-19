@@ -46,7 +46,7 @@ class PartyReader:
         validate_classification(self.classification, groups)
         return groups
 
-    def _observation(self, row, binding, groups, mailing_date=None):
+    def _observation(self, row, binding, groups, mailing_date=None, gst_date=None):
         if not row.get("GUID") or not row.get("NAME") or not row.get("ALTERID"):
             raise ReadError("Tally ledger identity/name/version is missing")
         path = ancestry(row.get("PARENT", ""), groups)
@@ -94,6 +94,8 @@ class PartyReader:
             unavailable.remove('gst_reg_type')
         elif row.get("NESTED_GST_UNRESOLVED"):
             unavailable.append("gstin")
+        if gst_date is not None and row.get('GST_APPLICABLE_FROM') != gst_date:
+            unavailable.extend(['gstin','gst_reg_type'])
         return PartyObservation(binding=binding, side=Side.TALLY, identity=row["GUID"],
                                 party_type=matches[0], content=PartyContent(name=row["NAME"], **content),
                                 version=row["ALTERID"], observed_at=datetime.now(timezone.utc),
@@ -101,12 +103,12 @@ class PartyReader:
                                 classification_evidence=json.dumps([(g.identity, g.name, g.parent) for g in path]),
                                 unavailable_fields=tuple(unavailable), content_schema=2)
 
-    def detail(self, binding, identity, *, mailing_date=None):
+    def detail(self, binding, identity, *, mailing_date=None, gst_date=None):
         groups = self.groups(binding)
         rows = self.gateway.read("Ledger", binding.company_guid, identity)
         if len(rows) != 1 or rows[0].get("GUID") != identity:
             raise ReadError("Tally GUID was not found uniquely; no name fallback is allowed")
-        return self._observation(rows[0], binding, groups, mailing_date)
+        return self._observation(rows[0], binding, groups, mailing_date, gst_date)
 
     def scan(self, binding):
         groups = self.groups(binding)

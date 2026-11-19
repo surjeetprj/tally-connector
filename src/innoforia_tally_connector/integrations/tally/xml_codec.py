@@ -115,8 +115,11 @@ def records(raw: bytes, entity: str) -> list[dict[str, str]]:
                     row["MAILING_UNRESOLVED"] = "Dated mailing records require further evidence"
             tax = node.findall('LEDGSTREGDETAILS.LIST')
             if tax:
-                from innoforia_tally_connector.integrations.tally.gst_updates import content as gst_content
-                try: row['GST_CONTENT'] = gst_content(tax)
+                from innoforia_tally_connector.integrations.tally.gst_updates import content as gst_content, history as gst_history
+                try:
+                    row['GST_CONTENT'] = gst_content(tax)
+                    history = gst_history(tax)
+                    if history: row['GST_APPLICABLE_FROM'] = history[-1].findtext('APPLICABLEFROM')
                 except ValueError: row['NESTED_GST_UNRESOLVED'] = 'Yes'
             elif node.find('LEDGSTREGDETAILS') is not None:
                 row['NESTED_GST_UNRESOLVED'] = 'Yes'

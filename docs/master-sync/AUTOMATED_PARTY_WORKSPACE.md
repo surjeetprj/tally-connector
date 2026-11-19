@@ -71,12 +71,20 @@ remain ineligible. Closing the summary without confirmation sends no create.
 ## Saved field policy
 
 Policies are versioned and binding-scoped, with separate destination selections.
-Initial contact/mailing choices are email, phone, address, country, state and
-pincode. Name/classification are required. New Bahi-destination policies also
-include observed GSTIN, PAN and registration type. Existing policies retain their
-explicit choices until edited and saved. Tally creation tax fields remain disabled.
-Linked updates in either direction have their own exact approval; see
-[reverse linked changes](TALLY_TO_BAHI_UPDATES.md).
+The current transfer workflow includes all supported applicable source fields in
+both directions: contact/mailing values, PAN and valid GSTIN/registration type.
+Name/classification remain required. Opening Settings or preparing a new batch
+versions old contact-only policies automatically; unapproved drafts require a new
+summary. Approved/executing/historical work retains its original field decisions.
+Fields are not silently dropped merely because older policies predated support.
+Invalid/unavailable/destination-incompatible optional values still have reasons.
+
+Tally GST creation requires the complete supported Regular/Composition pair and
+populated source State/country India. Its initial master applicability date is the
+verified destination Books From date, shown before approval with exact payload
+values. This is not a fabricated source registration date or history. Known-GUID
+read-back verifies the approved date and fields. Bahi stores current tax scalars.
+No tax rates, accounting balances, bank settings or unsupported aliases are added.
 
 Saving the policy explicitly permits automatic omission of unavailable or invalid
 optional fields, with generated reasons retained in every child preview and link
@@ -170,3 +178,13 @@ with strict native reply decoding and exact field comparison retained. All
 approved Airtel fields match via live exports; owner-run reconciliation is next.
 153 focused checks and the full offline suite (338 passed, one live skipped) pass.
 See [Unicode evidence and create limitation](../api/tally/README.md#unicode-http-repair--18-november-2026).
+
+## Owner acceptance: all applicable fields
+
+On 19 November 2026 the owner reported that SKE CLOUD PRIVATE LIMITED transferred
+successfully from Tally to Bahi with no omissions. This is owner-reported live
+acceptance for that record, following the policy upgrade. Independent destination
+field inspection, record IDs, party type and restart evidence were not supplied.
+The separate SK TRADING PAN investigation confirmed the source PAN was empty;
+that omission is source availability, not a disabled tax policy. New dated Tally
+tax creation retains its separate live acceptance gate.

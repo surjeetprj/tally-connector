@@ -22,10 +22,11 @@ from innoforia_tally_connector.persistence.repositories.experiments import Exper
 from innoforia_tally_connector.persistence.migrations.versions.v0001_party_links import link_audit
 
 
+@pytest.mark.parametrize("tax_create",[False,True])
 @pytest.mark.parametrize("kind", list(PartyType))
 @pytest.mark.parametrize("ignored_mailing", [False, True])
 @pytest.mark.parametrize("unicode_address", [False, True])
-def test_dated_transfer_and_known_id_recovery_never_repeat_create(store, binding, observation, kind, ignored_mailing, unicode_address):
+def test_dated_transfer_and_known_id_recovery_never_repeat_create(store, binding, observation, kind, ignored_mailing, unicode_address, tax_create):
     binding = binding.model_copy(update={"id": "mailing-binding", "business_id": 52, "company_guid": COMPANY_GUID})
     store.register_binding(binding)
     classification = Classification(customer_root="debtors", supplier_root="creditors")
@@ -34,10 +35,16 @@ def test_dated_transfer_and_known_id_recovery_never_repeat_create(store, binding
     first_line = "First – दिल्ली ₹" if unicode_address else "First"
     source = observation(binding=binding, name=name, party_type=kind, is_active=True, is_system=False, content_schema=2,
         content=PartyContent(name=name, address=first_line + "\n\nThird", state="State", country="India", pincode="012345"))
+    if tax_create:
+        source=source.model_copy(update={'content':source.content.model_copy(update={'pan':'CNXPP6229G','gstin':'09CNXPP6229G1Z7','gst_reg_type':'Regular'})})
     # Independent native-export fixture, not an echo of the builder/request.
     canonical = (Path(__file__).resolve().parents[1] / "fixtures/tally/party_country_7.xml").read_bytes()
     canonical = canonical.replace(b"Sundry Creditors", parent.encode())
     canonical = canonical.replace(b'>First<', ('>' + first_line + '<').encode('utf-8'))
+    if tax_create:
+        canonical=canonical.replace(b'</LEDGER>', b'<INCOMETAXNUMBER>CNXPP6229G</INCOMETAXNUMBER>'
+            b'<LEDGSTREGDETAILS.LIST><APPLICABLEFROM>20260401</APPLICABLEFROM><GSTREGISTRATIONTYPE>Regular</GSTREGISTRATIONTYPE>'
+            b'<STATE>State</STATE><GSTIN>09CNXPP6229G1Z7</GSTIN></LEDGSTREGDETAILS.LIST></LEDGER>')
     ignored = (b'<COLLECTION><LEDGER NAME="Synthetic country supplier">'
         b'<GUID>11111111-2222-3333-4444-555555555555-00000001</GUID><MASTERID>1</MASTERID><ALTERID>1</ALTERID>'
         b'<NAME>Synthetic country supplier</NAME><PARENT>' + parent.encode() + b'</PARENT>'
@@ -51,6 +58,10 @@ def test_dated_transfer_and_known_id_recovery_never_repeat_create(store, binding
             state.imports += 1
             ledger = root.find(".//LEDGER")
             mailing = ledger.find("LEDMAILINGDETAILS.LIST")
+            if tax_create:
+                assert ledger.findtext('INCOMETAXNUMBER')=='CNXPP6229G'
+                assert ledger.findtext('LEDGSTREGDETAILS.LIST/GSTIN')=='09CNXPP6229G1Z7'
+                assert ledger.findtext('LEDGSTREGDETAILS.LIST/APPLICABLEFROM')=='20260401'
             assert root.findtext(".//SVCURRENTCOMPANY") == "SIS Dummy"
             assert ledger.findtext("PARENT") == parent
             assert mailing.findtext("APPLICABLEFROM") == "20260401"
@@ -102,7 +113,7 @@ def test_dated_transfer_and_known_id_recovery_never_repeat_create(store, binding
         if ignored_mailing:
             assert result.state == "BLOCKED" and not store.by_id(result.preview.id)
             assert all(result.comparisons[field] is False for field in ("address", "state", "pincode", "country"))
-            assert "address, country, pincode, state" in result.message
+            assert all(field in result.message for field in ("address", "country", "pincode", "state"))
             # Restart retrieval and unchanged reads cannot turn this into a new create.
             assert ExperimentStore(store.engine).get(result.preview.id, binding) == result
             result = run("TRANSFER_RECONCILE", experiment_id=result.preview.id)

@@ -1,5 +1,6 @@
 """One compact approval for the exact ready subset; details remain inspectable."""
 from datetime import datetime, timezone
+import json
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTableView,
     QSplitter, QTextEdit, QCheckBox, QPushButton)
@@ -85,7 +86,7 @@ class BatchReview(QDialog):
         totals = {status: sum(i.status == status for i in batch.items) for status in {i.status for i in batch.items}}
         self.summary.setText(f"{batch.direction.value.replace('_', ' ')} · Operator: {batch.policy.operator} · Policy v{batch.policy.version}\n"
             f"{batch.state}: " + "; ".join(f"{count} {status}" for status, count in sorted(totals.items())) +
-            "\nOnly Ready records are approved. Tax fields are omitted by the saved policy. Select a row to inspect exact fields and destination.")
+            "\nOnly Ready records are approved. All applicable supported fields are included; any omissions have specific reasons. Select a row to inspect exact fields and destination.")
         rows = []
         for item in batch.items:
             omissions = ", ".join(d.field for d in item.preview.decisions if d.status == "excluded") if item.preview else ""
@@ -136,6 +137,9 @@ class BatchReview(QDialog):
             p = item.preview
             lines += [f"Destination: {p.preflight.destination}", f"Group: {p.preflight.group_context}",
                 f"Exact included fields: {p.party.model_dump(exclude_unset=True)!r}", f"Approval expiry: {p.expires_at.isoformat()}"]
+            context = json.loads(p.preflight.group_context)
+            if context.get('gst_applicable_from'):
+                lines.append(f"Initial GST applicability: {context['gst_applicable_from']} (destination company Books From; included in this approval)")
             lines += [f"{d.field}: {d.status} — {d.reason}" for d in p.decisions]
         if item.result:
             lines += [f"Create attempt: {'recorded' if item.result.attempted else 'not sent'}",

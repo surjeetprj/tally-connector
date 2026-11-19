@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from innoforia_tally_connector.application.masters.parties import search_name
 from innoforia_tally_connector.application.masters.transfer_fields import select_fields
-from innoforia_tally_connector.domain.batches import BatchItem, TransferBatch
+from innoforia_tally_connector.domain.batches import BatchItem, TransferBatch, BAHI_FIELDS
 from innoforia_tally_connector.domain.errors import ReadError
 from innoforia_tally_connector.domain.experiments import Direction, ExperimentPreview
 from innoforia_tally_connector.domain.party_transfer import OPTIONAL_FIELDS
@@ -15,12 +15,18 @@ class BatchWorkflow:
     def __init__(self, store: PartyBatchStore, transfers, progress=lambda *_: None):
         self.store, self.transfers, self.progress = store, transfers, progress
 
+    def all_fields_policy(self, binding):
+        policy = self.store.policy(binding)
+        if policy and (policy.to_bahi != BAHI_FIELDS or policy.to_tally != BAHI_FIELDS):
+            policy = self.store.save_policy(policy.model_copy(update={'to_bahi':BAHI_FIELDS,'to_tally':BAHI_FIELDS}))
+        return policy
+
     def handle(self, command, binding, classification):
-        if command.kind == "POLICY_GET": return self.store.policy(binding)
+        if command.kind == "POLICY_GET": return self.all_fields_policy(binding)
         if command.kind == "POLICY_SAVE":
             if command.policy is None or command.policy.binding != binding:
                 raise ReadError("Settings must belong to the current connection")
-            return self.store.save_policy(command.policy)
+            return self.store.save_policy(command.policy.model_copy(update={'to_bahi':BAHI_FIELDS,'to_tally':BAHI_FIELDS}))
         if command.kind == "BATCH_PREPARE": return self.prepare(command, binding, classification)
         if command.kind == "BATCH_APPROVE": return self.store.approve(command)
         if command.kind == "BATCH_GET": return self.store.get(command.batch_id, binding)
@@ -39,7 +45,7 @@ class BatchWorkflow:
         raise ReadError("Unsupported batch action")
 
     def prepare(self, command, binding, classification):
-        policy = self.store.policy(binding)
+        policy = self.all_fields_policy(binding)
         if policy is None:
             raise ReadError("Save operator and field policy in Settings first")
         sources = command.sources

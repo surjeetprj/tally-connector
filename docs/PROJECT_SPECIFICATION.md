@@ -131,6 +131,16 @@ creation policies may include supported GSTIN/PAN/registration fields; existing
 policies retain explicit saved choices. Tally creation tax gates remain. See
 [reverse update scope](master-sync/TALLY_TO_BAHI_UPDATES.md).
 
+The latest owner-approved creation increment includes every applicable supported
+party field in both directions, with automatic versioned upgrades of older saved
+contact-only policies and renewed review of unsent drafts. Tally creates support
+PAN and the exact supported GST pair in a dated first entry. Require source State
+and India, bind the initial Books From applicability date to approval, and verify
+the actual nested date/values by known-GUID read-back. Invalid/unavailable fields
+remain individually audited omissions. No source values, tax history or accounting
+balances may be invented. This supersedes the earlier Tally creation tax gate;
+live tax-creation acceptance remains distinct from existing update evidence.
+
 ## 2. Technology stack and dependency management
 
 Use the requested libraries, with SQLAlchemy as the ORM and Pydantic for domain

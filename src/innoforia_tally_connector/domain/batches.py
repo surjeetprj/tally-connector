@@ -20,7 +20,7 @@ class TransferPolicy(Value):
         if not self.operator.strip():
             raise ValueError("Enter the operator name")
         if any(len(set(fields)) != len(fields) or set(fields) - set(allowed)
-               for fields,allowed in ((self.to_bahi,BAHI_FIELDS),(self.to_tally,CONTACT_FIELDS))):
+               for fields,allowed in ((self.to_bahi,BAHI_FIELDS),(self.to_tally,BAHI_FIELDS))):
             raise ValueError("Only destination-supported fields can be enabled")
         return self
 

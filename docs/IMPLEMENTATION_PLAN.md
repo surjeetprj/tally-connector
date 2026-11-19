@@ -384,6 +384,16 @@ is not established by offline tests or the earlier party-create success. The
 subsequent owner-run supplier-283 update and Bahi screenshot now establish the
 GSTIN/PAN subset; other live update cases and restart evidence remain pending.
 
+19 November all-applicable-fields follow-up: the owner requested tax/contact
+fields on creation in both directions, including old saved policy v2. Version
+policies automatically before fresh preparation, preserve attempted/history work,
+and include supported PAN/detailed dated GST on new Tally masters. Reuse the
+verified first-entry schema, initial destination Books From applicability context,
+typed one-ledger guard and exact-date read-back. Verify both party types, old
+policy upgrades, omissions/dependencies, approval invalidation, ignored tax fields
+and recovery offline. Live new-tax-ledger creation is not established by prior
+owner GST-update acceptance.
+
 Update 4 November: [automated party workspace](master-sync/AUTOMATED_PARTY_WORKSPACE.md)
 adds saved policies/operator, verified automatic reopening/loading, up to 100 selected
 parties per batch, one exact Ready-subset approval and sequential shared execution.

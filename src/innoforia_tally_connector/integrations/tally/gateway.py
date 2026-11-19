@@ -136,6 +136,9 @@ class Gateway:
                 raise ContextMismatch("Company books date changed during preflight")
             context["mailing_applicable_from"] = company["BOOKSFROM"]
             context["mailing_date_source"] = "Company.BooksFrom"
+            if party.model_fields_set & {'gstin','gst_reg_type'}:
+                context['gst_applicable_from'] = company['BOOKSFROM']
+                context['gst_date_source'] = 'Company.BooksFrom'
         context = json.dumps(context, sort_keys=True)
         return Preflight(group_context=context, destination=f"Tally {company['NAME']} ({company['GUID']})",
                          baseline_guids=tuple(sorted(r["GUID"] for r in ledgers)))

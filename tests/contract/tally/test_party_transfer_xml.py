@@ -65,6 +65,41 @@ def test_unverified_tax_and_null_values_fail_closed():
         import_receipt(b"<RESPONSE><CREATED>1</CREATED><CREATED>0</CREATED><ALTERED>0</ALTERED><ERRORS>0</ERRORS></RESPONSE>", ())
 
 
+@pytest.mark.parametrize('kind',list(PartyType))
+def test_tax_create_contains_only_supported_dated_values_and_checks_date_on_readback(kind,binding):
+    from innoforia_tally_connector.domain.masters import Classification
+    from lxml import etree
+    draft=PartyDraft(name='Tax party',party_type=kind,pan='CNXPP6229G',gstin='09CNXPP6229G1Z7',
+        gst_reg_type='Regular',state='Uttar Pradesh',country='India',pincode='001234')
+    raw=party_xml(draft,'SIS Dummy',ROOTS[kind],'20260401')
+    validate_party_xml(raw)
+    ledger=parse(raw).find('.//LEDGER')
+    assert ledger.findtext('INCOMETAXNUMBER')==draft.pan
+    assert ledger.findtext('LEDGSTREGDETAILS.LIST/GSTIN')==draft.gstin
+    assert ledger.findtext('LEDGSTREGDETAILS.LIST/APPLICABLEFROM')=='20260401'
+    assert ledger.find('PARTYGSTIN') is None and ledger.find('OPENINGBALANCE') is None
+    etree.SubElement(ledger,'GUID').text='party'
+    etree.SubElement(ledger,'ALTERID').text='1'
+    row=records(b'<COLLECTION>'+etree.tostring(ledger)+b'</COLLECTION>','Ledger')[0]
+    class Gateway:
+        def read(self,entity,company_guid,guid=None):
+            if entity=='Group':return [{'GUID':'root','NAME':ROOTS[kind],'PARENT':'Primary','ALTERID':'1'},
+                    {'GUID':'other','NAME':'Sundry Creditors' if kind==PartyType.CUSTOMER else 'Sundry Debtors','PARENT':'Primary','ALTERID':'1'}]
+            return [row]
+    classification=Classification(customer_root='root' if kind==PartyType.CUSTOMER else 'other',
+        supplier_root='root' if kind==PartyType.SUPPLIER else 'other')
+    reader=PartyReader(Gateway(),classification)
+    target=reader.detail(binding,'party',mailing_date='20260401',gst_date='20260401')
+    assert not {'pan','gstin','gst_reg_type'} & set(target.unavailable_fields)
+    assert target.content.gstin==draft.gstin and target.content.pan==draft.pan
+    row['GST_APPLICABLE_FROM']='20260501'
+    assert {'gstin','gst_reg_type'}<=set(reader.detail(binding,'party',gst_date='20260401').unavailable_fields)
+    row.pop('GST_APPLICABLE_FROM')  # Root echoes/ignored history never prove success.
+    assert 'gstin' in reader.detail(binding,'party',gst_date='20260401').unavailable_fields
+    bad=raw.replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>',b'<APPLICABLEFROM>20260501</APPLICABLEFROM>',1)
+    with pytest.raises(ValueError): validate_party_xml(bad)
+
+
 def test_tally_multiline_reader_and_new_field_availability(binding):
     from innoforia_tally_connector.domain.masters import Classification
     class Gateway:

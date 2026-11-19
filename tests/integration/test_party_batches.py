@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select, update
 from innoforia_tally_connector.application.masters.batches import BatchWorkflow
 from innoforia_tally_connector.application.masters.transfers import PartyTransferWorkflow
-from innoforia_tally_connector.domain.batches import BatchApproval, TransferPolicy, CONTACT_FIELDS
+from innoforia_tally_connector.domain.batches import BatchApproval, TransferPolicy, CONTACT_FIELDS, BAHI_FIELDS
 from innoforia_tally_connector.domain.commands import Command
 from innoforia_tally_connector.domain.experiments import Direction, Preflight, TargetIdentity, UncertainWrite, WriteRejected
 from innoforia_tally_connector.domain.masters import Side, PartyContent, PartyScan, PartyType, ConfirmedPartyLink
@@ -58,7 +58,7 @@ def rig(store, binding, observation):
     transfers = PartyTransferWorkflow(records, lambda _: (Reader(Side.BAHI), Reader(Side.TALLY)),
         lambda *_: destination, lambda: SimpleNamespace(business_id=binding.business_id, company_guid=binding.company_guid), store)
     workflow = BatchWorkflow(batch_store, transfers)
-    batch_store.save_policy(TransferPolicy(binding=binding, operator="Owner", to_bahi=CONTACT_FIELDS))
+    batch_store.save_policy(TransferPolicy(binding=binding, operator="Owner", to_bahi=BAHI_FIELDS,to_tally=BAHI_FIELDS))
     def execute(command):
         claimed = journal.claim(command.id)
         if not claimed: return None
@@ -113,7 +113,7 @@ def test_batch_creates_once_and_persists_mapping_per_party(rig, side, kind):
     for item in restored.items:
         assert item.result.source_normal_party_confirmed and item.result.reviewer == "Owner"
         link = r.store.by_id(item.preview.id)
-        assert link.transfer_exclusions["gstin"].startswith("Saved field policy")
+        assert "gstin" not in link.transfer_exclusions  # Absent source data, not a blanket tax exclusion.
         assert link.source_eligibility_evidence.startswith("Named reviewer")
         assert all(item.result.comparisons.values())
 
@@ -123,7 +123,7 @@ def test_bahi_tax_creation_policy_is_versioned_and_tally_policy_stays_unchanged(
     r=rig
     old=r.batch_store.policy(r.binding)
     new=r.batch_store.save_policy(old.model_copy(update={'to_bahi':BAHI_FIELDS}))
-    assert new.version==old.version+1 and new.to_tally==old.to_tally==CONTACT_FIELDS
+    assert new.version==old.version+1 and new.to_tally==old.to_tally==BAHI_FIELDS
     for identity,source in r.sources.items():
         r.sources[identity]=source.model_copy(update={'side':Side.TALLY,'content':source.content.model_copy(
             update={'gstin':'09CNXPP6229G1Z7','pan':'CNXPP6229G','gst_reg_type':'Regular'})})
@@ -135,6 +135,22 @@ def test_bahi_tax_creation_policy_is_versioned_and_tally_policy_stays_unchanged(
         assert item.result.observation.content.pan=='CNXPP6229G'
         assert all(d.status=='included' for d in item.preview.decisions if d.field in {'gstin','pan','gst_reg_type'})
         assert all(item.result.comparisons.values())
+
+
+def test_old_contact_only_policy_is_upgraded_before_preparation_without_writing(rig):
+    r=rig
+    old=r.batch_store.policy(r.binding)
+    legacy=r.batch_store.save_policy(old.model_copy(update={'to_bahi':CONTACT_FIELDS,'to_tally':CONTACT_FIELDS}))
+    r.sources['1']=r.sources['1'].model_copy(update={'side':Side.TALLY,'content':r.sources['1'].content.model_copy(
+        update={'gstin':'09CNXPP6229G1Z7','pan':'CNXPP6229G','gst_reg_type':'Regular'})})
+    batch=r.prepare(ids=('1',))
+    assert batch.policy.version==legacy.version+1
+    assert batch.policy.to_bahi==batch.policy.to_tally==BAHI_FIELDS
+    assert batch.items[0].preview.party.gstin=='09CNXPP6229G1Z7'
+    assert not r.state.creates
+    # Reopening Settings is idempotent; historical policy evidence is untouched.
+    assert r.run('POLICY_GET')==batch.policy
+    assert r.batch_store.get(batch.id,r.binding).state=='PENDING'
 
 
 @pytest.mark.parametrize("change", ["digest", "subset", "confirmation", "expired", "policy"])

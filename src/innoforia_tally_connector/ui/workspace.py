@@ -178,7 +178,7 @@ class Workspace(QMainWindow):
         self.setup_error.hide()
         form.addWidget(self.setup_error)
         note = QLabel("Saved policy: omit unavailable/invalid optional fields with audited reasons. "
-            "Tally creation omits tax fields; Bahi supports observed GSTIN, PAN and registration type. Linked updates require exact approval; "
+            "All applicable supported fields are included in both directions, including PAN and valid GST details. Invalid or unavailable values have recorded omission reasons. "
             "Tally GST updates require paired fields and an effective date; earlier tax history is preserved. Rename and unattended writes remain disabled. Only exact source values are transferred.")
         note.setWordWrap(True)
         form.addWidget(note)
@@ -186,9 +186,10 @@ class Workspace(QMainWindow):
         for direction in Direction:
             group = QGroupBox(direction.value.replace('_', ' '))
             row = QHBoxLayout(group)
-            for field in (BAHI_FIELDS if direction == Direction.TO_BAHI else CONTACT_FIELDS):
+            for field in BAHI_FIELDS:
                 box = QCheckBox(field)
                 box.setChecked(True)
+                box.setEnabled(False)
                 row.addWidget(box)
                 self.field_boxes[direction, field] = box
             form.addWidget(group)
@@ -295,7 +296,7 @@ class Workspace(QMainWindow):
         try:
             policy = TransferPolicy(binding=self.controller.binding, version=self.policy.version if self.policy else 1,
                 operator=self.operator.text().strip(), **{("to_bahi" if d == Direction.TO_BAHI else "to_tally"):
-                tuple(f for f in (BAHI_FIELDS if d == Direction.TO_BAHI else CONTACT_FIELDS) if self.field_boxes[d, f].isChecked()) for d in Direction})
+                BAHI_FIELDS for d in Direction})
         except ValueError:
             self.open_transfer_setup()
             self.setup_error.setText("Enter your name above before saving. No transfer has been started.")
@@ -401,7 +402,7 @@ class Workspace(QMainWindow):
                 self.operator.setText(result.operator)
                 for d in Direction:
                     fields = result.to_bahi if d == Direction.TO_BAHI else result.to_tally
-                    for f in (BAHI_FIELDS if d == Direction.TO_BAHI else CONTACT_FIELDS): self.field_boxes[d, f].setChecked(f in fields)
+                    for f in BAHI_FIELDS: self.field_boxes[d, f].setChecked(f in fields)
                 self.tabs.setCurrentIndex(0)
             else:
                 self.tabs.setCurrentIndex(2)

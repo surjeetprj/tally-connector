@@ -11,7 +11,7 @@ limits. In particular, this semantic matrix does not enable unverified Tally
 PAN/GST registration writes or prove an end-to-end tax round trip. Implemented
 linked updates have their own narrower evidence: see
 [selected fields](LINKED_PARTY_UPDATES.md) and
-[dated GST updates](GST_PARTY_UPDATES.md). Tally creation tax fields remain disabled; Bahi creation has destination-specific supported tax choices. See [reverse updates](TALLY_TO_BAHI_UPDATES.md).
+[dated GST updates](GST_PARTY_UPDATES.md). New party creation in both directions now includes applicable supported PAN/GST values with strict destination validation and dated Tally read-back. See [reverse updates](TALLY_TO_BAHI_UPDATES.md).
 
 ## Customers and suppliers
 

@@ -4,7 +4,11 @@ GSTIN and registration-type updates use the existing selected-field update
 workflow, journal, approval, serialized gateway and per-field acknowledgements.
 They are enabled for confirmed customer/supplier links in the currently supported
 business-52/SIS-Dummy test binding. This does not enable tax fields on party
-creation, reverse updates, GST rates, transactions or unattended writes.
+creation, reverse updates, GST rates, transactions or unattended writes by itself.
+The later [all-applicable-fields creation increment](AUTOMATED_PARTY_WORKSPACE.md#saved-field-policy)
+now supports the exact first-entry schema on new ledgers, with an approved initial
+applicability date and exact read-back; new-tax-ledger live acceptance remains
+separate from the update evidence below.
 
 ## User workflow and limits
 

@@ -29,10 +29,9 @@ for that supplier/field subset, not all Bahi PATCH fields or customers. Restart
 persistence and the update operation ID were not supplied.
 No assistant repair write or new party creation was performed for this feature.
 
-Future Tally-to-Bahi creates support GSTIN/PAN/registration type in **Settings**.
-New policies include those fields; existing saved policies retain their explicit
-choices until edited and saved as a new version. Tally creation tax fields remain
-disabled. Existing completed transfers and their exclusion audits are unchanged.
+New transfers now include all supported applicable fields in either direction.
+Older policies are versioned automatically on reopening/preparation; historical
+exclusions are retained. See [current creation policy](AUTOMATED_PARTY_WORKSPACE.md#saved-field-policy).
 
 ## Execution and recovery
 
