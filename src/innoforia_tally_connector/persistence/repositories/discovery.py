@@ -14,7 +14,7 @@ class DiscoveryStore:
         self.engine = engine
 
     def capture(self, command):
-        key = None if command.kind in {"LINK", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_CANCEL", "ACTIVITY_DETAIL", "BATCH_STEP", "BATCH_APPROVE", "BATCH_CANCEL", "POLICY_SAVE", "BATCH_PREPARE", "UPDATE_APPLY", "UPDATE_CANCEL", "UPDATE_PREPARE"} else f"{command.generation}:{command.kind}"
+        key = None if command.kind in {"LINK", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_CANCEL", "ACTIVITY_DETAIL", "BATCH_STEP", "BATCH_APPROVE", "BATCH_CANCEL", "POLICY_SAVE", "BATCH_PREPARE", "UPDATE_APPLY", "UPDATE_CANCEL", "UPDATE_PREPARE", "UPDATE_CLOSE_FAILED"} else f"{command.generation}:{command.kind}"
         if command.kind == "PARTY_CHANGES":
             key += ":" + str(command.party_identity)
         if command.kind in {"UPDATE_STATUS", "UPDATE_RECONCILE"}:
@@ -67,6 +67,10 @@ class DiscoveryStore:
 
     def finish(self, identity, error=None):
         with self.engine.begin() as connection:
+            # Acquire the writer before reading attempt evidence. A deferred
+            # read snapshot cannot be upgraded after a concurrent WAL commit;
+            # busy_timeout cannot help that SQLITE_BUSY_SNAPSHOT case.
+            connection.execute(update(operations).where(operations.c.id == identity).values(state=operations.c.state))
             attempt = connection.execute(select(attempts.c.experiment_id).where(attempts.c.operation_id == identity)).scalar_one_or_none()
             if attempt is not None:
                 if error:
@@ -93,7 +97,7 @@ class DiscoveryStore:
             rows = connection.execute(select(operations).where(operations.c.state.in_(["PENDING", "VALIDATING"]))).mappings().all()
         for row in rows:
             command = Command.model_validate_json(row["command_json"])
-            if command.kind in {"LINK", "BIND", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_PREPARE", "TRANSFER_CANCEL", "BATCH_APPROVE", "BATCH_STEP", "BATCH_PREPARE", "POLICY_SAVE", "BATCH_CANCEL", "UPDATE_APPLY", "UPDATE_PREPARE", "UPDATE_CANCEL"}:
+            if command.kind in {"LINK", "BIND", "EXP_CREATE", "TRANSFER_CREATE", "TRANSFER_PREPARE", "TRANSFER_CANCEL", "BATCH_APPROVE", "BATCH_STEP", "BATCH_PREPARE", "POLICY_SAVE", "BATCH_CANCEL", "UPDATE_APPLY", "UPDATE_PREPARE", "UPDATE_CANCEL", "UPDATE_CLOSE_FAILED"}:
                 applied = command.kind == "LINK" and links.by_id(command.id) is not None
                 self.finish(command.id, None if applied else "Interrupted confirmation requires renewed review")
                 self.dispatched(command.id)

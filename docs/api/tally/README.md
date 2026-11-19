@@ -1,5 +1,44 @@
 # Tally Phase 0 evidence
 
+## Dated party GST import/read-back — 19 November 2026
+
+[GST feature evidence](../../master-sync/GST_PARTY_UPDATES.md) records the executed
+7.0 contract probes on retained synthetic ledgers 0000016a and 0000015f. A single
+new tax aggregate replaced the old history; the verifier caught this and stopped.
+A distinct full-history repair restored the original row, then Regular and
+Composition entries and an empty-history first entry passed fresh native reads.
+Earlier dates/settings, other ledger values and company/GUID context are verified.
+Only the two synthetic test ledgers were changed; the journals retain the failed
+hypothesis and recovery, with no replay of an uncertain attempt. Complete typed
+history import is now required. New first-entry empty optional scalar padding and
+the same-company-to-own-ledger RemoteAltGUID transition are narrowly verified;
+unrelated metadata changes still fail. No Bahi/invoice/application mapping write
+was performed by these contract probes. No BahiAI implementation was used.
+
+## Selected mailing update preservation — 19 November 2026
+
+Owner operation `479f956b-af96-4609-b4af-1f3519eb6c25` on Apollo source 277
+returned exact approved address, PIN and mailing Country. Native preservation
+alone failed: the exported root ADDRESS lines carry `TYPE="String"`, and root
+CountryOfResidence stayed empty instead of echoing the mailing Country. The
+[official schema](https://help.tallysolutions.com/developer-reference/release-3-tdl-enhancements-tally-prime/what-are-the-changes-in-xml-tags/)
+documents Country, Address and PINCode under Ledger/LedMailingDetails. It does not
+establish that root CountryOfResidence must follow mailing edits; that unchanged
+root behavior is deployment evidence from this 7.0 result.
+
+The [verifier](../../../src/innoforia_tally_connector/integrations/tally/party_update.py)
+checks exact selected projections, permits only the known String type annotation,
+and uses original before evidence to allow residence unchanged or equal to the
+approved country. Unselected fields, dates, balances and other root values remain
+protected. Approval hashes and stored expected snapshots are retained unchanged.
+Saved post-write replay and a fresh known-GUID export pass the repaired verifier;
+company context is unchanged and ALTERID is 457. The diagnostic used one serialized
+gateway in a background worker, exports only and SQLite read-only/query-only mode.
+No new import, runtime status mutation or raw customer fixture was committed.
+The owner subsequently verified SUCCEEDED/all-true in the app and inspected the
+mailing fields in Tally; that mailing operation is locally complete.
+See [recovery and limits](../../master-sync/LINKED_PARTY_UPDATES.md).
+
 ## Country write mismatch — 18 November 2026
 
 Owner screenshot of SIS Dummy ledger MST004-SUP-20261102-7a5d3198 shows Country

@@ -33,7 +33,18 @@ def test_only_state_payload_with_lossless_native_preservation_evidence():
     assert all(x not in raw for x in (b'OPENINGBALANCE', b'GSTTYPE', SENTINEL.encode()))
 
 
-@pytest.mark.parametrize('case', ['wrong_guid','duplicate_guid','unknown_control','dtd','reserved_token','history','future_date','no_date'])
+@pytest.mark.parametrize('tag',['PRIORSTATENAME','GSTNATUREOFSUPPLY'])
+def test_observed_native_default_tokens_are_preserved_as_opaque_evidence_not_imported(tag):
+    before=native_snapshot(native(extra=f'<{tag}>&#4; Not Applicable</{tag}>'),GUID)
+    assert parse(before.encode()).findtext(tag)==SENTINEL+' Not Applicable'
+    raw=state_xml(before,'Kerala','SIS Dummy')
+    assert tag.encode() not in raw and SENTINEL.encode() not in raw
+    after=native_snapshot(native('Kerala','2',extra=f'<{tag}>&#4; Not Applicable</{tag}>'),GUID)
+    assert preservation_matches(expected_native(before,'Kerala'),after,'Kerala')
+    assert not preservation_matches(expected_native(before,'Kerala'),after.replace(SENTINEL+' Not Applicable','Different'),'Kerala')
+
+
+@pytest.mark.parametrize('case', ['wrong_guid','duplicate_guid','unknown_control','dtd','reserved_token','history','future_date'])
 def test_unknown_or_ambiguous_snapshot_blocks(case):
     raw = native()
     if case == 'wrong_guid': raw = raw.replace(GUID.encode(), b'wrong')
@@ -43,7 +54,6 @@ def test_unknown_or_ambiguous_snapshot_blocks(case):
     if case == 'reserved_token': raw = raw.replace(b'Keep', SENTINEL.encode())
     if case == 'history': raw = native(extra='<LEDMAILINGDETAILS.LIST><APPLICABLEFROM>20250401</APPLICABLEFROM><STATE>Old</STATE></LEDMAILINGDETAILS.LIST>')
     if case == 'future_date': raw = raw.replace(b'20260401',b'99990401')
-    if case == 'no_date': raw = raw.replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>',b'')
     with pytest.raises((ReadError, ValueError)):
         snapshot = native_snapshot(raw, GUID)
         state_xml(snapshot, 'Delhi', 'SIS Dummy')
@@ -103,3 +113,104 @@ def test_nonempty_import_identity_is_not_silently_replaced():
     before = native_snapshot(native(extra='<REMOTEALTGUID>prior-id</REMOTEALTGUID>'), GUID)
     actual = native_snapshot(native('Delhi','2',extra=f'<REMOTEALTGUID>{GUID}</REMOTEALTGUID>'),GUID)
     assert not preservation_matches(expected_native(before,'Delhi'),actual,'Delhi')
+
+
+def test_same_company_import_identity_may_become_the_exact_ledger_guid():
+    company=GUID[:-9]
+    before=native_snapshot(native(extra=f'<REMOTEALTGUID>{company}</REMOTEALTGUID>'),GUID)
+    actual=native_snapshot(native('Delhi','2',extra=f'<REMOTEALTGUID>{GUID}</REMOTEALTGUID>'),GUID)
+    assert preservation_matches(expected_native(before,'Delhi'),actual,'Delhi')
+    assert not preservation_matches(expected_native(before,'Delhi'),actual.replace(f'<REMOTEALTGUID>{GUID}',f'<REMOTEALTGUID>{company}-00000002'),'Delhi')
+
+
+@pytest.mark.parametrize('date_xml,reason', [
+    ('<APPLICABLEFROM>20260230</APPLICABLEFROM>', 'date is invalid'),
+    ('<APPLICABLEFROM>2026-04-01</APPLICABLEFROM>', 'date is invalid'),
+])
+def test_invalid_mailing_date_cannot_build_an_update(date_xml, reason):
+    raw = native().replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>', date_xml.encode())
+    before = native_snapshot(raw, GUID)
+    with pytest.raises(ReadError, match=reason):
+        state_xml(before, 'Delhi', 'SIS Dummy')
+
+
+@pytest.mark.parametrize('date_xml', ['', '<APPLICABLEFROM/>', '<APPLICABLEFROM> </APPLICABLEFROM>'])
+def test_undated_entry_is_copied_without_inventing_or_normalizing_a_date(date_xml):
+    before = native_snapshot(native().replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>', date_xml.encode()), GUID)
+    raw = state_xml(before, 'Delhi', 'SIS Dummy')
+    validate_state_xml(raw, before, 'Delhi', 'SIS Dummy')
+    sent = parse(raw).find('.//LEDMAILINGDETAILS.LIST')
+    original = parse(before.encode()).find('LEDMAILINGDETAILS.LIST')
+    assert sent.findtext('APPLICABLEFROM') == original.findtext('APPLICABLEFROM')
+    assert len(sent.findall('APPLICABLEFROM')) == len(original.findall('APPLICABLEFROM'))
+    assert sent.findtext('STATE') == 'Delhi'
+    expected = expected_native(before, 'Delhi')
+    assert preservation_matches(expected, expected, 'Delhi')
+    # A server-added date is a preservation mismatch, never silently accepted.
+    if sent.find('APPLICABLEFROM') is None:
+        changed = expected.replace('</LEDMAILINGDETAILS.LIST>', '<APPLICABLEFROM>20260401</APPLICABLEFROM></LEDMAILINGDETAILS.LIST>')
+        assert not preservation_matches(expected, changed, 'Delhi')
+        with pytest.raises(ReadError):
+            validate_state_xml(raw.replace(b'</LEDMAILINGDETAILS.LIST>', b'<APPLICABLEFROM>20260401</APPLICABLEFROM></LEDMAILINGDETAILS.LIST>'), before, 'Delhi', 'SIS Dummy')
+
+
+def test_empty_native_mailing_aggregate_cannot_be_used_to_create_a_state_only_entry():
+    from lxml import etree
+    node = parse(native_snapshot(native(), GUID).encode())
+    mailing = node.find('LEDMAILINGDETAILS.LIST')
+    mailing.clear()
+    before = etree.tostring(node, encoding='unicode')
+    with pytest.raises(ReadError, match='no populated mailing entry'):
+        state_xml(before, 'Kerala', 'SIS Dummy')
+    # Observed live rejection: import advanced version metadata but saved no State.
+    expected = parse(before.encode())
+    etree.SubElement(expected.find('LEDMAILINGDETAILS.LIST'), 'STATE').text = 'Kerala'
+    assert not preservation_matches(etree.tostring(expected, encoding='unicode'), before, 'Kerala')
+
+
+def empty_snapshot():
+    from lxml import etree
+    node = parse(native_snapshot(native(), GUID).encode())
+    node.find('LEDMAILINGDETAILS.LIST').clear()
+    return etree.tostring(node, encoding='unicode')
+
+
+@pytest.mark.parametrize('date', [None, '', '20260230', '2026-04-01', '99990401'])
+def test_first_mailing_requires_explicit_valid_nonfuture_date(date):
+    with pytest.raises((ReadError, ValueError)):
+        state_xml(empty_snapshot(), 'Kerala', 'SIS Dummy', date)
+
+
+def test_first_mailing_payload_and_hash_do_not_allow_date_substitution():
+    before = empty_snapshot()
+    raw = state_xml(before, 'Kerala', 'SIS Dummy', '20260401')
+    validate_state_xml(raw, before, 'Kerala', 'SIS Dummy', '20260401')
+    mailing = parse(raw).find('.//LEDMAILINGDETAILS.LIST')
+    assert [n.tag for n in mailing] == ['APPLICABLEFROM', 'STATE']
+    assert mailing.findtext('APPLICABLEFROM') == '20260401'
+    with pytest.raises(ReadError):
+        validate_state_xml(raw.replace(b'20260401', b'20250401'), before, 'Kerala', 'SIS Dummy', '20260401')
+    with pytest.raises(ReadError):
+        state_xml(native_snapshot(native(), GUID), 'Kerala', 'SIS Dummy', '20260401')
+
+
+@pytest.mark.parametrize('mutation', [None, 'country', 'pincode', 'name', 'whitespace', 'attributes', 'nested',
+    'duplicate', 'date', 'state', 'balance', 'extra', 'existing_value_removed'])
+def test_first_entry_empty_export_scalars_are_narrowly_verified(mutation):
+    before = empty_snapshot()
+    approved = expected_native(before, 'Kerala', '20260401')
+    actual = approved.replace('<STATE>Kerala</STATE>', '<PINCODE/><MAILINGNAME/><STATE>Kerala</STATE><COUNTRY/>')
+    if mutation == 'country': actual = actual.replace('<COUNTRY/>', '<COUNTRY>India</COUNTRY>')
+    if mutation == 'pincode': actual = actual.replace('<PINCODE/>', '<PINCODE>00123</PINCODE>')
+    if mutation == 'name': actual = actual.replace('<MAILINGNAME/>', '<MAILINGNAME>Other</MAILINGNAME>')
+    if mutation == 'whitespace': actual = actual.replace('<COUNTRY/>', '<COUNTRY> </COUNTRY>')
+    if mutation == 'attributes': actual = actual.replace('<COUNTRY/>', '<COUNTRY TYPE="String"/>')
+    if mutation == 'nested': actual = actual.replace('<COUNTRY/>', '<COUNTRY><X/></COUNTRY>')
+    if mutation == 'duplicate': actual = actual.replace('<COUNTRY/>', '<COUNTRY/><COUNTRY/>')
+    if mutation == 'date': actual = actual.replace('20260401', '20250401')
+    if mutation == 'state': actual = actual.replace('Kerala', 'Delhi')
+    if mutation == 'balance': actual = actual.replace('<OPENINGBALANCE>0', '<OPENINGBALANCE>1')
+    if mutation == 'extra': actual = actual.replace('<COUNTRY/>', '<COUNTRY/><ADDRESS.LIST/>')
+    if mutation == 'existing_value_removed': approved = approved.replace('<STATE>Kerala</STATE>', '<STATE>Kerala</STATE><COUNTRY>India</COUNTRY>')
+    assert preservation_matches(approved, actual, 'Kerala', '20260401') == (mutation is None)
+    assert not preservation_matches(approved, actual, 'Kerala')  # Ordinary updates stay exact.

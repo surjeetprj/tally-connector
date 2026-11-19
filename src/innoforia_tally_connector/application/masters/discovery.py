@@ -31,7 +31,7 @@ class SavedPage:
 
 
 class DiscoveryWorkflow:
-    def __init__(self, verify, readers, validate_groups, store, links, credential_reference, experiments=None, transfers=None, batches=None, changes=None, updates=None):
+    def __init__(self, verify, readers, validate_groups, store, links, credential_reference, experiments=None, transfers=None, batches=None, changes=None, updates=None, reverse_changes=None, reverse_updates=None):
         self.verify, self.readers, self.validate_groups = verify, readers, validate_groups
         self.store, self.links, self.credential_reference = store, links, credential_reference
         self.active = None
@@ -40,6 +40,7 @@ class DiscoveryWorkflow:
         self.batches = batches
         self.changes = changes
         self.updates = updates
+        self.reverse_changes, self.reverse_updates = reverse_changes, reverse_updates
 
     def handle(self, command):
         if command.kind == "RESTORE":
@@ -97,18 +98,27 @@ class DiscoveryWorkflow:
         binding, classification, _ = self.active
         if command.kind.startswith("UPDATE_"):
             if self.updates is None: raise ReadError("Controlled state updates unavailable")
-            return self.updates.handle(command, binding, classification)
+            direction = command.direction
+            if command.experiment_id:
+                record = self.updates.store.get(command.experiment_id, binding)
+                if record: direction = record.preview.direction
+            workflow = self.reverse_updates if direction == 'TALLY_TO_BAHI' else self.updates
+            if workflow is None: raise ReadError('Linked updates unavailable for this direction')
+            return workflow.handle(command, binding, classification)
         if command.kind == "PARTY_CHANGES":
             if self.changes is None:
                 raise ReadError("Linked-party change review is unavailable")
-            return self.changes.review(binding, classification, command.party_identity)
+            workflow = self.reverse_changes if command.direction == 'TALLY_TO_BAHI' else self.changes
+            if workflow is None: raise ReadError('Linked review unavailable for this direction')
+            return workflow.review(binding, classification, command.party_identity)
         if command.kind.startswith(("BATCH_", "POLICY_")):
             if self.batches is None:
                 raise ReadError("Batch transfers unavailable")
             if command.kind == "BATCH_RECOVER" and self.experiments:
                 for record in self.transfers.store.reconciliation_candidates(binding):
                     if record.preview.kind == "UPDATE" and self.updates:
-                        self.updates.handle(command.model_copy(update={"kind": "UPDATE_RECONCILE", "experiment_id": record.preview.id}), binding, classification)
+                        workflow = self.reverse_updates if record.preview.direction == 'TALLY_TO_BAHI' else self.updates
+                        workflow.handle(command.model_copy(update={"kind": "UPDATE_RECONCILE", "experiment_id": record.preview.id}), binding, classification)
                     if record.preview.kind == "EXPERIMENT" and record.attempted and record.target and record.state not in {"SUCCEEDED", "FAILED", "CANCELLED"}:
                         self.experiments.handle(command.model_copy(update={"kind": "EXP_RECONCILE", "experiment_id": record.preview.id}), binding, classification)
             return self.batches.handle(command, binding, classification)

@@ -62,6 +62,9 @@ class PartyReader:
                   "PINCODE": "pincode", "LEDSTATENAME": "state", "COUNTRYNAME": "country"}
         content = {dest: row[src] for src, dest in fields.items() if src in row}
         unavailable = ["pan", "gst_reg_type"]
+        if 'INCOMETAXNUMBER' in row:
+            content['pan'] = row['INCOMETAXNUMBER']
+            unavailable.remove('pan')
         # Owner-supplied TallyPrime 7.0 export uses this native scalar. Retain
         # legacy COUNTRYNAME reads, but never treat conflicting values as verified.
         if "COUNTRYOFRESIDENCE" in row:
@@ -86,7 +89,10 @@ class PartyReader:
             # New creates must prove the approved dated aggregate was saved,
             # even if an older/root representation happens to echo the values.
             unavailable.extend(sorted(mailing_fields - set(unavailable)))
-        if row.get("NESTED_GST_UNRESOLVED"):
+        if 'GST_CONTENT' in row:
+            content.update(row['GST_CONTENT'])
+            unavailable.remove('gst_reg_type')
+        elif row.get("NESTED_GST_UNRESOLVED"):
             unavailable.append("gstin")
         return PartyObservation(binding=binding, side=Side.TALLY, identity=row["GUID"],
                                 party_type=matches[0], content=PartyContent(name=row["NAME"], **content),

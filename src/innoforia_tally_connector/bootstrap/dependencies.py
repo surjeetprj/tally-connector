@@ -6,6 +6,7 @@ from innoforia_tally_connector.application.masters.batches import BatchWorkflow
 from innoforia_tally_connector.application.masters.changes import LinkedPartyReviewWorkflow
 from innoforia_tally_connector.application.masters.state_updates import StateUpdateWorkflow
 from innoforia_tally_connector.integrations.tally.state_destination import StateDestination
+from innoforia_tally_connector.integrations.bahi.endpoints.updates import UpdateDestination
 from innoforia_tally_connector.persistence.repositories.batches import BatchStore
 from innoforia_tally_connector.integrations.bahi.endpoints.transfers import PartyDestination as BahiDestination
 from innoforia_tally_connector.integrations.tally.transfers import PartyDestination as TallyDestination
@@ -61,7 +62,11 @@ def build(directory, emit, credential=read_key, bahi_client=None, tally_gateway=
     changes = LinkedPartyReviewWorkflow(readers, verify, links, BatchStore(engine).policy,
         lambda classification: TallyDestination(gateway, classification), ExperimentStore(engine).state_acknowledgement)
     updates = StateUpdateWorkflow(ExperimentStore(engine), changes, lambda roots: StateDestination(gateway, roots), lambda: runtime.stopping.is_set())
-    workflow = DiscoveryWorkflow(verify, readers, validate_classification, store, links, REFERENCE, experiments, transfers, batches, changes, updates)
+    reverse_changes = LinkedPartyReviewWorkflow(readers, verify, links, BatchStore(engine).policy,
+        lambda roots: BahiDestination(bahi), ExperimentStore(engine).state_acknowledgement, reverse=True)
+    reverse_updates = StateUpdateWorkflow(ExperimentStore(engine), reverse_changes,
+        lambda roots: UpdateDestination(bahi), lambda: runtime.stopping.is_set(), reverse=True)
+    workflow = DiscoveryWorkflow(verify, readers, validate_classification, store, links, REFERENCE, experiments, transfers, batches, changes, updates, reverse_changes, reverse_updates)
 
     def handle(command):
         nonlocal current

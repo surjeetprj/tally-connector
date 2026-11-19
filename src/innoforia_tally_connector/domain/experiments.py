@@ -11,6 +11,7 @@ from pydantic import AwareDatetime, model_validator
 
 from innoforia_tally_connector.domain.masters import Binding, PartyObservation, Side, Value, ConfirmedPartyLink, PartyType
 from innoforia_tally_connector.domain.party_transfer import FieldDecision, PartyDraft
+from innoforia_tally_connector.domain.party_changes import PARTY_UPDATE_FIELDS, GST_UPDATE_FIELDS
 
 
 class Direction(StrEnum):
@@ -57,6 +58,11 @@ class StateUpdateEvidence(Value):
     native_expected: str
     policy_version: int
     acknowledged_operation_id: str | None = None
+    mailing_effective_date: str | None = None
+    fields: tuple[str, ...] = ('state',)
+    accepted_missing_fields: tuple[str, ...] = ()
+    gst_effective_date: str | None = None
+    gst_state: str | None = None
 
 
 class ExperimentPreview(Value):
@@ -84,13 +90,32 @@ class ExperimentPreview(Value):
                 or self.source_confirmation_required != (self.source.is_system is None)):
                 raise ValueError("Transfer identity, classification, name and direction must match the selected source")
             if self.kind == "UPDATE":
-                if (self.update is None or self.direction != Direction.TO_TALLY or self.party.party_type != PartyType.SUPPLIER
-                    or self.party.model_fields_set != {"name", "party_type", "state"} or not self.party.state or not self.party.state.strip()
-                    or self.update.link.binding != self.binding or self.update.link.bahi.identity != self.source.identity
-                    or self.update.before.binding != self.binding or self.update.before.side != Side.TALLY
+                source_link = self.update.link.bahi if self.update and self.direction == Direction.TO_TALLY else self.update.link.tally if self.update else None
+                target_link = self.update.link.tally if self.update and self.direction == Direction.TO_TALLY else self.update.link.bahi if self.update else None
+                if (self.update is None or self.party.party_type not in {PartyType.SUPPLIER, PartyType.CUSTOMER}
+                    or not self.update.fields or len(self.update.fields) != len(set(self.update.fields))
+                    or set(self.update.fields) - set(PARTY_UPDATE_FIELDS)
+                    or set(self.update.accepted_missing_fields) - set(self.update.fields)
+                    or self.party.model_fields_set != {"name", "party_type", *self.update.fields}
+                    or any(not isinstance(getattr(self.party,f), str) or not getattr(self.party,f).strip() for f in self.update.fields)
+                    or any(getattr(self.party,f) != getattr(self.source.content,f) for f in self.update.fields)
+                    or self.update.link.binding != self.binding or source_link.identity != self.source.identity
+                    or self.update.before.binding != self.binding or self.update.before.side != target_link.side
                     or self.update.before.party_type != self.party.party_type
-                    or self.update.before.identity != self.update.link.tally.identity):
-                    raise ValueError("Only one linked supplier state update is allowed")
+                    or self.update.before.identity != target_link.identity):
+                    raise ValueError("Only selected supported nonempty linked-party fields may be updated")
+                tax_selected = bool(set(self.update.fields) & set(GST_UPDATE_FIELDS))
+                if self.direction == Direction.TO_BAHI:
+                    if any((self.update.mailing_effective_date, self.update.gst_effective_date, self.update.gst_state)):
+                        raise ValueError('Bahi scalar updates do not accept Tally history dates')
+                    if self.party.gstin and not self.party.gst_reg_type:
+                        raise ValueError('Bahi GSTIN update requires its observed registration type')
+                elif (tax_selected and (not set(GST_UPDATE_FIELDS) <= set(self.update.fields)
+                    or not self.update.gst_effective_date or not self.update.gst_state
+                    or self.update.gst_state != self.source.content.state or self.update.gst_state != self.update.before.content.state
+                    or self.source.content.country != 'India' or self.update.before.content.country != 'India')
+                    or not tax_selected and (self.update.gst_effective_date is not None or self.update.gst_state is not None)):
+                    raise ValueError('GST updates require paired fields, an approved effective date and State')
         elif self.source is not None or not isinstance(self.party, TestSupplier):
             raise ValueError("Legacy experiment cannot represent a real source transfer")
         if self.kind != "UPDATE" and self.update is not None:
@@ -101,8 +126,12 @@ class ExperimentPreview(Value):
     def digest(self):
         data = self.model_dump(mode="json")
         if self.update is None: data.pop("update")  # Preserve legacy approval hashes.
-        elif self.update.acknowledged_operation_id is None:
-            data["update"].pop("acknowledged_operation_id")  # Preserve controlled-trial hashes.
+        else:
+            for optional in ("acknowledged_operation_id", "mailing_effective_date", "gst_effective_date", "gst_state"):
+                if getattr(self.update, optional) is None:
+                    data["update"].pop(optional)  # Preserve earlier approval hashes.
+            if self.update.fields == ('state',): data['update'].pop('fields')
+            if not self.update.accepted_missing_fields: data['update'].pop('accepted_missing_fields')
         return hashlib.sha256(json.dumps(data, sort_keys=True,
                                           separators=(",", ":")).encode()).hexdigest()
 

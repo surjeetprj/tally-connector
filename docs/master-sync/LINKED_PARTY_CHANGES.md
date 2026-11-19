@@ -1,5 +1,9 @@
 # Linked-party changes: first read-only milestone
 
+The current screen also supports [selected field updates](LINKED_PARTY_UPDATES.md).
+The original read-only comparison and State experiments below are historical
+milestones; current verified baselines advance separately for selected fields.
+
 Implemented 18 November 2026, as the first bounded step toward supervised updates
 in MST-004. Original difference review is read-only. A subsequent
 [controlled supplier State experiment](CONTROLLED_STATE_UPDATE.md) added a separate

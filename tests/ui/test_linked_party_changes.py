@@ -35,8 +35,9 @@ from innoforia_tally_connector.ui.workspace import Workspace
 
 
 @pytest.mark.parametrize("execute_trial", [False, True])
-def test_linked_changes_are_fresh_and_read_only_through_worker(qtbot, tmp_path, monkeypatch, execute_trial):
-    state = SimpleNamespace(source_state=None, target_state=None, fail=False, detail_ids=[], imports=0)
+@pytest.mark.parametrize("undated", [False, True, 'empty'])
+def test_linked_changes_are_fresh_and_read_only_through_worker(qtbot, tmp_path, monkeypatch, execute_trial, undated):
+    state = SimpleNamespace(source_state=None, target_state=None, fail=False, detail_ids=[], imports=0, entry_date=None)
     groups = [{"GUID": "a", "NAME": "Sundry Debtors", "PARENT": "Primary", "ALTERID": "1"},
         {"GUID": "b", "NAME": "Sundry Creditors", "PARENT": "Primary", "ALTERID": "1"}]
     identity = COMPANY_GUID + "-00000001"
@@ -66,19 +67,31 @@ def test_linked_changes_are_fresh_and_read_only_through_worker(qtbot, tmp_path, 
             row = {"GUID": identity, "NAME": "Linked supplier", "PARENT": "Sundry Creditors", "ALTERID": "1",
                 "MAILING_CONTENT": {"address": "Exact – दिल्ली address", "country": "India"}}
             if state.target_state is not None: row["MAILING_CONTENT"]["state"] = state.target_state
+            if undated == 'empty':
+                row['MAILING_CONTENT'] = {'state': state.target_state} if state.target_state is not None else {}
             return [row]
         def state_snapshot(self, binding, target):
             assert target == identity
             raw = (Path(__file__).resolve().parents[1] / 'fixtures/tally/state_update_native.xml').read_bytes()
             raw = raw.replace(b'Synthetic supplier', b'Linked supplier')
+            if undated == 'empty':
+                import re
+                entry = (f'<LEDMAILINGDETAILS.LIST><APPLICABLEFROM>{state.entry_date}</APPLICABLEFROM><STATE>{state.target_state}</STATE></LEDMAILINGDETAILS.LIST>'
+                    if state.entry_date else '<LEDMAILINGDETAILS.LIST/>')
+                raw = re.sub(rb'<LEDMAILINGDETAILS.LIST>.*?</LEDMAILINGDETAILS.LIST>', entry.encode(), raw, flags=re.S)
+            if undated and undated != 'empty': raw = raw.replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>', b'')
             value = (state.target_state or '').encode()
             raw = raw.replace(b'<STATE></STATE>', b'<STATE>' + value + b'</STATE>')
             raw = raw.replace(b'<LEDSTATENAME></LEDSTATENAME>', b'<LEDSTATENAME>' + value + b'</LEDSTATENAME>')
             return Preflight(destination='Tally SIS Dummy', group_context=json.dumps({'company_guid': COMPANY_GUID, 'company_name': 'SIS Dummy'})), native_snapshot(raw, identity)
         def apply_state(self, preview):
             assert execute_trial and preview.kind == 'UPDATE'
+            assert ('<APPLICABLEFROM>' in preview.update.native_before) == (not undated or state.entry_date is not None)
             state.imports += 1
             state.target_state = preview.party.state
+            if undated == 'empty' and not state.entry_date:
+                assert preview.update.mailing_effective_date == '20260401'
+                state.entry_date = preview.update.mailing_effective_date
             return TargetIdentity(kind='TALLY_GUID', identity=identity)
         def create_party(self, *_): pytest.fail("Change review must never create")
         def close(self): pass
@@ -99,6 +112,8 @@ def test_linked_changes_are_fresh_and_read_only_through_worker(qtbot, tmp_path, 
     bridge = Bridge()
     runtime, cleanup = build(tmp_path, bridge.event.emit, bahi_client=api, tally_gateway=gateway)
     window = Workspace(); qtbot.addWidget(window)
+    window.changes_review.model.automatic = False
+    window.changes_review.automatic = False
     runtime.start(); window.show(); window.attach(Controller(runtime, bridge))
     ticks = []
     timer = QTimer(); timer.timeout.connect(lambda: ticks.append(True)); timer.start(5)
@@ -111,22 +126,29 @@ def test_linked_changes_are_fresh_and_read_only_through_worker(qtbot, tmp_path, 
         rows = {f.field: f for f in window.changes_review.model.objects}
         assert rows["state"].status == "Bahi changed"
         assert rows["state"].saved_bahi.availability == "null" and rows["state"].saved_tally.availability == "absent"
-        assert rows["address"].status == "Already matches" and "– दिल्ली" in rows["address"].current_bahi.value
+        assert rows["address"].status == ('Fill missing destination' if undated == 'empty' else 'Already matches') and "– दिल्ली" in rows["address"].current_bahi.value
         assert len(ticks) > before
         assert runtime.links.by_id("saved-link") == baseline
         if execute_trial:
             monkeypatch.setattr(QMessageBox, 'exec', lambda *_: QMessageBox.StandardButton.Yes)
             page = window.changes_review
+            if undated == 'empty': page.effective_date.setText('2026-04-01')
             page.prepare.click()
             qtbot.waitUntil(lambda: page.record is not None and not window.controller.pending, timeout=10000)
             record_id = page.record.preview.id
             assert page.record.state == 'PENDING' and state.imports == 0
             assert not page.approve.isEnabled()
             page.normal.setChecked(True)
+            if undated == 'empty':
+                assert '20260401' in page.result.text()
+                page.effective_date.setText('2026-04-02')
+                assert not page.approve.isEnabled()
+                page.effective_date.setText('2026-04-01')
             assert page.reviewer.text() == 'Reviewer' and page.approve.isEnabled()
             page.approve.click()
             qtbot.waitUntil(lambda: page.record is not None and page.record.state == 'SUCCEEDED' and not window.controller.pending, timeout=10000)
             assert state.imports == 1 and state.target_state == 'Delhi'
+            assert not page.effective_date.text()  # Do not reuse a first-entry date for later State changes.
             assert not page.approve.isEnabled() and runtime.links.by_id('saved-link') == baseline
             assert next(f for f in page.model.objects if f.field == 'state').status == 'Already matches'
             assert 'test' not in page.prepare.text().lower() and 'test' not in page.result.text().lower()
@@ -222,6 +244,59 @@ def test_state_result_queries_coalesce_only_for_the_same_party_or_record(store, 
     assert journal.capture(explicit) == explicit.id
 
 
+@pytest.mark.parametrize('fill_field', ['country', 'pincode'])
+def test_field_selection_blank_fills_and_approval_are_bound_in_native_dialog(qtbot,binding,observation,monkeypatch,fill_field):
+    from datetime import timedelta
+    from PySide6.QtCore import Qt
+    from innoforia_tally_connector.application.masters.changes import compare_changes
+    from innoforia_tally_connector.domain.masters import PartyContent
+    from innoforia_tally_connector.domain.party_transfer import PartyDraft
+    from innoforia_tally_connector.domain.experiments import ExperimentPreview,ExperimentResult,StateUpdateEvidence,Direction
+    from innoforia_tally_connector.ui.pages.party_changes import PartyChangesDialog
+    a=observation(identity='a',is_active=True,content_schema=2,content=PartyContent(name='Example Supplier',email='old@example.invalid',phone='001',country='India'))
+    b=observation(Side.TALLY,'b',content_schema=2,content=PartyContent(name='Example Supplier',email='old@example.invalid',phone='001',pan=''))
+    link=ConfirmedPartyLink(id='linked',binding=binding,bahi=a,tally=b,confirmed_at=datetime.now(timezone.utc),confirmed_by='Owner',review_reference='explicit')
+    current=a.model_copy(update={'content':a.content.model_copy(update={'email':'new@example.invalid','phone':'002','pan':'AAACA1234A','gstin':'blocked'})})
+    if fill_field == 'pincode':
+        a = a.model_copy(update={'content': a.content.model_copy(update={'pincode': None})})
+        link = link.model_copy(update={'bahi': a})
+        current = current.model_copy(update={'content': current.content.model_copy(update={'pincode': '683576'})})
+        b = b.model_copy(update={'content': b.content.model_copy(update={'pincode': ''})})
+    review=compare_changes(link,current,b,TransferPolicy(binding=binding,operator='Owner'))
+    calls=[]
+    page=PartyChangesDialog(None,lambda kind,**values:calls.append((kind,values)),automatic=False)
+    qtbot.addWidget(page); page.generation=5; page.receive(review); page.show()
+    assert page.model.checked=={'email','phone'}  # PAN and initial differences are explicit.
+    def check(field,value):
+        row=next(i for i,f in enumerate(page.model.objects) if f.field==field)
+        return page.model.setData(page.model.index(row,0),value,Qt.ItemDataRole.CheckStateRole)
+    assert check(fill_field,Qt.CheckState.Checked)
+    assert not page.prepare.isEnabled()
+    page.accept_missing.setChecked(True)
+    assert page.prepare.isEnabled()
+    assert check('phone',Qt.CheckState.Unchecked) and check('pan',Qt.CheckState.Checked)
+    assert not check('gstin',Qt.CheckState.Checked)
+    page.prepare.click()
+    kind,values=calls[-1]
+    assert kind=='UPDATE_PREPARE' and set(values['update_fields'])=={'email',fill_field,'pan'} and values['accept_missing_fields']
+    now=datetime.now(timezone.utc)
+    selected=values['update_fields']
+    preview=ExperimentPreview(id='preview',binding=binding,generation=5,direction=Direction.TO_TALLY,
+        party=PartyDraft(name=current.content.name,party_type=current.party_type,**{f:getattr(current.content,f) for f in selected}),
+        source=current,source_confirmation_required=True,kind='UPDATE',preflight=Preflight(destination='Test',group_context='test'),
+        created_at=now,expires_at=now+timedelta(minutes=5),update=StateUpdateEvidence(link=link,before=b,
+            native_before='<LEDGER/>',native_expected='<LEDGER/>',policy_version=1,fields=selected,accepted_missing_fields=(fill_field,)))
+    page.show_update(ExperimentResult(preview=preview,state='PENDING',attempted=False),'Owner')
+    page.normal.setChecked(True)
+    assert page.approve.isEnabled()
+    check('email',Qt.CheckState.Unchecked)
+    assert not page.approve.isEnabled()
+    check('email',Qt.CheckState.Checked)
+    monkeypatch.setattr(QMessageBox,'exec',lambda *_:QMessageBox.StandardButton.Yes)
+    page.approve.click()
+    assert calls[-1][0]=='UPDATE_APPLY' and calls[-1][1]['approval_digest']==preview.digest
+
+
 def test_controller_discards_old_review_results_and_old_binding(qtbot, binding):
     class Runtime:
         def submit(self, kind, generation, **values):
@@ -236,3 +311,71 @@ def test_controller_discards_old_review_results_and_old_binding(qtbot, binding):
     assert seen == []
     controller.receive(Event(new, controller.generation, "PARTY_CHANGES", "current"))
     assert seen[0].result == "current"
+
+
+def test_gst_selection_is_paired_explicit_and_bound_to_its_own_date(qtbot,binding,observation):
+    from datetime import timedelta
+    from PySide6.QtCore import Qt
+    from innoforia_tally_connector.application.masters.changes import compare_changes
+    from innoforia_tally_connector.domain.masters import PartyContent
+    from innoforia_tally_connector.domain.party_transfer import PartyDraft
+    from innoforia_tally_connector.domain.experiments import ExperimentPreview,ExperimentResult,StateUpdateEvidence,Direction
+    from innoforia_tally_connector.ui.pages.party_changes import PartyChangesDialog
+    values=dict(gstin='32AAACA1234A1Z1',gst_reg_type='Regular')
+    a=observation(identity='a',is_active=True,content_schema=2,content=PartyContent(name='Example Supplier',state='Kerala',country='India',gstin='',gst_reg_type='Regular'))
+    b=observation(Side.TALLY,'b',content_schema=2,content=a.content)
+    link=ConfirmedPartyLink(id='linked',binding=binding,bahi=a,tally=b,confirmed_at=datetime.now(timezone.utc),confirmed_by='Owner',review_reference='explicit')
+    current=a.model_copy(update={'content':a.content.model_copy(update=values)})
+    review=compare_changes(link,current,b,TransferPolicy(binding=binding,operator='Owner'))
+    calls=[]
+    page=PartyChangesDialog(None,lambda kind,**args:calls.append((kind,args)),automatic=False)
+    qtbot.addWidget(page);page.generation=5;page.receive(review);page.show()
+    assert page.model.checked==set() and not page.gst_date.isEnabled()
+    row=next(i for i,f in enumerate(page.model.objects) if f.field=='gstin')
+    assert page.model.setData(page.model.index(row,0),Qt.CheckState.Checked,Qt.ItemDataRole.CheckStateRole)
+    assert page.model.checked==set(values) and page.gst_date.isEnabled()
+    calls.clear();page.prepare.click()
+    assert not calls and 'valid GST effective date' in page.result.text()
+    page.gst_date.setText('2026-04-02');page.prepare.click()
+    assert calls[-1][0]=='UPDATE_PREPARE' and set(calls[-1][1]['update_fields'])==set(values)
+    assert calls[-1][1]['gst_effective_date']=='20260402' and calls[-1][1]['mailing_effective_date'] is None
+    now=datetime.now(timezone.utc)
+    p=ExperimentPreview(id='gst-preview',binding=binding,generation=5,direction=Direction.TO_TALLY,
+        party=PartyDraft(name=current.content.name,party_type=current.party_type,**values),source=current,source_confirmation_required=True,kind='UPDATE',
+        preflight=Preflight(destination='Test',group_context='test'),created_at=now,expires_at=now+timedelta(minutes=5),
+        update=StateUpdateEvidence(link=link,before=b,native_before='<LEDGER/>',native_expected='<LEDGER/>',policy_version=1,
+            fields=tuple(values),gst_effective_date='20260402',gst_state='Kerala'))
+    page.show_update(ExperimentResult(preview=p,state='PENDING',attempted=False),'Owner')
+    page.normal.setChecked(True)
+    assert page.approve.isEnabled() and '20260402' in page.result.text() and 'Earlier tax history is preserved' in page.result.text()
+    page.gst_date.setText('2026-05-01')
+    assert not page.approve.isEnabled()
+    page.model.setData(page.model.index(row,0),Qt.CheckState.Unchecked,Qt.ItemDataRole.CheckStateRole)
+    assert not page.model.checked and not page.gst_date.isEnabled()
+
+
+def test_default_workflow_includes_all_eligible_changes_without_field_tasks(qtbot,binding,observation):
+    from PySide6.QtCore import Qt
+    from innoforia_tally_connector.application.masters.changes import compare_changes
+    from innoforia_tally_connector.domain.masters import PartyContent
+    from innoforia_tally_connector.ui.pages.party_changes import PartyChangesDialog
+    a=observation(identity='a',is_active=True,content_schema=2,content=PartyContent(name='Example Supplier',email='old@example.invalid',phone='001',address='Exact address',state='Kerala',country='India'))
+    b=observation(Side.TALLY,'b',content_schema=2,content=PartyContent(name='Example Supplier',email='old@example.invalid',phone='001',state='Kerala',country='India'))
+    link=ConfirmedPartyLink(id='linked',binding=binding,bahi=a,tally=b,confirmed_at=datetime.now(timezone.utc),confirmed_by='Owner',review_reference='explicit')
+    source=a.model_copy(update={'content':a.content.model_copy(update={'phone':'002','email':'source@example.invalid','pan':'AAACA1234A','gstin':'32AAACA1234A1Z1','gst_reg_type':'Regular'})})
+    target=b.model_copy(update={'content':b.content.model_copy(update={'email':'tally-edit@example.invalid'})})
+    review=compare_changes(link,source,target,TransferPolicy(binding=binding,operator='Owner'))
+    calls=[];page=PartyChangesDialog(None,lambda kind,**values:calls.append((kind,values)))
+    qtbot.addWidget(page);page.generation=5;page.receive(review);page.show()
+    assert page.model.checked=={'phone','address','pan','gstin','gst_reg_type'}
+    assert page.accept_missing.isChecked() and not page.accept_missing.isVisible()
+    for row in range(page.model.rowCount()):
+        index=page.model.index(row,0)
+        assert not page.model.flags(index)&Qt.ItemFlag.ItemIsUserCheckable
+        assert page.model.data(index,Qt.ItemDataRole.CheckStateRole) is None
+        assert not page.model.setData(index,Qt.CheckState.Unchecked,Qt.ItemDataRole.CheckStateRole)
+    page.gst_date.setText('2026-11-01');page.prepare.click()
+    assert calls[-1][0]=='UPDATE_PREPARE'
+    assert set(calls[-1][1]['update_fields'])==page.model.checked and calls[-1][1]['accept_missing_fields']
+    assert calls[-1][1]['gst_effective_date']=='20261101'
+    assert not page.approve.isEnabled()  # Preparation itself never sends an update.

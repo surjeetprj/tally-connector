@@ -63,7 +63,12 @@ restart; never create automatically on startup. Known-ID reconciliation is read-
 See [workspace behavior](master-sync/AUTOMATED_PARTY_WORKSPACE.md).
 
 The approved update increment supports repeatable Bahi-to-Tally supplier State
-updates on confirmed links, with one existing dated mailing entry. Each exact
+updates on confirmed links, with one existing mailing entry, dated or undated.
+Preserve the date's exact presence/value; never invent an effective date. The
+first entry in an existing empty mailing aggregate may instead be created with a
+user-entered, nonfuture effective date, included in the immutable approval. It adds
+only the approved date and State, preserving other native content. A populated
+entry's date cannot be changed through this feature. Each
 change requires approval, current context/content checks, one durable attempt,
 native preservation verification and atomic local completion. Store a separate
 State-only acknowledgement after success; preserve original link evidence and
@@ -71,7 +76,34 @@ other field baselines. Destination edits/conflicts and clears remain blocked.
 No broader field, customer, reverse or unattended update scope is implied. See
 [supplier State updates](master-sync/SUPPLIER_STATE_UPDATES.md).
 
+The next approved increment extends supervised Bahi-to-Tally updates to selected
+email, phone, address, State, country, PIN and PAN for confirmed customer/supplier
+links. Preserve unselected native content, original mapping evidence and dates.
+Advance only the selected field acknowledgements after exact read-back; never
+equate a link with matching content. Explicitly selected known blank destinations
+may be filled after accepting their initial differences. Conflicts, nonempty
+pre-existing differences without a new source change, clears and unavailable
+current representations remain blocked. PAN is explicitly approved per operation;
+creation policy tax gates remain. Reverse/unattended updates are not enabled.
+See [linked updates](master-sync/LINKED_PARTY_UPDATES.md).
+
+The approved dated-GST extension supports explicitly paired GSTIN/registration
+updates with a separately chosen effective date and matching Indian State context.
+Preserve every historical tax row and unrelated ledger value, using a complete
+typed history request where the verified Tally import replaces the collection.
+Require exact read-back and retain one-attempt uncertainty/recovery controls.
+Initial supported types are Regular and Composition; clears, historical/same-date
+rewrites, tax-State changes, unknown/future structures and portal validation remain
+outside scope. Creation tax gates remain unchanged. See
+[GST updates and live evidence](master-sync/GST_PARTY_UPDATES.md).
+
 ### Core constraints
+
+The current owner-approved desktop workflow includes all eligible supported Bahi
+changes automatically in one exact summary/approval. No per-field checkbox or
+separate routine blank-fill acknowledgement is required. Saved field rules,
+conflict/clear restrictions, required effective dates and durable execution remain;
+this interface simplification does not itself enable unattended or reverse writes.
 
 1. No FastAPI, Flask, Uvicorn, local web server, WebSockets or SSE.
 2. All connector-originated Tally HTTP calls run with concurrency one, including
@@ -88,6 +120,16 @@ No broader field, customer, reverse or unattended update scope is implied. See
 7. Never invent missing ledger, unit, stock-group, item, price or reference values.
 8. Do not retry a write with an uncertain result until reconciliation proves a
    retry safe. Preserve history, mappings, attempts and unresolved work on upgrade.
+
+The approved reverse increment adds linked **Tally-to-Bahi** review and exact
+approval for nonempty supported contact/mailing/PAN/current GST scalars. Reuse the
+shared UPDATE journal, binding guard, baseline acknowledgements and read-only
+recovery. Target the confirmed Bahi account ID; preserve all other returned values
+except its documented update timestamp. Do not copy Tally tax history dates into
+Bahi, recreate an existing link, rename, clear or overwrite conflicts. New Bahi
+creation policies may include supported GSTIN/PAN/registration fields; existing
+policies retain explicit saved choices. Tally creation tax gates remain. See
+[reverse update scope](master-sync/TALLY_TO_BAHI_UPDATES.md).
 
 ## 2. Technology stack and dependency management
 

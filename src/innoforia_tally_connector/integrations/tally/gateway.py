@@ -12,6 +12,7 @@ from innoforia_tally_connector.integrations.tally.dates import xml_date
 from innoforia_tally_connector.domain.party_transfer import PartyDraft
 from innoforia_tally_connector.integrations.tally.experiment import import_receipt
 from innoforia_tally_connector.integrations.tally.state_update import native_snapshot, native_shape, expected_native, state_xml, state_receipt
+from innoforia_tally_connector.integrations.tally.party_update import fields_xml
 from innoforia_tally_connector.domain.experiments import TargetIdentity
 from innoforia_tally_connector.integrations.tally.xml_codec import parse
 import json
@@ -95,8 +96,14 @@ class Gateway:
                 raise ContextMismatch("Company changed before state update")
             preview.require_current(preview.binding, preview.generation, preview.digest, datetime.now(timezone.utc))
             if self.stopped(): raise ReadError("Shutdown started; no update sent")
-            raw = self.transport.alter_state(state_xml(current, preview.party.state, company["NAME"]),
-                current, preview.party.state, company["NAME"])
+            if preview.update.fields == ('state',):
+                raw = self.transport.alter_state(state_xml(current, preview.party.state, company["NAME"], preview.update.mailing_effective_date),
+                    current, preview.party.state, company["NAME"], preview.update.mailing_effective_date)
+            else:
+                values = {f:getattr(preview.party,f) for f in preview.update.fields}
+                tax = dict(gst_effective_date=preview.update.gst_effective_date,gst_state=preview.update.gst_state)
+                raw = self.transport.alter_party_fields(fields_xml(current,values,company['NAME'],preview.update.mailing_effective_date,**tax),
+                    current,values,company['NAME'],preview.update.mailing_effective_date,**tax)
             target = TargetIdentity(kind="TALLY_GUID", identity=preview.update.before.identity)
             return state_receipt(raw, target)
         finally: self.lock.release()

@@ -5,22 +5,23 @@ from innoforia_tally_connector.domain.masters import Value, Binding, PartyObserv
 from innoforia_tally_connector.domain.experiments import Direction, ExperimentPreview, ExperimentResult
 
 CONTACT_FIELDS = ("email", "phone", "address", "country", "state", "pincode")
+BAHI_FIELDS = (*CONTACT_FIELDS, 'gstin', 'pan', 'gst_reg_type')
 
 
 class TransferPolicy(Value):
     binding: Binding
     version: int = Field(default=1, ge=1)
     operator: str
-    to_bahi: tuple[str, ...] = CONTACT_FIELDS
+    to_bahi: tuple[str, ...] = BAHI_FIELDS
     to_tally: tuple[str, ...] = CONTACT_FIELDS
 
     @model_validator(mode="after")
     def valid(self):
         if not self.operator.strip():
             raise ValueError("Enter the operator name")
-        if any(len(set(fields)) != len(fields) or set(fields) - set(CONTACT_FIELDS)
-               for fields in (self.to_bahi, self.to_tally)):
-            raise ValueError("Only verified contact and mailing fields can be enabled")
+        if any(len(set(fields)) != len(fields) or set(fields) - set(allowed)
+               for fields,allowed in ((self.to_bahi,BAHI_FIELDS),(self.to_tally,CONTACT_FIELDS))):
+            raise ValueError("Only destination-supported fields can be enabled")
         return self
 
 

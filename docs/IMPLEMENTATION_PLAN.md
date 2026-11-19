@@ -331,6 +331,59 @@ typed adapter; verify repeated changes, stale baselines, uncertainty, migrations
 and UI/restart offline before owner testing of a second live update. Other fields,
 customers, reverse updates and unattended writes retain their separate gates.
 
+19 November extension: retain undated single mailing entries without inventing a
+date, in both the typed alteration and observation reader. Offline dated/undated
+regressions cover approvals, repeat changes, preservation/date-change failures,
+reconciliation and native restart. The owner requests automated checks, with test
+system live regression permitted if needed; no additional manual trial is a task
+completion gate. Live evidence must still distinguish exports from actual writes.
+
+19 November first-mailing extension: allow a blank-by-default date input for the
+first entry in an existing empty aggregate, show the chosen date before approval,
+and bind it to payload/verification. Retain strict existing-history preservation.
+For the known ignored empty-entry attempt, add an explicit named local closure
+after two unchanged native reads; never auto-close uncertain results or resend the
+old attempt. Append closure evidence atomically and require a new intent/approval.
+Verify date/hash tampering, audit rollback, no startup closure and native UI/restart
+using automated tests; no additional owner manual-test gate is required.
+
+19 November selected-field increment: extend the shared UPDATE workflow to contact,
+mailing and PAN fields on linked customers/suppliers. Add checkboxes, explicit
+blank-field filling approval, per-field acknowledgements and generic typed XML
+while preserving State hashes/history. Regression gates include combined and
+independent fields, source/destination conflicts, uncertainty, migrations and native
+selection/restart. GSTIN/registration remain blocked pending verified dated-tax
+import/read-back/history semantics. Do not infer them from the empty native tax
+aggregate or add tax fields to creation policy. Scope/evidence are in
+[linked-party updates](master-sync/LINKED_PARTY_UPDATES.md).
+
+19 November dated-GST increment: the owner authorized work on the remaining
+GSTIN/registration gate. Extend the shared selected-field UPDATE path with paired
+explicit selection, an independent GST effective date and approved State context.
+The verified 7.0 collection-replacement contract requires the complete typed
+historical list plus a new dated entry; verify every prior row and unrelated value.
+Keep legacy hashes, mapping evidence and one-attempt recovery. Regular/Composition
+and first/existing-history paths have authorized synthetic live contract evidence;
+other tax types, historical corrections and creation tax fields remain separate.
+See [scope, tests and retained probe outcome](master-sync/GST_PARTY_UPDATES.md).
+
+Owner workflow follow-up, 19 November: automatically include all eligible Bahi
+field changes (including PAN, blank fills and the eligible GST pair) in one exact
+review/confirmation. Remove normal field checkboxes and routine per-field tasks.
+Retain dates, exceptions, policy/approval binding and existing shared execution.
+Owner GST screenshots establish Apollo's successful ordinary GST update.
+
+19 November reverse increment: owner requested the same linked-change review for
+Tally-to-Bahi transfers. Use the saved Bahi identity, automatic eligible fields,
+exact approval, bounded PATCH and shared one-attempt/recovery/audit engine.
+Verify customers/suppliers, old hashes, destination conflict/field limits,
+known-ID read-back, unrelated-value preservation and no create/resend on restart.
+Also keep historical evidence scrollable without enabling editing. See
+[reverse workflow](master-sync/TALLY_TO_BAHI_UPDATES.md). Live Bahi PATCH acceptance
+is not established by offline tests or the earlier party-create success. The
+subsequent owner-run supplier-283 update and Bahi screenshot now establish the
+GSTIN/PAN subset; other live update cases and restart evidence remain pending.
+
 Update 4 November: [automated party workspace](master-sync/AUTOMATED_PARTY_WORKSPACE.md)
 adds saved policies/operator, verified automatic reopening/loading, up to 100 selected
 parties per batch, one exact Ready-subset approval and sequential shared execution.

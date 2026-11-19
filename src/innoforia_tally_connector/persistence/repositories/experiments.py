@@ -8,7 +8,8 @@ from sqlalchemy.exc import IntegrityError
 from innoforia_tally_connector.domain.experiments import ActivityPage, ExperimentPreview, ExperimentResult, TargetIdentity
 from innoforia_tally_connector.domain.masters import PartyObservation, Side, ConfirmedPartyLink, LinkConflict
 from innoforia_tally_connector.domain.party_transfer import source_key
-from innoforia_tally_connector.domain.party_changes import StateAcknowledgement
+from innoforia_tally_connector.domain.party_changes import StateAcknowledgement, AcknowledgedField, FieldValue
+from innoforia_tally_connector.domain.party_transfer import field_availability
 from innoforia_tally_connector.persistence.migrations.versions.v0002_discovery import operations
 from innoforia_tally_connector.persistence.migrations.versions.v0003_experiments import attempts
 from innoforia_tally_connector.persistence.migrations.versions.v0004_party_transfers import experiments
@@ -52,7 +53,7 @@ class ExperimentStore:
                     kind=preview.kind, created_at=preview.created_at.isoformat(), binding_generation=preview.binding.generation))
                 if preview.kind == "UPDATE":
                     connection.execute(update(experiments).where(experiments.c.id == preview.id).values(
-                        target_json=TargetIdentity(kind="TALLY_GUID", identity=preview.update.before.identity).model_dump_json()))
+                        target_json=TargetIdentity(kind="TALLY_GUID" if preview.direction == "BAHI_TO_TALLY" else "BAHI_ID", identity=preview.update.before.identity).model_dump_json()))
                 if preview.source:
                     self._require_unlinked(connection, preview)
         except IntegrityError:
@@ -87,29 +88,40 @@ class ExperimentStore:
             comparisons=json.loads(row["comparisons_json"] or "{}"),
             observation=PartyObservation.model_validate_json(row["observation_json"]) if row["observation_json"] else None)
 
-    def latest_update(self, binding, source_identity=None):
+    def latest_update(self, binding, source_identity=None, direction=None):
         with self.engine.connect() as connection:
             query = select(experiments.c.id, experiments.c.preview_json).where(experiments.c.binding_id == binding.id,
                 experiments.c.binding_generation == binding.generation, experiments.c.kind == "UPDATE").order_by(
                     literal_column("party_experiments.rowid").desc())
             if source_identity is None:
-                row = connection.execute(query.limit(1)).first()
+                row = next((r for r in connection.execute(query) if direction is None or ExperimentPreview.model_validate_json(r.preview_json).direction == direction), None)
             else:
                 row = next((r for r in connection.execute(query) if
-                    ExperimentPreview.model_validate_json(r.preview_json).source.identity == source_identity), None)
+                    ExperimentPreview.model_validate_json(r.preview_json).source.identity == source_identity
+                    and (direction is None or ExperimentPreview.model_validate_json(r.preview_json).direction == direction)), None)
             identity = row.id if row else None
         return self.get(identity, binding) if identity else None
 
     @staticmethod
     def _state_acknowledgement(connection, link):
         from innoforia_tally_connector.persistence.migrations.versions.v0007_repeatable_state_updates import audit
-        row = connection.execute(select(audit.c.operation_id, audit.c.evidence_json).where(audit.c.link_id == link.id)
-            .order_by(literal_column("party_state_update_audit.rowid").desc()).limit(1)).first()
-        if row is None: return None
-        evidence = json.loads(row.evidence_json)
-        return StateAcknowledgement(operation_id=row.operation_id, link_id=link.id,
-            bahi=PartyObservation.model_validate_json(json.dumps(evidence["source_after"])),
-            tally=PartyObservation.model_validate_json(json.dumps(evidence["target_after"])))
+        rows = connection.execute(select(audit.c.operation_id, audit.c.evidence_json).where(audit.c.link_id == link.id)
+            .order_by(literal_column("party_state_update_audit.rowid"))).all()
+        if not rows: return None
+        baselines = {}
+        for row in rows:
+            evidence = json.loads(row.evidence_json)
+            source = PartyObservation.model_validate_json(json.dumps(evidence['source_after']))
+            target = PartyObservation.model_validate_json(json.dumps(evidence['target_after']))
+            fields = evidence.get('preview', {}).get('update', {}).get('fields', ('state',))
+            for field in fields:
+                def value(obs):
+                    availability = field_availability(obs, field)
+                    return FieldValue(availability=availability, value=getattr(obs.content,field)
+                        if availability in {'present','empty','null'} else None)
+                baselines[field] = AcknowledgedField(operation_id=row.operation_id, source=value(source), destination=value(target))
+        return StateAcknowledgement(operation_id=rows[-1].operation_id, link_id=link.id,
+            bahi=source if source.side == Side.BAHI else target, tally=target if target.side == Side.TALLY else source, field_baselines=baselines)
 
     def state_acknowledgement(self, link):
         with self.engine.connect() as connection:
@@ -176,7 +188,7 @@ class ExperimentStore:
                 raise LinkConflict("Confirmed link changed; no state update allowed")
             ack = ExperimentStore._state_acknowledgement(connection, preview.update.link)
             if (ack.operation_id if ack else None) != preview.update.acknowledged_operation_id:
-                raise LinkConflict("The verified State baseline changed; refresh and approve a new preview")
+                raise LinkConflict("The verified field baseline changed; refresh and approve a new preview")
             return
         column = party_links.c.bahi_id if preview.source.side == Side.BAHI else party_links.c.tally_guid
         if connection.execute(select(party_links.c.id).where(party_links.c.binding_id == preview.binding.id,
@@ -202,7 +214,7 @@ class ExperimentStore:
             connection.execute(update(experiments).where(experiments.c.id == preview.id).values(state="SUCCEEDED",
                 active_binding=None, source_key=None, comparisons_json=json.dumps(comparisons),
                 observation_json=destination.model_dump_json(exclude_unset=True),
-                message="State update verified; original link/audit preserved, State baseline and update evidence saved"))
+                message="Party fields verified; original link/audit preserved, selected field baselines and evidence saved"))
             connection.execute(update(operations).where(operations.c.id == command.id).values(state="SUCCEEDED", coalesce_key=None))
         return self.get(preview.id, preview.binding)
 
@@ -213,6 +225,22 @@ class ExperimentStore:
                 evidence_json=json.dumps(dict(native_after=native_after,
                     observation=destination.model_dump(mode="json"), comparisons=comparisons,
                     observed_at=datetime.now(timezone.utc).isoformat()), ensure_ascii=False)))
+
+    def close_unchanged_state_failure(self, record, command, destination, native_after):
+        from innoforia_tally_connector.persistence.migrations.versions.v0006_state_update_audit import verifications
+        p = record.preview
+        with self.engine.begin() as c:
+            changed = c.execute(update(experiments).where(experiments.c.id == p.id,
+                experiments.c.state == 'BLOCKED', experiments.c.active_binding == f'{p.binding.id}:{p.binding.generation}',
+                experiments.c.id.in_(select(attempts.c.experiment_id))).values(state='FAILED', active_binding=None,
+                    source_key=None, message='Operator closed unchanged empty-mailing failure after fresh reads; original attempt retained, never resend it. A new dated preview requires new approval.'))
+            if changed.rowcount != 1: raise ValueError('Failed update is no longer eligible for local closure')
+            c.execute(insert(verifications).values(request_id=command.id, experiment_id=p.id,
+                evidence_json=json.dumps(dict(native_after=native_after, observation=destination.model_dump(mode='json'),
+                    comparisons=record.comparisons, closed_by=command.reviewer, acknowledgement='Normal parties and no competing editor; close unchanged failure without resending',
+                    observed_at=datetime.now(timezone.utc).isoformat()), ensure_ascii=False)))
+            c.execute(update(operations).where(operations.c.id == command.id).values(state='SUCCEEDED', coalesce_key=None))
+        return self.get(p.id, p.binding)
 
     def complete_transfer(self, record, command, source, destination, comparisons, target):
         preview = record.preview

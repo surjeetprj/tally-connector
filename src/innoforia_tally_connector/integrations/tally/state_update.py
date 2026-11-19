@@ -13,7 +13,9 @@ from innoforia_tally_connector.integrations.tally.dates import xml_date
 # XML reference tokens as opaque evidence; never strip them or import them.
 SENTINEL = "__CONNECTOR_NATIVE_U0004__"
 NATIVE_TAGS = ("TAXCLASSIFICATIONNAME", "GSTTYPE", "APPROPRIATEFOR", "PAYTYPE", "PAYSTATTYPE",
-               "SERVICECATEGORY", "EXCISEDUTYTYPE", "EXCISENATUREOFPURCHASE", "LEDGERFBTCATEGORY")
+               "SERVICECATEGORY", "EXCISEDUTYTYPE", "EXCISENATUREOFPURCHASE", "LEDGERFBTCATEGORY",
+               # Observed in retained synthetic 7.0 ledger, 19 Nov 2026.
+               "PRIORSTATENAME", "GSTNATUREOFSUPPLY")
 
 
 def native_snapshot(raw, guid):
@@ -41,11 +43,13 @@ def native_snapshot(raw, guid):
     return etree.tostring(node, encoding="unicode")
 
 
-def mailing_record(node):
+def mailing_record(node, *, allow_empty=False):
     records = node.findall("LEDMAILINGDETAILS.LIST")
     if len(records) != 1:
-        raise ReadError("State updates require exactly one existing dated mailing record")
+        raise ReadError("State updates require exactly one existing mailing record")
     record = records[0]
+    if not len(record) and not allow_empty:
+        raise ReadError("This ledger has no populated mailing entry. Tally ignored a State-only update to an empty undated entry. Creating dated mailing details needs an explicitly chosen effective date; no update sent.")
     allowed = {"ADDRESS.LIST", "APPLICABLEFROM", "PINCODE", "MAILINGNAME", "STATE", "COUNTRY"}
     tags = [n.tag for n in record]
     if set(tags) - allowed or len(tags) != len(set(tags)) or SENTINEL in etree.tostring(record, encoding="unicode"):
@@ -56,16 +60,35 @@ def mailing_record(node):
                 raise ReadError("Unsupported mailing address; cannot preserve it")
         elif len(child) or child.attrib:
             raise ReadError("Unsupported mailing scalar")
-    if xml_date(record.findtext("APPLICABLEFROM")) > datetime.now(timezone(timedelta(hours=5, minutes=30))).date():
+    value = record.findtext("APPLICABLEFROM")
+    if value is None or not value.strip():
+        # Preserve an undated aggregate exactly, including absent/empty date nodes.
+        # Never introduce a date or turn an existing empty date into an omitted node.
+        return record
+    try:
+        effective = xml_date(value)
+    except ValueError:
+        raise ReadError("This ledger's mailing effective date is invalid. State updates require a valid YYYYMMDD date; no update sent.") from None
+    if effective > datetime.now(timezone(timedelta(hours=5, minutes=30))).date():
         raise ReadError("Future mailing dates are not supported for State updates")
     return record
 
 
-def expected_native(snapshot, state):
+def expected_native(snapshot, state, effective_date=None):
     if not isinstance(state, str) or not state.strip() or any(ord(c) < 32 for c in state) or len(state) > 100:
         raise ReadError("State must be an exact nonempty supported string")
     node = parse(snapshot.encode())
-    record = mailing_record(node)
+    record = mailing_record(node, allow_empty=effective_date is not None)
+    if effective_date is not None:
+        if len(record) or record.attrib or (record.text or '').strip():
+            raise ReadError("An effective date can be chosen only for an empty first mailing entry")
+        try:
+            chosen = xml_date(effective_date)
+        except ValueError:
+            raise ReadError("Choose a valid mailing effective date (YYYYMMDD)") from None
+        if chosen > datetime.now(timezone(timedelta(hours=5, minutes=30))).date():
+            raise ReadError("Mailing effective date cannot be in the future")
+        etree.SubElement(record, "APPLICABLEFROM").text = effective_date
     old = record.find("STATE")
     if old is None:
         old = etree.SubElement(record, "STATE")
@@ -86,7 +109,7 @@ def native_shape(snapshot, *, ignore_version=False):
     return json.dumps(shape(node), ensure_ascii=False, separators=(",", ":"))
 
 
-def preservation_matches(approved_expected, actual, state):
+def preservation_matches(approved_expected, actual, state, first_mailing_date=None):
     """Account only for observed derived State/import identity representations.
 
     Do not rewrite approval evidence or ignore arbitrary metadata differences.
@@ -97,6 +120,25 @@ def preservation_matches(approved_expected, actual, state):
     guid = expected.findtext("GUID")
     if not guid or observed.findtext("GUID") != guid:
         return False
+    if first_mailing_date is not None:
+        # Observed first-entry export pads these omitted scalars with empty nodes.
+        # This applies only to an approved date+State first entry, never history.
+        approved_entries, actual_entries = expected.findall('LEDMAILINGDETAILS.LIST'), observed.findall('LEDMAILINGDETAILS.LIST')
+        if len(approved_entries) != 1 or len(actual_entries) != 1:
+            return False
+        entry, returned = approved_entries[0], actual_entries[0]
+        if ([n.tag for n in entry] != ['APPLICABLEFROM', 'STATE']
+            or any(len(n) or n.attrib for n in entry)
+            or entry.findtext('APPLICABLEFROM') != first_mailing_date or entry.findtext('STATE') != state):
+            return False
+        tags = [n.tag for n in returned]
+        if len(tags) != len(set(tags)):
+            return False
+        for scalar in returned[:]:
+            if scalar.tag in {'PINCODE', 'MAILINGNAME', 'COUNTRY'}:
+                if len(scalar) or scalar.attrib or scalar.text not in (None, ''):
+                    return False
+                returned.remove(scalar)
     projections = [root.findall("LEDSTATENAME") for root in (expected, observed)]
     if any(len(nodes) > 1 for nodes in projections) or (projections[0] and not projections[1]):
         return False
@@ -114,17 +156,20 @@ def preservation_matches(approved_expected, actual, state):
         return False
     if len(before_ids) == len(after_ids) == 1:
         old, new = before_ids[0], after_ids[0]
-        if not len(old) and not len(new) and old.attrib == new.attrib and not (old.text or "") and new.text == guid:
+        company_guid = guid[:-9] if re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}-[0-9a-fA-F]{8}',guid) else None
+        # Observed native identity bookkeeping also moves the same company's
+        # GUID to this exact ledger GUID. Never accept an unrelated prior ID.
+        if not len(old) and not len(new) and old.attrib == new.attrib and (not (old.text or "") or old.text == company_guid) and new.text == guid:
             new.text = old.text
     return native_shape(etree.tostring(expected, encoding="unicode"), ignore_version=True) == native_shape(
         etree.tostring(observed, encoding="unicode"), ignore_version=True)
 
 
-def state_xml(snapshot, state, company):
+def state_xml(snapshot, state, company, effective_date=None):
     before = parse(snapshot.encode())
-    if before.findtext("PARENT") != "Sundry Creditors":
-        raise ReadError("State updates currently support the supplier root only")
-    after = parse(expected_native(snapshot, state).encode())
+    if before.findtext("PARENT") not in {"Sundry Creditors", "Sundry Debtors"}:
+        raise ReadError("Linked updates require the confirmed customer/supplier root")
+    after = parse(expected_native(snapshot, state, effective_date).encode())
     if not company.strip() or SENTINEL in company:
         raise ReadError("Verified company is required")
     root = etree.Element("ENVELOPE")
@@ -145,9 +190,9 @@ def state_xml(snapshot, state, company):
     return raw
 
 
-def validate_state_xml(raw, snapshot, state, company):
+def validate_state_xml(raw, snapshot, state, company, effective_date=None):
     actual = parse(raw)
-    expected = parse(state_xml(snapshot, state, company))
+    expected = parse(state_xml(snapshot, state, company, effective_date))
     if etree.tostring(actual, method="c14n") != etree.tostring(expected, method="c14n"):
         raise ReadError("Only the exact typed state alteration is allowed")
 

@@ -8,7 +8,10 @@ wire-schema authority; this table is not a complete payload schema.
 The [implemented actual-party feature](PARTY_TRANSFER.md#field-capabilities-and-evidence-limits)
 now supports explicit exclusions and publishes its narrower capability/evidence
 limits. In particular, this semantic matrix does not enable unverified Tally
-PAN/GST registration writes or prove an end-to-end tax round trip.
+PAN/GST registration writes or prove an end-to-end tax round trip. Implemented
+linked updates have their own narrower evidence: see
+[selected fields](LINKED_PARTY_UPDATES.md) and
+[dated GST updates](GST_PARTY_UPDATES.md). Tally creation tax fields remain disabled; Bahi creation has destination-specific supported tax choices. See [reverse updates](TALLY_TO_BAHI_UPDATES.md).
 
 ## Customers and suppliers
 

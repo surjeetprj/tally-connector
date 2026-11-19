@@ -43,3 +43,27 @@ def test_initial_size_respects_available_logical_screen_area(qtbot, monkeypatch)
     monkeypatch.setattr(Workspace, "screen", lambda _: SimpleNamespace(availableGeometry=lambda: QRect(0,0,1024,720)))
     window = Workspace(); window.quitting = True; qtbot.addWidget(window)
     assert window.width() <= 984 and window.height() <= 640
+
+
+def test_open_activity_starts_at_summary_and_keeps_legacy_details_collapsed(qtbot):
+    from innoforia_tally_connector.domain.experiments import Direction
+    window=Workspace();window.quitting=True;qtbot.addWidget(window)
+    calls=[];window.send=lambda kind,**kwargs:calls.append((kind,kwargs))
+    item=SimpleNamespace(source=SimpleNamespace(content=SimpleNamespace(name='SSS BUILDING PVT LTD')),
+        status='SUCCEEDED',result=SimpleNamespace(target=SimpleNamespace(identity='283')),
+        preview=SimpleNamespace(decisions=[SimpleNamespace(field='phone',status='excluded'),SimpleNamespace(field='gstin',status='excluded')]))
+    window.current_batch=SimpleNamespace(direction=Direction.TO_BAHI,state='SUCCEEDED',items=(item,))
+    window.resize(960,650);window.show();window.tabs.setCurrentIndex(1)
+    window.advanced.setChecked(True);qtbot.wait(20)
+    scroll=window.page_scrolls[1];scroll.verticalScrollBar().setValue(scroll.verticalScrollBar().maximum())
+    window.open_activity();qtbot.wait(20)
+    assert window.tabs.currentIndex()==1 and not window.advanced.isChecked()
+    assert not window.advanced_tabs.isVisible() and scroll.verticalScrollBar().value()==0
+    assert 'SSS BUILDING PVT LTD: SUCCEEDED' in window.activity_summary.text()
+    assert 'Bahi ID 283' in window.activity_summary.text()
+    assert 'phone, gstin' in window.activity_summary.text()
+    assert all(kind in {'BATCH_LIST','SAVED','ACTIVITY'} for kind,_ in calls)
+    window.advanced.setChecked(True)
+    assert window.advanced_tabs.isVisible()  # Evidence/recovery remain available.
+    window.current_batch=None;window.open_activity()
+    assert not window.activity_summary.isVisible() and not window.activity_summary.text()

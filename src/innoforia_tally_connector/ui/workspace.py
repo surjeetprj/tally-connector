@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, Q
     QGroupBox, QTextEdit, QScrollArea)
 from innoforia_tally_connector.domain.masters import Side, Classification
 from innoforia_tally_connector.domain.experiments import Direction
-from innoforia_tally_connector.domain.batches import TransferPolicy, CONTACT_FIELDS, TransferBatch
+from innoforia_tally_connector.domain.batches import TransferPolicy, CONTACT_FIELDS, BAHI_FIELDS, TransferBatch
 from innoforia_tally_connector.ui.models.parties import TableModel, PartyTableModel
 from innoforia_tally_connector.ui.party_drag import PartyView, DragSession, CreateDropArea
 from innoforia_tally_connector.ui.pages.batch_review import BatchReview
@@ -81,8 +81,12 @@ class Workspace(QMainWindow):
             column.addWidget(button)
             if side == Side.BAHI:
                 self.review_changes = QPushButton("Review linked changes → Tally…")
-                self.review_changes.clicked.connect(self.inspect_changes)
+                self.review_changes.clicked.connect(lambda: self.inspect_changes(Side.BAHI))
                 column.addWidget(self.review_changes)
+            if side == Side.TALLY:
+                self.review_bahi_changes = QPushButton('Review linked changes → Bahi…')
+                self.review_bahi_changes.clicked.connect(lambda: self.inspect_changes(Side.TALLY))
+                column.addWidget(self.review_bahi_changes)
             column.addWidget(drop)
             split.addWidget(panel)
             self.models[side], self.views[side], self.transfer_buttons[side] = model, view, button
@@ -90,6 +94,11 @@ class Workspace(QMainWindow):
         self.add_page(self.parties, "Parties")
         self.activity_page = QWidget()
         activity = QVBoxLayout(self.activity_page)
+        self.activity_summary = QLabel()
+        self.activity_summary.setTextFormat(Qt.TextFormat.PlainText)
+        self.activity_summary.setWordWrap(True)
+        self.activity_summary.hide()
+        activity.addWidget(self.activity_summary)
         controls = QHBoxLayout()
         self.refresh_activity = QPushButton("Refresh activity")
         self.recover = QPushButton("Check unresolved results (reads only)")
@@ -133,6 +142,7 @@ class Workspace(QMainWindow):
         self.saved_details.setMaximumHeight(110)
         activity.addWidget(self.saved_details)
         self.saved_view.selectionModel().selectionChanged.connect(self.inspect_link)
+        self.saved_view.doubleClicked.connect(self.inspect_link_operation)
         self.advanced = QGroupBox("Advanced: legacy history and recovery")
         self.advanced.setCheckable(True)
         self.advanced.setChecked(False)
@@ -168,16 +178,15 @@ class Workspace(QMainWindow):
         self.setup_error.hide()
         form.addWidget(self.setup_error)
         note = QLabel("Saved policy: omit unavailable/invalid optional fields with audited reasons. "
-            "GSTIN, PAN and registration type remain disabled pending verified Tally contracts. "
-            "Only exact source values are transferred. General updates and unattended writes remain disabled; "
-            "supplier State updates have their own exact approval.")
+            "Tally creation omits tax fields; Bahi supports observed GSTIN, PAN and registration type. Linked updates require exact approval; "
+            "Tally GST updates require paired fields and an effective date; earlier tax history is preserved. Rename and unattended writes remain disabled. Only exact source values are transferred.")
         note.setWordWrap(True)
         form.addWidget(note)
         self.field_boxes = {}
         for direction in Direction:
             group = QGroupBox(direction.value.replace('_', ' '))
             row = QHBoxLayout(group)
-            for field in CONTACT_FIELDS:
+            for field in (BAHI_FIELDS if direction == Direction.TO_BAHI else CONTACT_FIELDS):
                 box = QCheckBox(field)
                 box.setChecked(True)
                 row.addWidget(box)
@@ -229,6 +238,8 @@ class Workspace(QMainWindow):
         if not self.controller: return
         if kind in {"VERIFY", "RESTORE"}:
             self.discovery = self.policy = self.current_batch = None
+            self.activity_summary.clear()
+            self.activity_summary.hide()
             self.drag_session.reset(None, None)
             self.review.hide()
             self.changes_review.clear()
@@ -249,6 +260,7 @@ class Workspace(QMainWindow):
         self.verify.setEnabled(not busy and not executing)
         self.bind.setEnabled(not busy and not executing and self.customers.count() > 0)
         self.save_policy.setEnabled(bound and not busy and not executing)
+        self.review_bahi_changes.setEnabled(bound and not busy and not executing and self.discovery is not None)
         self.review_changes.setEnabled(bound and not busy and not executing and self.discovery is not None)
         self.links_previous.setEnabled(bound and not busy and self.links_offset > 0)
         self.links_next.setEnabled(bound and not busy and self.links_more)
@@ -283,7 +295,7 @@ class Workspace(QMainWindow):
         try:
             policy = TransferPolicy(binding=self.controller.binding, version=self.policy.version if self.policy else 1,
                 operator=self.operator.text().strip(), **{("to_bahi" if d == Direction.TO_BAHI else "to_tally"):
-                tuple(f for f in CONTACT_FIELDS if self.field_boxes[d, f].isChecked()) for d in Direction})
+                tuple(f for f in (BAHI_FIELDS if d == Direction.TO_BAHI else CONTACT_FIELDS) if self.field_boxes[d, f].isChecked()) for d in Direction})
         except ValueError:
             self.open_transfer_setup()
             self.setup_error.setText("Enter your name above before saving. No transfer has been started.")
@@ -309,16 +321,17 @@ class Workspace(QMainWindow):
         if target is None: self.prepare(source)
         else: self.review_pair(source, target)
 
-    def inspect_changes(self):
-        sources = self.models[Side.BAHI].selected_many(self.views[Side.BAHI])
+    def inspect_changes(self, side=Side.BAHI):
+        sources = self.models[side].selected_many(self.views[side])
         if len(sources) != 1:
-            self.status.setText("Select exactly one linked Bahi party to review changes")
+            self.status.setText("Select exactly one linked source party to review changes")
             return
-        if (Side.BAHI, sources[0].identity) not in self.linked:
+        if (side, sources[0].identity) not in self.linked:
             self.status.setText("This party has no confirmed link; use Transfer or link review first")
             return
         self.changes_review.clear()
-        self.send("PARTY_CHANGES", party_identity=sources[0].identity)
+        self.send("PARTY_CHANGES", party_identity=sources[0].identity,
+            direction=Direction.TO_BAHI if side == Side.TALLY else Direction.TO_TALLY)
 
     def review_pair(self, source, target, *_):
         if not self.policy or isinstance(source, tuple) or source.party_type != target.party_type or source.side == target.side:
@@ -334,7 +347,10 @@ class Workspace(QMainWindow):
         if event.error:
             self.status.setText(event.error)
             if event.kind.startswith("UPDATE_"):
-                self.changes_review.result.setText(event.error + "\nLoad the saved test or prepare a renewed preview; never resend an attempted update.")
+                self.changes_review.result.setText(event.error + (
+                    "\nNo update was sent. Refresh changes after resolving the reported prerequisite."
+                    if event.kind == "UPDATE_PREPARE" else
+                    "\nLoad the saved update to inspect its outcome; never resend an attempted update."))
                 self.changes_review.normal.setChecked(False)
             if event.kind == "SAVED": self.recovery_links_pending = False
             if event.kind == "POLICY_SAVE":
@@ -385,7 +401,7 @@ class Workspace(QMainWindow):
                 self.operator.setText(result.operator)
                 for d in Direction:
                     fields = result.to_bahi if d == Direction.TO_BAHI else result.to_tally
-                    for f in CONTACT_FIELDS: self.field_boxes[d, f].setChecked(f in fields)
+                    for f in (BAHI_FIELDS if d == Direction.TO_BAHI else CONTACT_FIELDS): self.field_boxes[d, f].setChecked(f in fields)
                 self.tabs.setCurrentIndex(0)
             else:
                 self.tabs.setCurrentIndex(2)
@@ -454,16 +470,24 @@ class Workspace(QMainWindow):
             self.changes_review.show()
             self.changes_review.raise_()
             self.status.setText("Linked-party changes reviewed. No remote fields were changed.")
-        elif kind.startswith("UPDATE_") or (kind == "ACTIVITY_DETAIL" and result.preview.kind == "UPDATE"):
-            self.changes_review.show_update(result, self.policy.operator if self.policy else "")
-            self.changes_review.show(); self.changes_review.raise_()
-            self.status.setText("State update result displayed. Updates are never automatically resent.")
-            if kind in {"UPDATE_APPLY", "UPDATE_RECONCILE"} and result and result.state == "SUCCEEDED":
-                self.send("PARTY_CHANGES", party_identity=result.preview.source.identity)
+        elif kind.startswith("UPDATE_"):
+            inspecting = (result and self.technical.record and self.technical.record.preview.id == result.preview.id
+                and self.tabs.currentIndex() == 1 and self.advanced.isChecked()
+                and self.advanced_tabs.currentWidget() == self.technical)
+            if inspecting:
+                self.technical.receive(event)
+            else:
+                self.changes_review.show_update(result, self.policy.operator if self.policy else "")
+                self.changes_review.show(); self.changes_review.raise_()
+            self.status.setText("Party update result displayed. Updates are never automatically resent.")
+            if not inspecting and result and ((kind in {"UPDATE_APPLY", "UPDATE_RECONCILE"} and result.state == "SUCCEEDED")
+                or (kind == 'UPDATE_CLOSE_FAILED' and result.state == 'FAILED')):
+                self.send("PARTY_CHANGES", party_identity=result.preview.source.identity, direction=result.preview.direction)
         elif kind == "ACTIVITY":
             self.legacy.receive(result)
         elif kind == "ACTIVITY_DETAIL" or kind.startswith(("TRANSFER_", "EXP_")):
             self.technical.receive(event)
+            self.tabs.setCurrentIndex(1)
             self.advanced.setChecked(True)
             self.advanced_tabs.setCurrentIndex(1)
         self.update_controls()
@@ -489,7 +513,17 @@ class Workspace(QMainWindow):
 
     def inspect_link(self, *_):
         link = self.saved_model.selected(self.saved_view)
-        if link: self.saved_details.setPlainText(link.model_dump_json(indent=2))
+        if link:
+            self.saved_details.setPlainText('Original link observations; later updates are stored separately in Activity. '
+                'These are historical values, not a current read. Double-click this row to inspect the original transfer fields.\n\n'
+                + link.model_dump_json(indent=2))
+
+    def inspect_link_operation(self, *_):
+        link = self.saved_model.selected(self.saved_view)
+        if link and link.transfer_fields:
+            self.send('ACTIVITY_DETAIL', experiment_id=link.review_reference)
+        elif link:
+            self.status.setText('This identity link has no original transfer fields; select its update in Activity to inspect later changes.')
 
     def load_activity(self):
         self.send("BATCH_LIST")
@@ -498,7 +532,25 @@ class Workspace(QMainWindow):
     def open_activity(self):
         self.review.hide()
         self.tabs.setCurrentIndex(1)
-        self.advanced.setChecked(True)
+        self.advanced.setChecked(False)
+        if self.current_batch:
+            batch = self.current_batch
+            destination = 'Bahi' if batch.direction == Direction.TO_BAHI else 'Tally'
+            lines = [f'Transfer to {destination}: {batch.state}']
+            for item in batch.items[:5]:
+                result = item.result
+                target = result.target.identity if result and result.target else None
+                lines.append(f'{item.source.content.name}: {item.status}' + (f' — {destination} ID {target}' if target else ''))
+                omissions = [d.field for d in item.preview.decisions if d.status == 'excluded'] if item.preview else []
+                if omissions: lines.append('Omitted by policy or destination validation: ' + ', '.join(omissions))
+            if len(batch.items)>5: lines.append('Open the batch row for all party results.')
+            self.activity_summary.setText('\n'.join(lines))
+            self.activity_summary.show()
+        else:
+            self.activity_summary.clear()
+            self.activity_summary.hide()
+        self.batch_view.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.page_scrolls[1].verticalScrollBar().setValue(0)
         self.load_activity()
         self.legacy.load(0)
 

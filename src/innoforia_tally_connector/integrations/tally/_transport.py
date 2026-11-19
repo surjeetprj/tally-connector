@@ -9,6 +9,7 @@ from innoforia_tally_connector.integrations.tally.builders.masters import valida
 from innoforia_tally_connector.integrations.tally.builders.parties import validate_party_xml
 from innoforia_tally_connector.domain.experiments import UncertainWrite
 from innoforia_tally_connector.integrations.tally.state_update import validate_state_xml
+from innoforia_tally_connector.integrations.tally.party_update import validate_fields_xml
 
 MAX_BYTES = 8 * 1024 * 1024
 
@@ -48,8 +49,12 @@ class Transport:
         validate_party_xml(request)
         return self._import(request)
 
-    def alter_state(self, request, snapshot, state, company):
-        validate_state_xml(request, snapshot, state, company)
+    def alter_state(self, request, snapshot, state, company, effective_date=None):
+        validate_state_xml(request, snapshot, state, company, effective_date)
+        return self._import(request)
+
+    def alter_party_fields(self,request,snapshot,values,company,effective_date=None, *, gst_effective_date=None,gst_state=None):
+        validate_fields_xml(request,snapshot,values,company,effective_date,gst_effective_date=gst_effective_date,gst_state=gst_state)
         return self._import(request)
 
     def _import(self, request):

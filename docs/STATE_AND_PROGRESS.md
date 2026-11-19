@@ -2,50 +2,129 @@
 
 Last updated: 19 November 2026.
 
-## Current milestone: repeatable supplier State updates
+## Current milestone: approved linked-party updates, including dated GST
 
-The owner verified controlled record `bcc0b354-14ab-4f7b-a1c1-cfc5d277d778`
-(Bahi source 282, Tally GUID ending 0000016c) directly in Tally: Delhi and
-unselected details are correct. The saved SUCCEEDED result also survives restart.
-All seven read-back/preservation comparisons pass. This owner evidence completes
-the [controlled trial](master-sync/CONTROLLED_STATE_UPDATE.md).
+Linked Tally-to-Bahi updates now use the existing UPDATE approval/attempt/audit
+lifecycle. Parties has **Review linked changes → Bahi** beside the Tally list.
+The reverse dialog automatically includes supported eligible contact, mailing,
+PAN and current GST/registration values, targets the saved Bahi ID, requires exact
+approval and verifies all returned unrelated values except updated_dtm. No Tally
+history dates are requested for Bahi scalar fields. Original links and earlier
+approval hashes remain unchanged; both directions share verified field baselines.
+Timeouts/mismatches retain attempts and reconcile by known ID without resending.
+See [reverse updates](master-sync/TALLY_TO_BAHI_UPDATES.md).
 
-The normal [State update feature](master-sync/SUPPLIER_STATE_UPDATES.md) now supports
-successive Bahi-to-Tally supplier State changes: **Review linked changes → Review
-State update → Confirm State update**. Saved operator, automatic party-scoped latest
-result and post-success refresh replace test-labelled controls. Each new change
-requires fresh exact approval; startup and refresh never write.
+Activity evidence follow-up: double-clicking a saved transfer link now loads its
+original operation into Advanced > Operation details instead of only showing link
+JSON. The JSON is explicitly labelled as historical linking observations, not a
+current read. Saved UPDATE history now opens in the same Operation details area
+with a read-only before/approved/saved-read-back/verification table. Previously
+updates were redirected to the linked review dialog and did not populate this
+table. Known-ID verification refreshes the inspected table without opening a
+second window. Transfer/legacy headers and approval controls remain separate.
+The historical table stays selectable and scrollable with locked cells. Embedded
+layout checks pass at three supported sizes/font scales; no zero-height collapse
+was reproduced. Focused navigation/scroll/visibility checks: 22 passed. The full
+UI suite plus both-direction update/recovery integrations and architecture checks
+passed: **196 tests**. Documentation links/fences and diff whitespace passed.
+Pre-commit verification of the final tree: **667 passed, one opt-in live test
+skipped** in the existing .venv. Documentation links/fences and diff whitespace
+passed. Owner screenshots now show the original transfer field table again; its
+historical exclusions remain correctly preserved.
 
-Successful audit evidence is the separate State-only acknowledgement. Future State
-reviews use it, while original identity links/other-field observations stay intact.
-Approval binds the predecessor acknowledgement; transactional reservation/attempt/
-completion checks reject stale baselines. Uncertain/blocked outcomes do not advance
-it or permit another write. Migration 7 backs up and preserves v6 trial evidence,
-removing only the one-audit-per-link restriction; operation uniqueness remains.
-The typed mailing contract, preservation rules, shared journal and gateway remain.
-No GUID-only/remote conditional-write guarantee is claimed.
+Owner transfer `0493cdc1-f62c-45e8-822a-7d0ad61c4b4b` succeeded for SSS BUILDING
+PVT LTD, Bahi 283. Initial destination evidence verified address/State/PIN while
+tax values were missing because the earlier creation policy excluded them.
+The owner now reports the reverse update succeeded; the new Bahi screenshot
+shows GSTIN 09CNXPP6229G1Z7 and PAN CNXPP6229G on the same active supplier 283.
+Its original link JSON still correctly retains the earlier null values; later
+verified updates are recorded separately. The update operation ID and restart
+persistence evidence were not supplied. Source phone
+contains combined phone/email text beyond Bahi's 16-character limit; it remains
+invalid rather than being split/truncated. New Bahi creation policies support tax
+fields; existing saved policies keep explicit choices until edited/versioned.
+The owner performed the approved reverse update. No assistant remote mutation,
+runtime database edit, record recreation or computer-use automation ran.
 
-**87 focused checks passed** for State XML, actual gateway/HTTPX with fake remotes,
-repeat updates, State-only baselines, conflicts/clears, uncertainty/no resend,
-old approval hashes, migration backup/rollback and offscreen UI/restart. Complete
-offline suite: **425 passed, one opt-in live test skipped**. Documentation checks
-pass for 9 Markdown files and 129 local links/anchors; git diff --check passes.
-No dependencies/environment changes, computer use,
-BahiAI reuse, assistant live writes or runtime journal changes ran for this work.
+Reverse-feature verification before this UI follow-up: existing .venv, full offline suite **661 passed,
+one opt-in live test skipped**. Focused temporary-SQLite/fake-HTTPX tests cover
+both party types, tax fills, exact Unicode/multiline/leading-zero contact values,
+shared command routing, repeated updates, approval guards, lost replies,
+preservation failures and local-completion recovery without another PATCH.
+Offscreen Qt verifies reverse commands/date controls and wheel scrolling on
+locked historical evidence. Documentation links/fences and diff whitespace pass.
+The owner-run supplier update supplies live Bahi PATCH acceptance for its exact
+GSTIN/PAN values. Other fields, customers and restart acceptance remain pending.
 
-Owner screenshots on 19 November confirm the repeat update **Delhi to Haryana**,
-record `ec02114b-7aa7-46a5-bf70-b2fe4901ef81`, source 282 and the same GUID.
-The normal feature shows SUCCEEDED, all seven comparisons true, original link/audit
-preserved and State baseline saved. Tally directly shows Haryana with the same
-visible address, country India and PIN 110019. This verifies a second live update;
-restart persistence of this new record and independent-edit conflict handling
-remain pending owner checks.
+Current desktop workflow now includes every supported eligible Bahi change
+automatically, including PAN, known blank fills and the complete GST pair. The
+normal table is read-only with no field checkboxes or separate blank-fill task;
+the exact summary and one final update approval bind the complete included set.
+Saved field policies, conflict/unsupported/clear blocks and necessary effective
+dates remain enforced. This removes routine field selection; it does not add
+polling or unattended execution; the separately implemented reverse review is above.
 
-Next: restart and load this latest result; confirm both update histories/original
-link remain. Then check an independent Tally edit blocks propagation using the
-short feature checklist. No additional write is needed for the restart check.
-Customers, other fields, clears, multi-entry mailing history, reverse/batch updates
-and unattended sync remain separate gates. Preserve journals, records and invoice 69.
+Selected contact, mailing and PAN updates now include explicitly paired GSTIN and
+registration-type updates. GST requires both exact nonempty source values, a
+separately chosen nonfuture date later than existing history, and matching Indian
+mailing State/Country. Initially supported types are Regular and Composition.
+The pair is included when eligible; a matching companion may be included without inventing
+a historical baseline. Unknown/conflicting targets, clears and source defaults
+remain blocked. See [GST behavior and evidence](master-sync/GST_PARTY_UPDATES.md)
+and [other selected fields](master-sync/LINKED_PARTY_UPDATES.md).
+
+The shared UPDATE approval/attempt/outbox/recovery engine remains authoritative.
+Approval binds exact fields, independent mailing/GST dates, GST State, policy,
+source/target/native context and binding generation. Only selected field baselines
+advance after exact read-back and atomic audit completion. Legacy State hashes,
+original mapping observations and existing journal evidence remain unchanged.
+There is no new migration, queue, backend idempotency claim or automatic write.
+
+Live 7.0 GST checks caught that a new-entry-only import replaces tax history. The
+typed writer now reconstructs complete approved historical entries plus the new
+row. A distinct repair restored the original synthetic row before continuing.
+Regular, Composition, repeated-history and first-entry paths now pass fresh
+known-GUID checks on retained synthetic ledgers ending 0000016a and 0000015f.
+Tax dates/settings, mailing data and other native values are preserved. Empty
+new-entry optional slots and same-company-to-own-ledger RemoteAltGUID changes are
+narrowly verified; other mutations fail. Test values are retained. Full native
+journals, original payload hash reconstruction and two final fresh checks are
+archived under `%LOCALAPPDATA%\InnoforaiTallySync\diagnostics\gst-contract-20261119-a531945d`.
+No Bahi, invoice or application mapping/journal write ran in these contract probes.
+
+Full offline suite: **661 passed, one opt-in live test skipped** in the existing
+.venv. Temporary SQLite, fake HTTPX through production gateway/transport and
+offscreen Qt cover both party types, collection replacement, full history,
+paired/date approval, exact Unicode and leading zeroes, conflict/expiry/cancel,
+uncertainty, native-preservation failures, restart/no resend, old hashes,
+migrations, architecture and GUI responsiveness. A fresh expanded ledger query
+parsed all 68 ledgers with resolved tax aggregates. Documentation links and
+whitespace checks are separate. No computer-use automation or environment change
+was used. Source implementation follows official docs and executed evidence,
+without BahiAI code.
+The automatic-field workflow regression verifies PAN/blank/GST inclusion,
+conflict exclusion, a read-only field table and preparation without transmission.
+No live writes were performed for this workflow simplification.
+Activity layout/navigation focused checks: five passed, including compact
+success/omission text, scroll reset, collapsed/reopenable evidence and stale-summary
+clearing. Documentation links and diff whitespace checks passed.
+
+Owner evidence: Apollo 277's mailing operation
+`479f956b-af96-4609-b4af-1f3519eb6c25` is now owner-confirmed SUCCEEDED/all-true,
+with address, Kerala, India and PIN 683576 visible in Tally. The prior false PIN
+conflict and typed-address/independent-residence preservation checks are repaired.
+Earlier Reliance/Apollo State results and the named closure of the original
+ignored empty-mailing attempt remain retained; nothing was resent for recovery.
+Owner screenshots also verify GST operation
+`bf38c56c-7392-44b6-ad1d-f5f801ccf4b1` SUCCEEDED/all-true, with GSTIN
+32AAFCA7004C2ZF and Regular visible in Tally, effective 20261101.
+
+Next: use the corrected Activity evidence view to inspect saved transfers and
+updates; continue ordinary approved linked reviews in either direction; no additional controlled owner
+trial is required. Tally tax creation, Unregistered/UIN, tax-State changes, historical
+corrections, future tax history, portal validation and unattended updates
+remain separate scopes. Confirmed links, existing journals, runtime identifier
+InnoforaiTallySync and invoice 69 remain preserved.
 
 ## Current repair: TallyPrime 7.0 mailing and Unicode
 

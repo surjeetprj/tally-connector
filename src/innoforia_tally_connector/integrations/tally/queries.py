@@ -28,7 +28,7 @@ def collection(entity: str, company: str | None = None, guid: str | None = None,
     if entity != "Company":
         fields.append("Parent")
     if entity == "Ledger":
-        fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryofResidence", "LedMailingDetails.*"]
+        fields += ["Email", "LedgerPhone", "LedgerMobile", "Pincode", "PartyGSTIN", "Address", "LedStateName", "CountryofResidence", "LedMailingDetails.*", "IncomeTaxNumber", "LedGSTRegDetails.*"]
     if complete:
         fields.append("*")
     for field in fields:

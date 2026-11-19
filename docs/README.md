@@ -31,6 +31,9 @@ single-party controls remain advanced history/recovery tools.
 | [Supervised party transfer](master-sync/PARTY_TRANSFER.md) | Actual source records, drag/drop, exclusions, atomic mapping and persistent activity history |
 | [Owner manual checklist](master-sync/MANUAL_PARTY_TRANSFER_CHECKLIST.md) | Four live direction/type cases, expected exclusions and screenshots to provide |
 | [Linked-party change review](master-sync/LINKED_PARTY_CHANGES.md) | Read-only comparison of linked Bahi/Tally changes, separate saved observations and pending update gates |
+| [Linked-party field updates](master-sync/LINKED_PARTY_UPDATES.md) | Selected contact, mailing and PAN updates, explicit blank fills and per-field acknowledgements |
+| [Tally-to-Bahi linked updates](master-sync/TALLY_TO_BAHI_UPDATES.md) | Reverse linked review, supported Bahi scalar fields and shared approved execution/recovery |
+| [Linked-party GST updates](master-sync/GST_PARTY_UPDATES.md) | Paired GSTIN/registration changes, explicit effective dates, complete tax-history preservation and live contract evidence |
 | [Controlled State update](master-sync/CONTROLLED_STATE_UPDATE.md) | One approved supplier-State experiment, preservation evidence, shared recovery and live checklist |
 | [Supplier State updates](master-sync/SUPPLIER_STATE_UPDATES.md) | Repeatable approved Bahi-to-Tally State updates, separate State baselines, conflicts and owner checklist |
 | [Phase 0 contract checklist](phase0/CONTRACT_VALIDATION.md) | Purchase scope, field matrix, evidence levels and backend validation backlog |

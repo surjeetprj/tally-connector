@@ -70,6 +70,7 @@ class TransferPage(QWidget):
         self.record = self.source = None
         self.report.clear()
         self.fields.setRowCount(0)
+        self.fields.setHorizontalHeaderLabels(["Field", "Source value", "Decision", "Include", "Exclusion reason"])
         self.candidate_model.replace([])
         self.normal_party.setChecked(False)
         self.normal_party.setVisible(False)
@@ -85,10 +86,22 @@ class TransferPage(QWidget):
         record = self.record
         pending = (isinstance(record, ExperimentResult) and record.preview.kind == "TRANSFER"
                    and record.state == "PENDING" and not record.attempted)
-        self.fields.setEnabled(not busy and pending)
+        # Completed evidence remains selectable and scrollable. Lock individual
+        # cells instead of disabling the entire view (which disables scrolling).
+        self.fields.setEnabled(True)
+        signals_blocked = self.fields.blockSignals(True)
+        for row in range(self.fields.rowCount()):
+            for col in range(self.fields.columnCount()):
+                item = self.fields.item(row,col)
+                if item is None: continue
+                flags = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+                if pending and not busy and col == 4: flags |= Qt.ItemFlag.ItemIsEditable
+                if pending and not busy and col == 3: flags |= Qt.ItemFlag.ItemIsUserCheckable
+                item.setFlags(flags)
+        self.fields.blockSignals(signals_blocked)
         self.normal_party.setEnabled(not busy and pending)
         self.refresh.setEnabled(bound and not busy and pending)
-        self.cancel.setEnabled(bound and not busy and isinstance(record, ExperimentResult) and record.state == "PENDING" and not record.attempted)
+        self.cancel.setEnabled(bound and not busy and isinstance(record, ExperimentResult) and record.preview.kind != 'UPDATE' and record.state == "PENDING" and not record.attempted)
         self.reconcile.setEnabled(bound and not busy and isinstance(record, ExperimentResult) and record.attempted
                                   and record.target is not None and record.state not in {"SUCCEEDED", "FAILED"})
         fresh = (pending and (self.generation is None or self.generation == record.preview.generation)
@@ -140,7 +153,7 @@ class TransferPage(QWidget):
         lines = [f"{preview.kind}: {result.state}", f"Record: {preview.id}", f"Direction: {preview.direction.value}",
                  f"Destination: {preview.preflight.destination}", f"Group: {group_text}",
                  f"Name: {preview.party.name}", f"Approval expires: {preview.expires_at.isoformat()}",
-                 f"Create attempt: {'recorded' if result.attempted else 'not sent'}", result.message]
+                 f"{'Update' if preview.kind == 'UPDATE' else 'Create'} attempt: {'recorded' if result.attempted else 'not sent'}", result.message]
         if preview.source:
             lines += [f"Source {preview.source.side} ID: {preview.source.identity}", f"Type: {preview.source.party_type}",
                       f"Source observed: {preview.source.observed_at.isoformat()}"]
@@ -164,6 +177,9 @@ class TransferPage(QWidget):
         lines.extend(f"{field}: {'matches' if ok else 'DIFFERS'}" for field, ok in result.comparisons.items())
         lines.append("No automatic retry, update or deletion. Destination field support still requires owner manual read-back verification.")
         self.report.setPlainText("\n".join(lines))
+        if preview.kind == 'UPDATE':
+            self.show_update_fields(result)
+            return
         self.fields.blockSignals(True)
         decisions = [d for d in preview.decisions if d.field in OPTIONAL_FIELDS]
         self.fields.setRowCount(len(decisions))
@@ -179,6 +195,24 @@ class TransferPage(QWidget):
             choice.setFlags(choice.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             choice.setCheckState(Qt.CheckState.Unchecked if decision.status == "excluded" else Qt.CheckState.Checked)
         self.fields.blockSignals(False)
+        self.set_busy(self.working, self.bound)
+
+    def show_update_fields(self, result):
+        """Render saved update evidence without fetching or proposing new values."""
+        preview = result.preview
+        self.report.append('Historical update evidence: approved values and saved read-back, not a fresh read.')
+        self.fields.blockSignals(True)
+        self.fields.setHorizontalHeaderLabels(['Field', 'Before update', 'Approved value', 'Saved read-back', 'Verification'])
+        self.fields.setRowCount(len(preview.update.fields))
+        for row, field in enumerate(preview.update.fields):
+            verified = result.comparisons.get(field)
+            values = (field, self.field_text(preview.update.before, field), repr(getattr(preview.party, field)),
+                self.field_text(result.observation, field) if result.observation else '[not recorded]',
+                'matches' if verified is True else 'DIFFERS' if verified is False else 'Not verified')
+            for col, value in enumerate(values):
+                self.fields.setItem(row, col, QTableWidgetItem(value))
+        self.fields.blockSignals(False)
+        self.set_busy(self.working, self.bound)
 
     def renew(self):
         exclusions = self.exclusions()
@@ -207,7 +241,7 @@ class TransferPage(QWidget):
                       source_normal_party_confirmed=self.normal_party.isChecked())
 
     def reconcile_record(self):
-        kind = "EXP_RECONCILE" if self.record.preview.kind == "EXPERIMENT" else "TRANSFER_RECONCILE"
+        kind = 'UPDATE_RECONCILE' if self.record.preview.kind == 'UPDATE' else "EXP_RECONCILE" if self.record.preview.kind == "EXPERIMENT" else "TRANSFER_RECONCILE"
         self.send(kind, experiment_id=self.record.preview.id)
 
     def review_existing(self):

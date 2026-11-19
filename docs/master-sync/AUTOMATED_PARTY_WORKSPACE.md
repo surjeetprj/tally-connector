@@ -21,6 +21,17 @@ the operator and field policy once in Settings; subsequent launches verify,
 load parties and check known unresolved targets automatically. No periodic polling
 is enabled. Failed verification leaves transfers disabled with an actionable message.
 
+Opening Activity from the transfer summary now starts at the top, with Advanced
+collapsed and a compact result showing party names, status, destination identities
+and omitted fields (up to five parties, with full batch inspection available).
+Legacy per-party evidence and recovery remain available under Advanced; normal
+navigation no longer expands or focuses the older transfer form. Changing the
+binding clears the compact result. This display change sends no remote writes.
+Double-clicking a saved transfer link opens its original field table in Advanced
+> Operation details. Saved updates also open there with before/approved/read-back
+columns. Link JSON is labelled as the original historical observation; later
+updates do not rewrite it. Field tables remain read-only and scrollable.
+
 The initial window fits the available logical desktop area. Tab contents scroll
 when large fonts, display scaling or advanced panels exceed the viewport, keeping
 lower controls reachable instead of forcing the window beyond the screen.
@@ -61,8 +72,11 @@ remain ineligible. Closing the summary without confirmation sends no create.
 
 Policies are versioned and binding-scoped, with separate destination selections.
 Initial contact/mailing choices are email, phone, address, country, state and
-pincode. Name/classification are required. Tax writes remain disabled while the
-Tally representation gates are open.
+pincode. Name/classification are required. New Bahi-destination policies also
+include observed GSTIN, PAN and registration type. Existing policies retain their
+explicit choices until edited and saved. Tally creation tax fields remain disabled.
+Linked updates in either direction have their own exact approval; see
+[reverse linked changes](TALLY_TO_BAHI_UPDATES.md).
 
 Saving the policy explicitly permits automatic omission of unavailable or invalid
 optional fields, with generated reasons retained in every child preview and link

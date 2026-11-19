@@ -15,7 +15,7 @@ class ActivityPage(QWidget):
             self.status.addItem(state.title().replace('_', ' '), state)
         self.kind.addItem("All activity", None)
         self.kind.addItem("Transfers", "TRANSFER")
-        self.kind.addItem("State updates", "UPDATE")
+        self.kind.addItem("Party updates", "UPDATE")
         self.kind.addItem("Legacy experiments", "EXPERIMENT")
         self.refresh = QPushButton("Refresh activity")
         self.previous, self.next = QPushButton("Previous"), QPushButton("Next")

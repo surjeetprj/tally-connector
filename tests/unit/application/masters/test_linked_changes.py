@@ -77,9 +77,52 @@ def test_absent_and_unavailable_baseline_are_distinct(linked):
     source = changed(linked.bahi, country="India")
     legacy = linked.model_copy(update={"bahi": linked.bahi.model_copy(update={"content_schema": 1})})
     assert fields(linked, source)["country"].status == "Bahi changed"
-    assert fields(legacy, source)["country"].status == "Unavailable"
+    assert fields(legacy, source)["country"].status == "Fill missing destination"
     source = source.model_copy(update={"unavailable_fields": ("country",)})
     assert fields(linked, source)["country"].status == "Unavailable"
+
+
+def pin_value(row, availability):
+    content = row.content.model_dump(exclude_unset=True)
+    content.pop('pincode', None)
+    if availability != 'absent':
+        content['pincode'] = {'null': None, 'empty': '', 'present': '001234'}[availability]
+    return row.model_copy(update={'content': PartyContent(**content)})
+
+
+@pytest.mark.parametrize('saved,current', [
+    ('absent', 'empty'), ('absent', 'null'), ('null', 'absent'),
+    ('null', 'empty'), ('empty', 'absent'), ('empty', 'null'),
+])
+def test_changed_source_pin_and_still_blank_target_require_explicit_fill(linked, saved, current):
+    link = linked.model_copy(update={
+        'bahi': pin_value(linked.bahi, 'null'),
+        'tally': pin_value(linked.tally, saved),
+    })
+    source = changed(link.bahi, pincode='683576')
+    target = pin_value(link.tally, current)
+    row = fields(link, source, target)['pincode']
+    assert row.status == 'Fill missing destination'
+    assert 'only its representation changed' in row.reason
+    assert row.saved_bahi.availability == 'null' and row.current_bahi.value == '683576'
+    assert row.saved_tally.availability == saved and row.current_tally.availability == current
+    policy = TransferPolicy(binding=link.binding, operator='Reviewer', to_tally=())
+    assert fields(link, source, target, policy)['pincode'].status != 'Fill missing destination'
+    assert fields(link, source.model_copy(update={'is_active': False}), target)['pincode'].status != 'Fill missing destination'
+    assert fields(link, source, target.model_copy(update={'unavailable_fields': ('pincode',)}))['pincode'].status == 'Unavailable'
+
+
+@pytest.mark.parametrize('current', ['absent', 'empty', 'null'])
+@pytest.mark.parametrize('source_changed', [False, True])
+def test_cleared_nonempty_target_pin_stays_protected(linked, current, source_changed):
+    link = linked.model_copy(update={
+        'bahi': pin_value(linked.bahi, 'present'),
+        'tally': pin_value(linked.tally, 'present'),
+    })
+    source = changed(link.bahi, pincode='683576') if source_changed else link.bahi
+    row = fields(link, source, pin_value(link.tally, current))['pincode']
+    assert row.status == ('Conflict' if source_changed else 'Tally changed')
+    assert row.saved_tally.value == '001234'
 
 
 def test_policy_and_invalid_source_values_are_explained(linked):
@@ -108,9 +151,22 @@ def test_eligibility_and_identity_changes_block_candidates(linked, change):
     assert fields(linked, source)["state"].status == "Blocked"
 
 
-def test_tax_differences_never_become_update_candidates(linked):
+def test_tax_candidates_are_distinct_from_unsupported_rename(linked):
     result = fields(linked, changed(linked.bahi, gstin="source", pan="source", gst_reg_type="Regular"))
-    assert all(result[f].status == "Out of scope" for f in ("gstin", "pan", "gst_reg_type", "name"))
+    assert result['name'].status=='Out of scope'
+    assert all(result[f].status=='Bahi changed' for f in ('gstin','gst_reg_type'))
+    assert result['pan'].status == 'Bahi changed'
+
+
+def test_matching_gst_companion_keeps_historical_unavailability_visible(linked):
+    link=linked.model_copy(update={'tally':linked.tally.model_copy(update={'unavailable_fields':('gst_reg_type',)})})
+    source=changed(link.bahi,gstin='32AAACA1234A1Z1',gst_reg_type='Regular')
+    target=changed(link.tally,gst_reg_type='Regular').model_copy(update={'unavailable_fields':()})
+    rows=fields(link,source,target)
+    assert rows['gst_reg_type'].status=='Already matches'
+    assert rows['gst_reg_type'].saved_tally.availability=='unavailable'
+    assert rows['gstin'].status=='Bahi changed'
+    assert fields(link,source,changed(target,gst_reg_type='Composition'))['gst_reg_type'].status=='Unavailable'
 
 
 @pytest.mark.parametrize("change", ["identity", "side", "binding", "policy"])

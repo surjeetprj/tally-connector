@@ -9,7 +9,7 @@ from innoforia_tally_connector.integrations.tally.dates import xml_date
 
 
 def mailing_content(nodes):
-    """One effective dated record, or explicitly unresolved; never pick a history row."""
+    """One effective dated or undated record; never pick a history row."""
     populated = [node for node in nodes if len(node) or (node.text or "").strip()]
     if not populated:
         return {}  # Empty native aggregates mean absent mailing values.
@@ -21,7 +21,8 @@ def mailing_content(nodes):
         set(tags) - {"APPLICABLEFROM", "MAILINGNAME", "ADDRESS.LIST", "STATE", "COUNTRY", "PINCODE"} or
         any(len(child) for child in node if child.tag != "ADDRESS.LIST")):
         raise ValueError("Unsupported dated mailing structure")
-    if xml_date(node.findtext("APPLICABLEFROM")) > datetime.now(timezone(timedelta(hours=5, minutes=30))).date():
+    effective = node.findtext("APPLICABLEFROM")
+    if effective and effective.strip() and xml_date(effective) > datetime.now(timezone(timedelta(hours=5, minutes=30))).date():
         raise ValueError("Mailing record is not effective yet")
     content = {field: node.findtext(tag, "") for tag, field in
                (("STATE", "state"), ("COUNTRY", "country"), ("PINCODE", "pincode"))
@@ -112,8 +113,13 @@ def records(raw: bytes, entity: str) -> list[dict[str, str]]:
                         row["MAILING_APPLICABLE_FROM"] = populated[0].findtext("APPLICABLEFROM")
                 except ValueError:
                     row["MAILING_UNRESOLVED"] = "Dated mailing records require further evidence"
-            if node.find("LEDGSTREGDETAILS.LIST") is not None or node.find("LEDGSTREGDETAILS") is not None:
-                row["NESTED_GST_UNRESOLVED"] = "Yes"
+            tax = node.findall('LEDGSTREGDETAILS.LIST')
+            if tax:
+                from innoforia_tally_connector.integrations.tally.gst_updates import content as gst_content
+                try: row['GST_CONTENT'] = gst_content(tax)
+                except ValueError: row['NESTED_GST_UNRESOLVED'] = 'Yes'
+            elif node.find('LEDGSTREGDETAILS') is not None:
+                row['NESTED_GST_UNRESOLVED'] = 'Yes'
             row["NAME"] = row.get("NAME") or node.get("NAME", "")
             result.append(row)
     return result

@@ -13,7 +13,7 @@ class Command(Value):
     kind: Literal["VERIFY", "BIND", "LOAD", "LINK", "SAVED", "EXP_PREPARE", "EXP_CREATE", "EXP_STATUS", "EXP_RECONCILE",
                   "TRANSFER_PREPARE", "TRANSFER_CREATE", "TRANSFER_RECONCILE", "ACTIVITY", "ACTIVITY_DETAIL", "TRANSFER_CANCEL",
                   "RESTORE", "POLICY_GET", "POLICY_SAVE", "BATCH_PREPARE", "BATCH_APPROVE", "BATCH_STEP", "BATCH_GET", "BATCH_LIST", "BATCH_CANCEL", "BATCH_RECOVER", "PARTY_CHANGES",
-                  "UPDATE_PREPARE", "UPDATE_APPLY", "UPDATE_RECONCILE", "UPDATE_CANCEL", "UPDATE_STATUS"]
+                  "UPDATE_PREPARE", "UPDATE_APPLY", "UPDATE_RECONCILE", "UPDATE_CANCEL", "UPDATE_STATUS", "UPDATE_CLOSE_FAILED"]
     generation: int
     binding: Binding | None = None
     classification: Classification | None = None
@@ -34,6 +34,10 @@ class Command(Value):
     approval: BatchApproval | None = None
     batch_id: str | None = None
     party_identity: str | None = None
+    mailing_effective_date: str | None = Field(default=None, pattern=r"^[0-9]{8}$")
+    update_fields: tuple[str, ...] = ()
+    accept_missing_fields: bool = False
+    gst_effective_date: str | None = Field(default=None, pattern=r"^[0-9]{8}$")
 
 
 @dataclass(frozen=True)

@@ -82,12 +82,11 @@ def test_empty_dated_mailing_never_passes_from_echoed_root_values(binding, maili
     assert not {"address", "country", "state", "pincode"} & result.content.model_fields_set
 
 
-@pytest.mark.parametrize("mutation", ["multiple", "missing_date", "invalid_date", "future_date", "duplicate_country", "nested_address"])
+@pytest.mark.parametrize("mutation", ["multiple", "invalid_date", "future_date", "duplicate_country", "nested_address"])
 def test_ambiguous_or_unsupported_mailing_cannot_be_transferred(binding, mutation):
     raw = FIXTURE.read_bytes()
     if mutation == "multiple":
         raw = raw.replace(b'</LEDGER>', b'<LEDMAILINGDETAILS.LIST><APPLICABLEFROM>20250401</APPLICABLEFROM><COUNTRY>Other</COUNTRY></LEDMAILINGDETAILS.LIST></LEDGER>')
-    if mutation == "missing_date": raw = raw.replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>', b'')
     if mutation == "invalid_date": raw = raw.replace(b'20260401', b'20260230')
     if mutation == "future_date": raw = raw.replace(b'20260401', b'99990401')
     if mutation == "duplicate_country": raw = raw.replace(b'</COUNTRY>', b'</COUNTRY><COUNTRY>Other</COUNTRY>')
@@ -100,13 +99,15 @@ def test_ambiguous_or_unsupported_mailing_cannot_be_transferred(binding, mutatio
     assert {"address", "country", "state", "pincode"} <= set(result.unavailable_fields)
 
 
-@pytest.mark.parametrize("representation", ["root_only", "other_date"])
+@pytest.mark.parametrize("representation", ["root_only", "other_date", "undated"])
 def test_new_create_requires_the_approved_dated_record_for_verification(binding, representation):
     from innoforia_tally_connector.domain.masters import GroupObservation
     raw = FIXTURE.read_bytes()
     if representation == "root_only":
         import re
         raw = re.sub(rb'<LEDMAILINGDETAILS.LIST>.*?</LEDMAILINGDETAILS.LIST>', b'', raw, flags=re.S)
+    elif representation == "undated":
+        raw = raw.replace(b'<APPLICABLEFROM>20260401</APPLICABLEFROM>', b'')
     else:
         raw = raw.replace(b'20260401', b'20250401')
     row = records(raw, "Ledger")[0]
