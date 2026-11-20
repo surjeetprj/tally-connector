@@ -394,6 +394,22 @@ policy upgrades, omissions/dependencies, approval invalidation, ignored tax fiel
 and recovery offline. Live new-tax-ledger creation is not established by prior
 owner GST-update acceptance.
 
+20 November owner acceptance: customer/mixed batches and the TCS Already linked
+skip have supplied live evidence, and the owner now confirms results/links remain
+after restart. Record these bounded party checks as accepted; do not equate them
+with complete MST-004/MST-008 or every destination field/registration variant.
+
+Next delivery direction is **scheduled linked-party synchronization**, as clarified
+by the owner, rather than a manual-only update workflow. Reuse the shared worker,
+operation journal and recovery engine. Deliver configurable scheduled discovery,
+last/next-run status, saved direction/field ownership, baseline comparison and echo
+suppression first. Policy-authorized unattended updates follow verified change
+capture, concurrency/writer ownership and uncertain-outcome capabilities; retain
+MST-008 gates. Manual Review and sync changes remains an on-demand/exception path.
+Items/UOM follow this increment with discovery, confirmed unit/group dependencies
+and approved untracked-goods transfer before broader item changes. No scheduler
+or automatic write behavior is introduced by this planning update.
+
 Update 4 November: [automated party workspace](master-sync/AUTOMATED_PARTY_WORKSPACE.md)
 adds saved policies/operator, verified automatic reopening/loading, up to 100 selected
 parties per batch, one exact Ready-subset approval and sequential shared execution.

@@ -186,5 +186,45 @@ successfully from Tally to Bahi with no omissions. This is owner-reported live
 acceptance for that record, following the policy upgrade. Independent destination
 field inspection, record IDs, party type and restart evidence were not supplied.
 The separate SK TRADING PAN investigation confirmed the source PAN was empty;
-that omission is source availability, not a disabled tax policy. New dated Tally
-tax creation retains its separate live acceptance gate.
+that omission is source availability, not a disabled tax policy.
+
+On 20 November the owner supplied Bahi source account 285, the SUCCEEDED
+Bahi-to-Tally policy-v4 result, and a Tally destination screenshot for customer
+TCS(Tata Consultancy Services Limited). Destination Sundry Debtors, name/address,
+Maharashtra, India, PIN 400021, PAN AAACR4849R, GSTIN 27AAACR4849R1ZL and Regular
+registration are visible and match the supplied source. This establishes the new
+customer/Regular tax-creation subset. Phone/email are included in the approved
+payload but not visible in the Tally screenshot; applicability date 20260401 is
+shown in the approved context. Restart persistence, independent native-date
+inspection, supplier/Composition creation and mixed batches remain unverified by
+these screenshots. No new assistant transfer was performed.
+
+Further owner evidence on 20 November (policy v4): a three-customer Tally-to-Bahi
+batch for M/s Sanjay Sales, SHAKUMBRI METALS and Surjeet Pvt shows three SUCCEEDED
+results, transferred and linked. The owner confirms all three exist in Bahi.
+A Bahi-to-Tally mixed batch shows Reliance Industries Limited (CUSTOMER) and
+Infosys Limited (SUPPLIER) moving from Ready to SUCCEEDED, while TCS remains
+Already linked before and after execution. Its existing link is retained rather
+than submitting another create. This is live batch/linked-skip evidence for these
+cases; independent new-destination field/native-date inspection and restart
+persistence remain separate. No assistant transfer was run to collect evidence.
+
+The owner subsequently confirmed on 20 November that the new transfer results
+and saved links remain after restarting the connector. This supplies the pending
+owner restart-persistence evidence for the reported transfers, without repeating
+creation. Other capability-specific evidence limits above remain explicit.
+
+## Next workflow: scheduled synchronization
+
+The owner clarified that scheduling is the planned routine workflow. A manual
+Review and sync changes action is for on-demand runs and exceptions. Reuse the
+existing worker, durable intents/attempts and reconciliation engine; do not add
+another queue. Begin with configurable scheduled read-only discovery of linked
+party changes and a clear last-run/next-run/error view. Define direction and field
+ownership, preserve verified baselines, suppress echoes and block conflicting
+edits. Extend to policy-authorized unattended writes only when the required
+change/version, writer ownership and uncertain-result contracts are verified.
+A timer does not make an unverified write capability safe or establish idempotency.
+Creation, clears, renames and unresolved outcomes retain their separate gates.
+This records the next delivery direction; scheduling is not implemented or enabled
+by this documentation-only change.

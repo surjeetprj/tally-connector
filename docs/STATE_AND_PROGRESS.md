@@ -1,8 +1,58 @@
 # Current state and progress
 
-Last updated: 19 November 2026.
+Last updated: 20 November 2026.
 
 ## Current milestone: approved linked-party updates, including dated GST
+
+Latest owner confirmation, 20 November: the newly transferred party results and
+saved links remain present after restarting the connector. This closes the pending
+owner restart-persistence check for the reported transfers. Earlier screenshot
+paragraphs below describe evidence available before this confirmation. Existing
+TCS Already linked evidence remains recorded separately; no new create was run.
+
+Owner direction clarified: **scheduled synchronization** is the intended everyday
+workflow, with Review and sync changes as an on-demand/exception action rather
+than the final manual-only workflow. Next scope is a configurable schedule over
+the existing shared execution/recovery engine: discover linked-party changes,
+apply directional field-ownership rules, suppress echoes, and surface conflicts.
+Initially scheduled discovery can run read-only; unattended mutation is enabled
+only for capabilities whose change capture, concurrency/writer ownership and
+uncertain-outcome contracts have actually been verified. Existing UI approval
+behavior is unchanged by this documentation. Automatic creates, clears and
+ambiguous overwrites are not authorized by enabling a timer. Item/UOM work follows
+the linked-party scheduled-sync increment and verified dependency mappings.
+
+Owner batch evidence, 20 November (policy v4, reviewer surjeet):
+- Tally to Bahi: **M/s Sanjay Sales**, **SHAKUMBRI METALS** and **Surjeet Pvt**
+  are CUSTOMER records; the screenshot shows SUCCEEDED: 3 SUCCEEDED, each
+  transferred and linked. The owner confirms all three are available in Bahi.
+- Bahi to Tally: the mixed batch contains **Reliance Industries Limited**
+  (CUSTOMER, source Bahi 290), **Infosys Limited** (SUPPLIER) and the already
+  linked TCS customer. The preview shows two Ready/one Already linked; final
+  evidence shows two SUCCEEDED/one Already linked. TCS retains saved link
+  f3c76a58-26fb-4abe-b4a1-757b80e76a65 and is not queued for recreation.
+These establish owner-run multi-customer batching to Bahi, mixed customer/supplier
+batch execution to Tally and Already linked exclusion for the TCS case. The new
+mixed-batch destination fields/native dates and restart persistence were not
+independently shown. Supplier/Composition field acceptance remains separate from
+application batch success. No assistant write, repeated transfer or new runtime
+mutation was performed; this update records supplied evidence only.
+
+Owner screenshots, 20 November: Bahi customer **TCS(Tata Consultancy Services
+Limited)**, account **285**, transferred to Tally **SIS Dummy** under **Sundry
+Debtors**, with policy v4 and application status SUCCEEDED / transferred and linked.
+The source and Tally destination screenshots show matching name, mailing address,
+Maharashtra, India, PIN 400021, PAN AAACR4849R, GSTIN 27AAACR4849R1ZL and Regular
+registration. This establishes owner-inspected live new-customer creation with
+populated mailing/PAN/Regular GST fields, beyond the earlier update-only evidence.
+The approved payload also includes phone 2267795995 and email corporate.office@tcs.com;
+those fields are not visible in the supplied Tally screen. Initial mailing/GST
+applicability 20260401 is displayed in the approved context; the native dates are
+not independently visible in the screenshot. The destination ledger GUID,
+operation ID and restart persistence evidence were not supplied. The later mixed
+batch evidence is recorded above; Composition and detailed supplier destination
+field inspection retain their separate live acceptance gates.
+No assistant live write or repeat transfer was performed to record this evidence.
 
 Owner review recorded, 19 November: **SKE CLOUD PRIVATE LIMITED** transferred
 from Tally to Bahi successfully with **no omissions**, according to the owner.
